@@ -1,0 +1,10 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# DB（名前付きボリュームへ移行済み。旧バインドマウントの名残/ダンプを除外）
+src/mysql_data/
+db_dump.sql
+
+# PHPセッション等の一時生成物
+*.log

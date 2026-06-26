@@ -1,0 +1,182 @@
+@use "../fundamental" as *;
+@use "sass:color";
+
+.match.summary {
+	margin: 2rem auto;
+	padding: 2rem;
+	max-width: 800px;
+	background: $color-base;
+	border: 1px solid $color-main;
+	border-radius: 8px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+
+	h2 {
+		font-size: 1.5rem;
+		border-bottom: 2px solid $color-main;
+		padding-bottom: 0.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.summary-header-card {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-bottom: 2rem;
+		padding: 1.25rem;
+		background: $color-background;
+		border-radius: 8px;
+
+		.meta-label,
+		.winner-label {
+			display: block;
+			font-size: 0.7rem;
+			color: rgba($color-text, 0.5);
+			letter-spacing: 0.1em;
+			margin-bottom: 0.25rem;
+		}
+
+		.summary-winner {
+			text-align: right;
+
+			.winner-name {
+				font-size: 1.5rem;
+				color: $color-accent;
+			}
+
+			&.is-draw .winner-name {
+				color: rgba($color-text, 0.7);
+			}
+		}
+	}
+
+	.summary-totals {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 1.5rem;
+		margin-bottom: 2rem;
+
+		.summary-vs {
+			font-size: 1.5rem;
+			font-weight: bold;
+			color: rgba($color-text, 0.4);
+		}
+
+		.total-card {
+			flex: 1;
+			text-align: center;
+			padding: 1.5rem;
+			background: $color-background;
+			border-radius: 8px;
+			border-left: 4px solid $color-main;
+
+			&.alliance-order {
+				border-left-color: $color-accent;
+			}
+			&.alliance-chaos {
+				border-left-color: $color-blood;
+			}
+			&.alliance-death {
+				border-left-color: $color-magic;
+			}
+			&.alliance-destruction {
+				border-left-color: $color-brick;
+			}
+
+			.player-label {
+				display: block;
+				font-size: 0.9rem;
+				margin-bottom: 0.5rem;
+			}
+
+			.vp-total {
+				display: block;
+				font-size: 2.5rem;
+				color: $color-accent;
+				margin-bottom: 0.25rem;
+			}
+
+			.faction-name {
+				font-size: 0.8rem;
+				color: rgba($color-text, 0.5);
+			}
+		}
+	}
+
+	.round-breakdown {
+		margin-bottom: 2rem;
+
+		h3 {
+			font-size: 1rem;
+			margin-bottom: 1rem;
+		}
+
+		.round-table {
+			width: 100%;
+			border-collapse: collapse;
+
+			th,
+			td {
+				padding: 0.75rem 1rem;
+				text-align: center;
+				border-bottom: 1px solid rgba($color-main, 0.5);
+			}
+
+			th {
+				background: $color-background;
+				font-size: 0.85rem;
+			}
+
+			tfoot td {
+				border-top: 2px solid $color-main;
+				font-size: 1.1rem;
+			}
+
+			.round-first-cell {
+				font-size: 0.85rem;
+				color: rgba($color-text, 0.8);
+			}
+
+			.double-turn-badge {
+				display: inline-block;
+				margin-left: 0.25rem;
+				padding: 0.05rem 0.4rem;
+				border-radius: 10px;
+				font-size: 0.62rem;
+				font-weight: bold;
+				background: rgba($color-blood, 0.18);
+				color: $color-blood;
+				border: 1px solid rgba($color-blood, 0.5);
+				vertical-align: middle;
+			}
+		}
+	}
+
+	.form-actions {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		flex-wrap: wrap;
+
+		.btn-submit {
+			padding: 0.85rem 2rem;
+			background: $color-accent;
+			color: $color-background;
+			border-radius: 4px;
+			font-weight: bold;
+			text-decoration: none;
+			min-height: 48px;
+			display: inline-flex;
+			align-items: center;
+		}
+
+		.btn-secondary {
+			padding: 0.85rem 2rem;
+			color: rgba($color-text, 0.6);
+			text-decoration: none;
+			min-height: 48px;
+			display: inline-flex;
+			align-items: center;
+		}
+	}
+}

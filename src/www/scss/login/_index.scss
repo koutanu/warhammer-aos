@@ -1,0 +1,29 @@
+@use "../fundamental" as *;
+.login {
+	height: 100vh;
+	display: flex;
+	flex-direction: column; /* ★ 縦並びにする（これで綺麗にセンターになります） */
+	align-items: center; /* 左右のセンター揃え */
+	justify-content: center; /* 上下のセンター揃え */
+	gap: 1.5rem; /* ★ ロゴとボタンの間の程よい隙間 */
+
+	.logo-img {
+		width: 350px;
+		height: auto; /* 画像の比率崩れ防止の保険 */
+	}
+
+	input {
+		border-radius: 50px;
+	}
+
+	.login-btn {
+		margin-top: 10px;
+	}
+
+	.hp-field {
+		position: absolute;
+		left: -5000px; /* 画面外に飛ばす */
+		opacity: 0;
+		z-index: -1;
+	}
+}

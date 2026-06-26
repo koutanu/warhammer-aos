@@ -1,0 +1,182 @@
+// ウォーハンマーAoS アプリ共通カラーパレット
+$color-background: #131c1c; // 全体の背景（ディープグリーンブラック）
+$color-text: #f0ead6; // テキスト（ややクラシックな白）
+$color-main: #2f4f4f; // メインカラー（ダークスレートグレー）
+$color-base: #1a2626; // カードなどのベース背景（深い煤色）
+
+// アライアンス・要素別アクセントカラー
+$color-accent: #d4af37; // 基本アクセント（メタリックゴールド）
+$color-magic: #00ced1; // 魔法・デス・レルム（ダークターコイズ）
+$color-blood: #8b0000; // 血・ケイオス・激戦（ダークレッド）
+$color-brick: #e97451; // 破壊・テラコッタ（ブリックレッド）
+
+// シタデルパレット
+$color-retributor-armour: #c5a059; // 聖なるゴールド（ストームキャスト等）
+/* ==========================================
+1. リセット & 共通ベース設定
+   ========================================== */
+body,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+ul,
+li,
+th,
+td,
+span,
+i,
+label,
+button,
+textarea,
+select,
+a {
+	margin: 0;
+	padding: 0;
+	font-family: sans-serif; /* 基本フォント（ゴシック体） */
+	color: $color-text;
+	font-weight: 400;
+}
+
+a {
+	text-decoration: none;
+}
+
+// iOS/iPadOS: 端末回転時の文字自動拡大を抑止
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+body {
+	background: $color-background;
+	// タップ時の青いハイライトを抑制（タッチ操作を快適に）
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+// タッチ操作の最小ターゲットサイズ確保（iPad での誤タップ低減）
+button,
+.btn,
+a.nav-item {
+	touch-action: manipulation;
+}
+
+/* 箇条書きのインデント調整のみ残す */
+li {
+	padding-left: 1rem;
+}
+
+/* ==========================================
+2. フォーム要素（input, textarea, select）
+   ========================================== */
+input,
+textarea,
+select {
+	font-family: inherit; /* 上位のベース設定、または親要素を継承 */
+	font-size: 16px; /* 1em から 16px（インラインの指定を優先）に統一 */
+	box-sizing: border-box;
+	background-color: #fff;
+	color: inherit;
+}
+
+input,
+textarea {
+	border: 1px solid #333; /* 競合していた border を #333 に統合 */
+}
+
+input,
+textarea,
+select {
+	color: #1a2626;
+}
+
+input {
+	margin: 2px 0;
+	padding: 0.4em 0.8em; /* 窮屈にならないよう padding を適用 */
+}
+
+input:focus {
+	border: 1px solid rgba(0, 0, 0, 0.32);
+	box-shadow: none;
+	outline: none;
+}
+
+textarea {
+	vertical-align: top;
+	padding: 5px;
+}
+
+/* ==========================================
+3. ボタン要素
+   ========================================== */
+button {
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+	outline: none;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.btn {
+	background: $color-accent;
+	padding: 0.5rem;
+	min-width: 200px;
+	border-radius: 5px;
+	display: block;
+	margin: 0 auto;
+	cursor: pointer;
+	border: none; /* ボタン特有のデフォルト枠線を消す（必要に応じて） */
+}
+
+/* ==========================================
+4. スクロールバー（WebKit系）
+   ========================================== */
+::-webkit-scrollbar {
+	width: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: $color-main;
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: $color-main;
+	border-radius: 10px;
+}
+
+// 全体を横並びにするためのラッパー
+.wrapper {
+	display: flex;
+	min-height: 100vh;
+	background-color: $color-background;
+}
+
+// --- 右側メインコンテンツのスタイル ---
+.main-content {
+	flex-grow: 1;
+	// セーフエリア対応（右・下の丸角/ホームインジケータ分を加算）
+	padding: calc(2rem + env(safe-area-inset-top)) calc(2rem + env(safe-area-inset-right))
+		calc(2rem + env(safe-area-inset-bottom)) 2rem;
+	box-sizing: border-box;
+
+	// スコープを壊さないよう、コンテンツが溢れたらスクロールさせる
+	max-height: 100vh;
+	overflow-y: auto;
+}
+// --- 📱 スマホ（縦画面）で見るとき用のレスポンス対応 ---
+@media (max-width: 768px) {
+	.wrapper {
+		flex-direction: column; // 縦並びに変更
+	}
+
+	.main-content {
+		max-height: none; // スマホではスクロール制限を解除
+		overflow-y: visible;
+		padding: 1rem calc(1rem + env(safe-area-inset-right))
+			calc(1rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
+	}
+}

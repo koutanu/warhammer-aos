@@ -1,0 +1,306 @@
+@use "../fundamental" as *;
+@use "sass:color";
+
+/* ==========================================
+6. ロスター作成・管理画面 (.roster.index)
+   ========================================== */
+.roster.index {
+	max-width: 650px;
+	margin: 1rem auto;
+	padding: 2rem;
+	background: $color-base; /* ユニット図鑑などと統一したベースカラー */
+	border-radius: 12px; /* 既存デザインと統一した角丸 */
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+	box-sizing: border-box;
+
+	h2 {
+		color: $color-accent; /* 聖なるゴールド */
+		font-size: 1.6rem;
+		font-family:
+			"Georgia", serif; /* ユニット図鑑と統一してファンタジー感を強調 */
+		letter-spacing: 0.1em;
+		text-align: center;
+		border-bottom: 2px solid $color-main; /* 下部に暗緑色の細いライン */
+		padding-bottom: 0.75rem;
+		margin-bottom: 2rem;
+	}
+
+	.roster-flash-error {
+		padding: 0.75rem 1rem;
+		border-radius: 6px;
+		margin-bottom: 1.25rem;
+		font-size: 0.9rem;
+		line-height: 1.5;
+		background: rgba($color-blood, 0.15);
+		border: 1px solid rgba($color-blood, 0.5);
+		color: color.adjust($color-blood, $lightness: 25%);
+	}
+
+	.form-group {
+		margin-bottom: 1.75rem;
+
+		label {
+			display: block;
+			color: $color-text; /* テキストカラー */
+			font-weight: bold;
+			font-size: 1.05rem;
+			margin-bottom: 0.6rem;
+		}
+
+		/* フォーム要素のオーバーライド（共通リセットの #fff 背景を上書き） */
+		input[type="text"],
+		select {
+			width: 100%;
+			padding: 14px 16px; /* タブレットの親指でタップしやすい高さ */
+			font-size: 1.05rem;
+			color: $color-text;
+			background-color: $color-background; /* アプリ全体の背景色をフォーム内にも適用 */
+			border: 1px solid $color-main; /* メインのスレートグレーで境界線 */
+			border-radius: 8px;
+			box-sizing: border-box;
+			transition:
+				border-color 0.2s,
+				box-shadow 0.2s;
+			appearance: none;
+			-webkit-appearance: none; /* iOS/Safariのデフォルト形状をリセット */
+
+			&:focus {
+				outline: none;
+				border-color: $color-accent;
+				box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+			}
+		}
+
+		/* プレースホルダーの色調整 */
+		input::placeholder {
+			color: rgba(240, 234, 214, 0.4);
+		}
+
+		/* セレクトボックスにカスタムの矢印（ゴールド）を配置 */
+		select {
+			cursor: pointer;
+			background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+			background-repeat: no-repeat;
+			background-position: right 14px center;
+			background-size: 16px;
+			padding-right: 40px;
+		}
+	}
+
+	/* 作成ボタン（共通の .btn クラスをロスター専用に拡張） */
+	.btn-submit {
+		background: $color-accent;
+		color: $color-background; /* ボタン文字は背景の深緑にして視認性を確保 */
+		font-weight: bold;
+		font-size: 1.1rem;
+		padding: 14px;
+		width: 100%;
+		min-width: auto;
+		border-radius: 8px;
+		display: block;
+		margin-top: 2rem;
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+		transition:
+			background-color 0.1s,
+			transform 0.1s;
+
+		&:active {
+			transform: scale(
+				0.98
+			); /* 既存のグリッド等と統一したタップ時のフィードバック */
+			background-color: #bfa032; /* 少し沈んだゴールドに */
+		}
+	}
+
+	/* スマホ縦画面での表示調整（入れ子のなかにメディアクエリを配置） */
+	@media (max-width: 768px) {
+		margin: 0.5rem;
+		padding: 1.5rem;
+	}
+
+	// .roster.index の中に追加してください
+	.alliance-selector {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+		margin-bottom: 0.5rem;
+
+		.alliance-btn {
+			padding: 12px 8px;
+			font-size: 0.85rem;
+			font-weight: bold;
+			letter-spacing: 1px;
+			text-align: center;
+			border-radius: 6px;
+			border: 2px solid transparent;
+			background: $color-background; // 通常時は深い背景色
+			color: rgba($color-text, 0.6);
+			transition: all 0.2s ease;
+
+			// タブレットで押しやすく
+			cursor: pointer;
+
+			// 各アライアンスのアクティブ（選択時）カラー設定
+			&.btn-order.active {
+				background: $color-accent; // ゴールド
+				color: $color-background;
+				box-shadow: 0 0 12px rgba($color-accent, 0.4);
+			}
+			&.btn-chaos.active {
+				background: $color-blood; // 血の赤
+				color: $color-text;
+				box-shadow: 0 0 12px rgba($color-blood, 0.4);
+			}
+			&.btn-death.active {
+				background: $color-magic; // 魔術の青緑
+				color: $color-background;
+				box-shadow: 0 0 12px rgba($color-magic, 0.4);
+			}
+			&.btn-destruction.active {
+				background: $color-brick; // 破壊のレンガ色
+				color: $color-text;
+				box-shadow: 0 0 12px rgba($color-brick, 0.4);
+			}
+
+			// 選択されていない時のホバー（うっすら枠線を光らせる）
+			&:not(.active):hover {
+				border-color: rgba($color-text, 0.3);
+				color: $color-text;
+			}
+		}
+	}
+
+	// セレクトボックスが固定（disabled）のときのスタイル
+	select:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		background-image: none; /* 矢印を消して選択不可感を出す */
+	}
+
+	.index-sub-link {
+		text-align: center;
+		margin-top: 1rem;
+		font-size: 0.9rem;
+
+		a {
+			color: $color-accent;
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+}
+
+.roster.list {
+	max-width: 960px;
+	margin: 2rem auto;
+	padding: 2rem;
+	background: $color-base;
+	border: 1px solid $color-main;
+	border-radius: 8px;
+
+	.list-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.5rem;
+		border-bottom: 2px solid $color-main;
+		padding-bottom: 0.75rem;
+
+		h2 {
+			margin: 0;
+			font-size: 1.4rem;
+			color: $color-accent;
+		}
+
+		.btn-submit {
+			width: auto;
+			padding: 0.6rem 1.25rem;
+			font-size: 0.9rem;
+			text-decoration: none;
+			display: inline-block;
+			margin-top: 0;
+		}
+	}
+
+	.roster-flash {
+		padding: 0.75rem 1rem;
+		border-radius: 6px;
+		margin-bottom: 1.25rem;
+		font-size: 0.9rem;
+		line-height: 1.5;
+	}
+
+	.roster-flash-success {
+		background: rgba($color-accent, 0.12);
+		border: 1px solid rgba($color-accent, 0.45);
+		color: color.adjust($color-accent, $lightness: 15%);
+	}
+
+	.roster-flash-error {
+		background: rgba($color-blood, 0.15);
+		border: 1px solid rgba($color-blood, 0.5);
+		color: color.adjust($color-blood, $lightness: 25%);
+	}
+
+	.roster-list-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.9rem;
+
+		th, td {
+			padding: 0.75rem 1rem;
+			border-bottom: 1px solid rgba($color-main, 0.3);
+			text-align: left;
+		}
+
+		th {
+			color: rgba($color-text, 0.6);
+			font-size: 0.8rem;
+			text-transform: uppercase;
+		}
+
+		.list-actions {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+
+			.btn-edit {
+				color: $color-accent;
+				text-decoration: none;
+				font-weight: bold;
+
+				&:hover {
+					text-decoration: underline;
+				}
+			}
+
+			.delete-roster-form {
+				margin: 0;
+			}
+
+			.btn-delete {
+				background: none;
+				border: none;
+				padding: 0;
+				cursor: pointer;
+				color: color.adjust($color-blood, $lightness: 25%);
+				font-weight: bold;
+				font-size: inherit;
+				font-family: inherit;
+
+				&:hover {
+					text-decoration: underline;
+				}
+			}
+		}
+	}
+
+	.list-empty {
+		color: rgba($color-text, 0.6);
+		text-align: center;
+		padding: 2rem 0;
+	}
+}

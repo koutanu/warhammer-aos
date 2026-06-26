@@ -1,0 +1,136 @@
+@use "fundamental" as *;
+// --- 左側サイドナビのスタイル（タブレット横持ち・PC想定） ---
+.side-nav {
+	width: 220px;
+	// ★追記: 外枠自体を「画面全体の高さ」にして、スクロール領域の基準を作ります
+	height: 100vh;
+	background-color: $color-base;
+	border-right: 2px solid $color-main;
+	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.4);
+	flex-shrink: 0; // ナビの幅が潰れないように固定
+
+	.nav-sticky-container {
+		position: sticky;
+		top: 0;
+		height: 100vh; // ここで画面いっぱいに固定されます
+		display: flex;
+		flex-direction: column;
+		// セーフエリア対応（iPad スタンドアロンの丸角/ホームインジケータ/ノッチ）
+		padding: calc(1.5rem + env(safe-area-inset-top)) 1rem
+			calc(1.5rem + env(safe-area-inset-bottom))
+			calc(1rem + env(safe-area-inset-left));
+		box-sizing: border-box;
+	}
+
+	.app-title {
+		margin: 0 0 2.5rem 0;
+		font-size: 1.25rem;
+		line-height: 1.3;
+		font-weight: bold;
+		letter-spacing: 1px;
+		text-align: center;
+
+		a {
+			color: $color-accent;
+			text-decoration: none;
+		}
+	}
+
+	.nav-menu {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.nav-footer {
+		margin-top: auto; // ログアウトボタンを一番下に押し下げる
+	}
+
+	.nav-item {
+		display: block;
+		color: $color-text;
+		text-decoration: none;
+		font-weight: bold;
+		font-size: 1.05rem;
+		padding: 12px 16px; // タブレットで押しやすい絶妙な高さ
+		border-radius: 6px;
+		transition: all 0.2s;
+
+		&:hover {
+			background-color: rgba($color-main, 0.5);
+			color: $color-accent;
+		}
+
+		// 現在の画面のハイライト（左端にゴールドの線を縦に入れる）
+		&.active {
+			color: $color-accent;
+			background-color: rgba($color-main, 0.3);
+			border-left: 4px solid $color-accent;
+			border-radius: 0 6px 6px 0;
+		}
+
+		&.logout:hover {
+			background-color: rgba($color-blood, 0.2);
+			color: lighten($color-blood, 40%);
+		}
+	}
+}
+
+// --- 右側メインコンテンツのスタイル ---
+.main-content {
+	flex-grow: 1;
+	padding: 2rem;
+	box-sizing: border-box;
+
+	// ★追記: 左のサイドバーが常に画面高さで固定されるため、
+	// 右側コンテンツの高さが100vhを超えた場合、右側だけが独立してスクロールするようにします
+	max-height: 100vh;
+	overflow-y: auto;
+}
+
+// --- 📱 スマホ（縦画面）時のレスポンシブ対応 ---
+@media (max-width: 768px) {
+	.side-nav {
+		width: 100%;
+		height: auto; // スマホでは高さ固定を解除
+		border-right: none;
+		border-bottom: 2px solid $color-main;
+
+		.nav-sticky-container {
+			position: relative; // stickyを解除
+			height: auto;
+			flex-direction: row; // 横並びに変更
+			justify-content: space-between;
+			align-items: center;
+			padding: 0.5rem 1rem;
+		}
+
+		.app-title {
+			margin: 0;
+			font-size: 1rem;
+		}
+
+		.nav-menu {
+			flex-direction: row;
+			gap: 0.5rem;
+		}
+
+		.nav-item {
+			padding: 8px 12px;
+			font-size: 0.9rem;
+
+			&.active {
+				border-left: none;
+				border-bottom: 2px solid $color-accent;
+				border-radius: 0;
+			}
+		}
+
+		.nav-footer {
+			margin-top: 0;
+		}
+	}
+}

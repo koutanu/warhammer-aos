@@ -1,0 +1,12 @@
+Options -Indexes
+RewriteEngine On
+
+# 追記：もしファイルやディレクトリが実在するなら、以下のリライトルールを無視する
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 既存のルール：実在しないパスへのアクセスを index.php に集約
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]

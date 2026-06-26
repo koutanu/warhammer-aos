@@ -1,0 +1,862 @@
+@use "../fundamental" as *;
+@use "detail_modal";
+/* ==========================================
+5. ユニット図鑑・インデックス画面 (.unit.index)
+   ========================================== */
+.unit.index {
+	padding: 1.5rem 1rem;
+	margin: 0 auto;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 20px;
+
+	// グランドアライアンスごとの外枠コンテナ
+	div {
+		background: $color-base;
+		border-radius: 12px;
+		padding: 1.2rem;
+		margin-bottom: 1.5rem; /* 次のアライアンス（DESTRUCTION等）との余白 */
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+
+		// ⚔️ グランドアライアンス名（ORDER, CHAOSなど）
+		h1 {
+			font-size: 1.4rem;
+			text-transform: uppercase; /* 小文字で入力されても強制的に大文字にして厳格さを出す */
+			letter-spacing: 0.15em; /* 文字の間隔を広げて公式のルーン文字っぽく */
+			border-bottom: 2px solid $color-main; /* 下部に暗緑色の細いラインを引く */
+			padding-bottom: 0.5rem;
+			margin-bottom: 1rem;
+			font-family:
+				"Georgia", serif; /* ここだけフォントをセリフ体（明朝系）にすると一気にファンタジー感が出ます */
+		}
+
+		// 🛡️ 所属ファクション（ストームキャストなど）のカード
+		// 今後 <a> タグや <li> タグに増えてもいいように汎用的に指定します
+		p,
+		a,
+		.faction-item {
+			display: block;
+			background: $color-main; /* `#2f4f4f` の重厚なベースカラー */
+			color: $color-text;
+			padding: 1rem 1.2rem;
+			border-radius: 8px;
+			margin-bottom: 0.8rem;
+			font-size: 1.1rem;
+			text-transform: capitalize; /* 単語の頭文字を大文字に（stormcast → Stormcast） */
+			font-weight: bold;
+			box-sizing: border-box;
+
+			// リストの最後のアイテムだけは下の余白をゼロにする
+			&:last-child {
+				margin-bottom: 0;
+			}
+
+			// タップしたときの手応えエフェクト
+			cursor: pointer;
+			transition:
+				transform 0.1s ease,
+				background-color 0.1s ease;
+
+			&:active {
+				transform: scale(0.98);
+				background-color: #3a6363; /* タップした瞬間だけ、少し明るいハイライト緑に */
+			}
+		}
+	}
+}
+
+/* ==========================================
+6. ユニット一覧 (.unit.faction-units)
+   ========================================== */
+.unit-back-link {
+	display: inline-block;
+	color: rgba($color-text, 0.7);
+	font-size: 0.9rem;
+	margin-bottom: 0.5rem;
+
+	&:hover {
+		color: $color-accent;
+	}
+}
+
+.unit-flash {
+	padding: 0.8rem 1rem;
+	border-radius: 6px;
+	margin-bottom: 1rem;
+	font-size: 0.9rem;
+
+	&.unit-flash-success {
+		background: rgba($color-main, 0.35);
+		border: 1px solid $color-accent;
+		color: $color-text;
+	}
+	&.unit-flash-error {
+		background: rgba($color-blood, 0.25);
+		border: 1px solid $color-blood;
+		color: $color-text;
+	}
+}
+
+.unit.faction-units {
+	.unit-list-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin-bottom: 1.5rem;
+
+		h2 {
+			font-size: 1.6rem;
+			color: $color-text;
+			border-bottom: 2px solid $color-main;
+			padding-bottom: 0.4rem;
+			text-transform: capitalize;
+		}
+	}
+
+	.btn-unit-add {
+		display: inline-block;
+		background: $color-accent;
+		color: #1a1a1a;
+		font-weight: bold;
+		padding: 0.55rem 1rem;
+		border-radius: 6px;
+
+		&:hover {
+			filter: brightness(1.08);
+		}
+	}
+
+	.unit-empty {
+		color: rgba($color-text, 0.6);
+		font-style: italic;
+	}
+
+	.unit-card-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+		gap: 1rem;
+	}
+
+	.unit-card {
+		background: $color-base;
+		border: 1px solid $color-main;
+		border-radius: 10px;
+		padding: 1rem;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		gap: 0.75rem;
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+
+		&--hidden {
+			opacity: 0.6;
+			border-style: dashed;
+		}
+	}
+
+	.unit-card-thumb {
+		width: 100%;
+		height: 160px;
+		border-radius: 8px;
+		overflow: hidden;
+		background: rgba(0, 0, 0, 0.25);
+		border: 1px solid rgba($color-main, 0.5);
+
+		img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+		}
+	}
+
+	.unit-card-name {
+		font-size: 1.1rem;
+		font-weight: bold;
+		color: $color-text;
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.unit-hidden-badge {
+		font-size: 0.65rem;
+		font-weight: bold;
+		text-transform: uppercase;
+		background: rgba($color-blood, 0.4);
+		border: 1px solid $color-blood;
+		color: $color-text;
+		padding: 0.1rem 0.4rem;
+		border-radius: 4px;
+	}
+
+	.unit-hero-badge {
+		font-size: 0.65rem;
+		font-weight: bold;
+		text-transform: uppercase;
+		background: rgba($color-accent, 0.25);
+		border: 1px solid $color-accent;
+		color: $color-accent;
+		padding: 0.1rem 0.4rem;
+		border-radius: 4px;
+	}
+
+	.unit-reinforce-badge {
+		font-size: 0.65rem;
+		font-weight: bold;
+		text-transform: uppercase;
+		background: rgba($color-magic, 0.2);
+		border: 1px solid $color-magic;
+		color: $color-magic;
+		padding: 0.1rem 0.4rem;
+		border-radius: 4px;
+	}
+
+	.unit-card-meta {
+		display: flex;
+		gap: 1rem;
+		font-size: 0.85rem;
+		color: rgba($color-text, 0.8);
+		margin-top: 0.35rem;
+
+		.unit-card-points {
+			color: $color-accent;
+			font-weight: bold;
+		}
+	}
+
+	.unit-card-points {
+		font-size: 0.85rem;
+		color: $color-accent;
+		font-weight: bold;
+	}
+
+	.unit-card-keywords {
+		margin-top: 0.4rem;
+		font-size: 0.75rem;
+		color: rgba($color-text, 0.6);
+		line-height: 1.4;
+	}
+
+	.unit-card-actions {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		border-top: 1px solid rgba($color-main, 0.4);
+		padding-top: 0.65rem;
+	}
+
+	.btn-unit-detail,
+	.btn-unit-edit {
+		font-size: 0.85rem;
+		padding: 0.35rem 0.8rem;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+
+	.btn-unit-detail {
+		background: $color-main;
+		color: $color-text;
+		border: 1px solid #444;
+	}
+
+	.btn-unit-edit {
+		background: rgba($color-accent, 0.15);
+		border: 1px solid rgba($color-accent, 0.5);
+		color: $color-text;
+	}
+
+	.unit-hide-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.78rem;
+		color: rgba($color-text, 0.75);
+		margin-left: auto;
+		cursor: pointer;
+
+		input {
+			margin: 0;
+			width: auto;
+		}
+	}
+
+	/* --- タブ --- */
+	.unit-tabs {
+		display: flex;
+		gap: 0.4rem;
+		border-bottom: 2px solid $color-main;
+		margin-bottom: 1.25rem;
+	}
+
+	.unit-tab {
+		background: transparent;
+		border: 1px solid transparent;
+		border-bottom: none;
+		color: rgba($color-text, 0.7);
+		font-size: 0.95rem;
+		font-weight: bold;
+		padding: 0.6rem 1.2rem;
+		border-radius: 8px 8px 0 0;
+		cursor: pointer;
+		transition:
+			background-color 0.1s ease,
+			color 0.1s ease;
+
+		&:hover {
+			color: $color-text;
+			background: rgba($color-main, 0.3);
+		}
+
+		&.is-active {
+			color: $color-accent;
+			background: $color-base;
+			border-color: $color-main;
+			border-bottom: 2px solid $color-base;
+			margin-bottom: -2px;
+		}
+	}
+
+	.unit-tab-panel {
+		display: none;
+
+		&.is-active {
+			display: block;
+		}
+	}
+
+	/* --- 軍勢オプション --- */
+	.option-section {
+		margin-bottom: 0.75rem;
+	}
+
+	.option-section-title {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		width: 100%;
+		font-size: 1.1rem;
+		font-weight: bold;
+		color: $color-accent;
+		background: rgba($color-main, 0.3);
+		border: 1px solid rgba($color-main, 0.6);
+		border-radius: 8px;
+		padding: 0.7rem 1rem;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+		text-align: left;
+		transition: background-color 0.1s ease;
+
+		&:hover {
+			background: rgba($color-main, 0.5);
+		}
+	}
+
+	.option-section-count {
+		font-size: 0.85rem;
+		color: rgba($color-text, 0.65);
+		font-weight: normal;
+	}
+
+	.accordion-icon {
+		flex-shrink: 0;
+		width: 0.7rem;
+		height: 0.7rem;
+		border-right: 2px solid currentColor;
+		border-bottom: 2px solid currentColor;
+		transform: rotate(45deg);
+		transition: transform 0.15s ease;
+		margin-right: 0.3rem;
+	}
+
+	.option-section-body {
+		display: none;
+		padding-top: 1rem;
+	}
+
+	.option-section.is-open {
+		.option-section-body {
+			display: block;
+		}
+
+		.accordion-icon {
+			transform: rotate(225deg);
+			margin-top: 0.3rem;
+		}
+	}
+
+	.option-empty {
+		color: rgba($color-text, 0.55);
+		font-style: italic;
+		font-size: 0.9rem;
+	}
+
+	.option-card {
+		background: $color-base;
+		border: 1px solid $color-main;
+		border-left: 4px solid $color-accent;
+		border-radius: 0 8px 8px 0;
+		padding: 1rem 1.1rem;
+		margin-bottom: 1rem;
+		box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+	}
+
+	.option-card-head {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.option-card-name {
+		font-size: 1.05rem;
+		font-weight: bold;
+		color: $color-text;
+	}
+
+	.option-card-points {
+		font-size: 0.85rem;
+		font-weight: bold;
+		color: $color-accent;
+		margin-left: auto;
+	}
+
+	.option-card-sub {
+		font-size: 0.85rem;
+		color: rgba($color-text, 0.7);
+		margin-bottom: 0.4rem;
+	}
+
+	.manifestation-spell-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.manifestation-spell {
+		padding: 0.75rem;
+		background: rgba($color-accent, 0.06);
+		border: 1px solid rgba($color-accent, 0.25);
+		border-radius: 6px;
+
+		& + & {
+			margin-top: 0;
+		}
+	}
+
+	.manifestation-spell-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+		margin-bottom: 0.4rem;
+	}
+
+	.manifestation-spell-name {
+		font-weight: bold;
+		color: $color-accent;
+	}
+
+	.manifestation-spell-keywords {
+		margin: 0.4rem 0 0;
+		font-size: 0.8rem;
+		color: rgba($color-text, 0.85);
+
+		.keywords-label {
+			font-weight: bold;
+		}
+	}
+
+	.manifestation-spell-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+	}
+
+	.option-badge {
+		display: inline-block;
+		font-size: 0.65rem;
+		font-weight: bold;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		background: rgba($color-magic, 0.18);
+		border: 1px solid rgba($color-magic, 0.6);
+		color: $color-magic;
+		padding: 0.12rem 0.45rem;
+		border-radius: 4px;
+
+		&--cat {
+			background: rgba($color-main, 0.4);
+			border-color: rgba($color-main, 0.8);
+			color: rgba($color-text, 0.85);
+			text-transform: none;
+		}
+	}
+
+	.option-card-effect {
+		font-size: 0.9rem;
+		line-height: 1.6;
+		color: rgba($color-text, 0.92);
+		margin-top: 0.5rem;
+
+		&.lore-effect {
+			white-space: pre-wrap;
+		}
+
+		.keywords-label {
+			font-weight: bold;
+			color: rgba($color-text, 0.6);
+		}
+
+		.lore-divider {
+			border: none;
+			border-top: 1px dashed rgba($color-main, 0.6);
+			margin: 0.6rem 0;
+		}
+
+		.lore-flavor,
+		.text-muted {
+			color: rgba($color-text, 0.55);
+			font-style: italic;
+		}
+	}
+
+	.option-flavor {
+		font-size: 0.82rem;
+		font-style: italic;
+		color: rgba($color-text, 0.55);
+		margin-top: 0.5rem;
+		line-height: 1.5;
+	}
+}
+
+/* ==========================================
+7. ユニット編集/新規フォーム (.unit.unit-edit)
+   ========================================== */
+.unit.unit-edit {
+	max-width: 1100px;
+	margin: 0 auto;
+
+	.unit-edit-header {
+		margin-bottom: 1.5rem;
+
+		h2 {
+			font-size: 1.5rem;
+			color: $color-text;
+			border-bottom: 2px solid $color-main;
+			padding-bottom: 0.4rem;
+		}
+	}
+
+	.unit-edit-section {
+		background: $color-base;
+		border: 1px solid $color-main;
+		border-radius: 10px;
+		padding: 1.25rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.unit-edit-section-title {
+		font-size: 1.15rem;
+		color: $color-accent;
+		margin-bottom: 1rem;
+		padding-bottom: 0.4rem;
+		border-bottom: 1px solid rgba($color-main, 0.6);
+	}
+
+	.unit-edit-note {
+		font-size: 0.82rem;
+		line-height: 1.5;
+		color: rgba($color-text, 0.8);
+		background: rgba($color-blood, 0.12);
+		border-left: 3px solid $color-blood;
+		padding: 0.6rem 0.8rem;
+		border-radius: 0 6px 6px 0;
+		margin-bottom: 1rem;
+	}
+
+	.form-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin-bottom: 1rem;
+
+		&.stat-row .form-group {
+			flex: 1 1 140px;
+		}
+	}
+
+	.form-group {
+		display: flex;
+		flex-direction: column;
+		flex: 1 1 200px;
+		margin-bottom: 1rem;
+
+		&--wide {
+			flex-basis: 100%;
+		}
+
+		label {
+			font-size: 0.85rem;
+			color: rgba($color-text, 0.85);
+			margin-bottom: 0.3rem;
+		}
+
+		textarea {
+			resize: vertical;
+		}
+
+		&.form-check {
+			flex-direction: row;
+			align-items: center;
+
+			label {
+				display: flex;
+				align-items: center;
+				gap: 0.4rem;
+				margin: 0;
+			}
+			input {
+				width: auto;
+				margin: 0;
+			}
+		}
+	}
+
+	.required {
+		color: $color-blood;
+		font-size: 0.7rem;
+		margin-left: 0.25rem;
+	}
+
+	.unit-image-field {
+		.unit-image-preview {
+			margin-bottom: 0.6rem;
+
+			img {
+				max-width: 220px;
+				max-height: 220px;
+				border-radius: 8px;
+				border: 1px solid rgba($color-main, 0.6);
+				display: block;
+			}
+		}
+
+		input[type="file"] {
+			background: transparent;
+			border: none;
+			padding: 0;
+			color: rgba($color-text, 0.85);
+		}
+
+		.unit-image-hint {
+			display: block;
+			margin-top: 0.3rem;
+			font-size: 0.75rem;
+			color: rgba($color-text, 0.55);
+		}
+	}
+
+	.unit-weapons-edit-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.82rem;
+
+		th {
+			background: $color-main;
+			color: $color-text;
+			padding: 0.5rem;
+			white-space: nowrap;
+			font-size: 0.75rem;
+		}
+		td {
+			padding: 0.3rem;
+			border-bottom: 1px solid rgba($color-main, 0.4);
+
+			input,
+			select {
+				width: 100%;
+				margin: 0;
+				padding: 0.3rem 0.4rem;
+			}
+			input.cell-narrow {
+				width: 60px;
+			}
+		}
+	}
+
+	.btn-add-row {
+		margin-top: 0.75rem;
+		font-size: 0.85rem;
+		padding: 0.4rem 0.9rem;
+		border-radius: 5px;
+		background: rgba($color-accent, 0.15);
+		border: 1px solid rgba($color-accent, 0.5);
+		color: $color-text;
+		cursor: pointer;
+	}
+
+	.btn-remove-row {
+		color: $color-blood;
+		font-size: 1.1rem;
+		font-weight: bold;
+		cursor: pointer;
+		padding: 0 0.4rem;
+	}
+
+	.ability-attach-bar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem;
+		margin-bottom: 1rem;
+
+		select {
+			flex: 1 1 240px;
+			padding: 0.35rem 0.5rem;
+			width: 100%;
+		}
+	}
+
+	.ability-edit-card {
+		background: rgba($color-background, 0.6);
+		border: 1px solid rgba($color-main, 0.6);
+		border-left: 4px solid $color-accent;
+		border-radius: 0 8px 8px 0;
+		padding: 1rem;
+		margin-bottom: 1rem;
+
+		&--removed {
+			opacity: 0.45;
+			border-left-color: $color-blood;
+		}
+
+		.ability-edit-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 1rem;
+		}
+
+		.ability-edit-actions {
+			text-align: right;
+		}
+
+		.btn-remove-ability {
+			font-size: 0.8rem;
+			color: $color-blood;
+			border: 1px solid rgba($color-blood, 0.5);
+			border-radius: 4px;
+			padding: 0.25rem 0.6rem;
+			cursor: pointer;
+		}
+	}
+
+	.unit-regiment-section {
+		.regiment-edit-group {
+			margin-bottom: 1.25rem;
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
+
+		.regiment-edit-subtitle {
+			font-size: 1rem;
+			color: $color-text;
+			margin-bottom: 0.3rem;
+		}
+
+		.regiment-option-checks {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.5rem 1rem;
+			margin-top: 0.5rem;
+		}
+
+		.regiment-option-check {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.4rem;
+			background: rgba($color-main, 0.25);
+			border: 1px solid rgba($color-main, 0.6);
+			border-radius: 6px;
+			padding: 0.35rem 0.7rem;
+			font-size: 0.88rem;
+			cursor: pointer;
+
+			input {
+				margin: 0;
+			}
+		}
+
+		.hero-regiment-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 0.5rem;
+
+			th,
+			td {
+				border: 1px solid rgba($color-main, 0.5);
+				padding: 0.4rem 0.6rem;
+				font-size: 0.88rem;
+				text-align: left;
+			}
+
+			th {
+				color: $color-accent;
+				background: rgba($color-main, 0.3);
+			}
+
+			.cell-center {
+				text-align: center;
+			}
+
+			input.cell-narrow {
+				width: 5rem;
+			}
+		}
+
+		.unit-empty {
+			color: rgba($color-text, 0.7);
+			font-style: italic;
+		}
+	}
+
+	.unit-edit-footer {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		gap: 1rem;
+		margin-top: 1.5rem;
+
+		.btn-cancel {
+			color: rgba($color-text, 0.7);
+			padding: 0.6rem 1rem;
+
+			&:hover {
+				color: $color-text;
+			}
+		}
+
+		.btn-save-unit {
+			background: $color-accent;
+			color: #1a1a1a;
+			font-weight: bold;
+			padding: 0.6rem 1.8rem;
+			border-radius: 6px;
+			cursor: pointer;
+			border: none;
+
+			&:hover {
+				filter: brightness(1.08);
+			}
+		}
+	}
+}

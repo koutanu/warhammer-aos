@@ -1,0 +1,21 @@
+services:
+    web:
+        build: . # 今作ったDockerfileを使う
+        ports:
+            - "8080:80"
+        volumes:
+            - ./src:/var/www/html
+            - ./php.ini:/usr/local/etc/php/conf.d/docker-php-custom.ini
+
+    db:
+        image: mysql:8.0
+        ports:
+            - "3307:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: 51l20_warhammer_aos
+        volumes:
+            - db_data:/var/lib/mysql
+
+volumes:
+    db_data:
