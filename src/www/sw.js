@@ -13,7 +13,7 @@
  * ※ CSS/JS を更新したら CACHE_VERSION を上げること。
  */
 
-const CACHE_VERSION = "v8";
+const CACHE_VERSION = "v9";
 const STATIC_CACHE = "aos-static-" + CACHE_VERSION;
 const RUNTIME_CACHE = "aos-runtime-" + CACHE_VERSION;
 const OFFLINE_URL = "./offline.html";

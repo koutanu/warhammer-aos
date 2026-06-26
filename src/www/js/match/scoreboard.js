@@ -200,18 +200,8 @@ document.addEventListener("DOMContentLoaded", function () {
 		}
 	}
 
-	// 保留中（デバウンス待ち）のVP同期を即時フラッシュする。
-	// ラウンド進行・試合終了の前に呼び、サーバへ最新VPを確定させてから
-	// round_vp スナップショットが走るようにする。
-	async function flushPendingVp() {
-		clearTimeout(syncTimers[1]);
-		clearTimeout(syncTimers[2]);
-		await Promise.all([syncVp(1), syncVp(2)]);
-	}
-
 	async function advanceRound(firstPlayerSlot) {
 		try {
-			await flushPendingVp();
 			const res = await apiPost("match/advanceRound", {
 				token,
 				matchId,
@@ -228,7 +218,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 	async function syncComplete() {
 		try {
-			await flushPendingVp();
+			await Promise.all([syncVp(1), syncVp(2)]);
 			const res = await apiPost("match/complete", { token, matchId });
 			if (res.success) {
 				window.location.href = baseUrl + "match/summary/" + matchId;
