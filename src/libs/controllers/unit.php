@@ -48,6 +48,7 @@ class Unit extends Controller
 			'faction_terrain'     => $this->model->getFactionTerrain($factionId),
 			'manifestation_details' => $this->model->getManifestationLores($factionId),
 			'battle_formations'   => $this->model->getBattleFormations($factionId),
+			'battle_traits'       => $this->model->getBattleTraitsForFaction($factionId),
 			'spell_lores'         => $this->formatLoreData($this->model->getSpellLores($factionId), 'spell'),
 			'prayer_lores'        => $this->formatLoreData($this->model->getPrayerLores($factionId), 'prayer'),
 			'heroic_traits'       => $this->model->getHeroicTraitsForFaction($factionId),

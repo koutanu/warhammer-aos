@@ -1,3 +1,31 @@
+<?php
+// 構造化フィールド(トークン)を日本語表示へ変換する補助。phases.js のラベルマップに対応。
+$phaseJaMap = ['deployment' => '配置', 'hero' => 'ヒーロー', 'movement' => '移動', 'shooting' => '射撃', 'charge' => '突撃', 'combat' => '戦闘', 'end' => '終了', 'any' => '全般'];
+$turnJaMap = ['your' => '自分のターン', 'opponent' => '相手のターン', 'any' => 'いつでも', 'battle' => 'バトル中'];
+$phaseJa = function ($csv) use ($phaseJaMap) {
+	$parts = array_filter(array_map('trim', explode(',', (string)$csv)));
+	$labels = [];
+	foreach ($parts as $p) {
+		$labels[] = $phaseJaMap[strtolower($p)] ?? $p;
+	}
+	return implode(' / ', array_unique($labels));
+};
+$turnJa = function ($v) use ($turnJaMap) {
+	$v = strtolower(trim((string)$v));
+	return $turnJaMap[$v] ?? $v;
+};
+$freqJa = function (array $row) {
+	$activation = strtolower((string)($row['activation'] ?? 'active'));
+	$scope = strtolower((string)($row['usage_scope'] ?? 'unlimited'));
+	$army = strtolower((string)($row['usage_per'] ?? 'unit')) === 'army' ? '（アーミー）' : '';
+	if ($activation === 'passive') return 'パッシブ';
+	if ($scope === 'once_per_battle') return 'バトルに1回' . $army;
+	if ($scope === 'once_per_turn') return 'ターンに1回' . $army;
+	if ($scope === 'once_per_phase') return 'フェイズに1回' . $army;
+	if ($activation === 'reaction') return 'リアクション';
+	return '';
+};
+?>
 <div class="unit faction-units">
 
 	<div class="unit-list-header">
@@ -146,7 +174,7 @@
 
 		<section class="option-section">
 			<button type="button" class="option-section-title" data-accordion aria-expanded="false">
-				<span>バトルフォーメーション / BATTLE FORMATIONS<?php if (!empty($battle_formations)): ?> <span class="option-section-count">(<?= count($battle_formations); ?>)</span><?php endif; ?></span>
+				<span>戦闘陣形 / BATTLE FORMATIONS<?php if (!empty($battle_formations)): ?> <span class="option-section-count">(<?= count($battle_formations); ?>)</span><?php endif; ?></span>
 				<span class="accordion-icon" aria-hidden="true"></span>
 			</button>
 			<div class="option-section-body">
@@ -157,8 +185,14 @@
 						<div class="option-card">
 							<div class="option-card-head">
 								<span class="option-card-name"><?= $this->h($f['formation_name']); ?></span>
-								<?php if (!empty($f['trigger_phase'])): ?>
-									<span class="option-badge"><?= $this->h($f['trigger_phase']); ?></span>
+								<?php $fFreq = $freqJa($f); ?>
+								<?php if ($fFreq !== ''): ?>
+									<span class="option-badge option-badge--cat"><?= $this->h($fFreq); ?></span>
+								<?php endif; ?>
+								<?php if (!empty($f['trigger_condition_ja'])): ?>
+									<span class="option-badge"><?= $this->h($f['trigger_condition_ja']); ?></span>
+								<?php elseif (!empty($f['trigger_phase'])): ?>
+									<span class="option-badge"><?= $this->h($phaseJa($f['trigger_phase'])); ?></span>
 								<?php endif; ?>
 							</div>
 							<?php if (!empty($f['ability_name'])): ?>
@@ -167,6 +201,50 @@
 							<div class="option-card-effect"><?= nl2br($this->h($f['effect'])); ?></div>
 							<?php if (!empty($f['flavor_text'])): ?>
 								<p class="option-flavor"><?= $this->h($f['flavor_text']); ?></p>
+							<?php endif; ?>
+						</div>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+		</section>
+
+		<section class="option-section">
+			<button type="button" class="option-section-title" data-accordion aria-expanded="false">
+				<span>戦闘特性 / BATTLE TRAITS<?php if (!empty($battle_traits)): ?> <span class="option-section-count">(<?= count($battle_traits); ?>)</span><?php endif; ?></span>
+				<span class="accordion-icon" aria-hidden="true"></span>
+			</button>
+			<div class="option-section-body">
+				<?php if (empty($battle_traits)): ?>
+					<p class="option-empty">このファクションには戦闘特性が登録されていません。</p>
+				<?php else: ?>
+					<?php foreach ($battle_traits as $bt): ?>
+						<div class="option-card">
+							<div class="option-card-head">
+								<span class="option-card-name"><?= $this->h($bt['name']); ?></span>
+								<?php $btFreq = $freqJa($bt); ?>
+								<?php if ($btFreq !== ''): ?>
+									<span class="option-badge option-badge--cat"><?= $this->h($btFreq); ?></span>
+								<?php endif; ?>
+								<?php if (isset($bt['command_point']) && $bt['command_point'] !== null && $bt['command_point'] !== ''): ?>
+									<span class="option-card-points"><?= $this->h($bt['command_point']); ?> CP</span>
+								<?php endif; ?>
+							</div>
+							<?php if (!empty($bt['sub_faction_name'])): ?>
+								<div class="option-card-sub"><?= $this->h($bt['sub_faction_name']); ?></div>
+							<?php endif; ?>
+							<?php if (!empty($bt['trigger_condition_ja'])): ?>
+								<span class="option-badge"><?= $this->h($bt['trigger_condition_ja']); ?></span>
+							<?php else: ?>
+								<?php if (!empty($bt['trigger_phase'])): ?>
+									<span class="option-badge"><?= $this->h($phaseJa($bt['trigger_phase'])); ?></span>
+								<?php endif; ?>
+								<?php if (!empty($bt['trigger_turn'])): ?>
+									<span class="option-badge"><?= $this->h($turnJa($bt['trigger_turn'])); ?></span>
+								<?php endif; ?>
+							<?php endif; ?>
+							<div class="option-card-effect"><?= nl2br($this->h($bt['effect'])); ?></div>
+							<?php if (!empty($bt['flavor_text'])): ?>
+								<p class="option-flavor"><?= $this->h($bt['flavor_text']); ?></p>
 							<?php endif; ?>
 						</div>
 					<?php endforeach; ?>
@@ -203,7 +281,7 @@
 		?>
 		<section class="option-section">
 			<button type="button" class="option-section-title" data-accordion aria-expanded="false">
-				<span>顕現魔術の伝承 / MANIFESTATION LORES<?php if (!empty($manifestationGroups)): ?> <span class="option-section-count">(<?= count($manifestationGroups); ?>)</span><?php endif; ?></span>
+				<span>顕現伝承 / MANIFESTATION LORES<?php if (!empty($manifestationGroups)): ?> <span class="option-section-count">(<?= count($manifestationGroups); ?>)</span><?php endif; ?></span>
 				<span class="accordion-icon" aria-hidden="true"></span>
 			</button>
 			<div class="option-section-body">
@@ -224,7 +302,7 @@
 												<span class="option-badge">Casting <?= $this->h($m['casting_value']); ?>+</span>
 											<?php endif; ?>
 											<?php if (!empty($m['trigger_phase'])): ?>
-												<span class="option-badge"><?= $this->h($m['trigger_phase']); ?></span>
+												<span class="option-badge"><?= $this->h($phaseJa($m['trigger_phase'])); ?></span>
 											<?php endif; ?>
 										</div>
 										<?php if (!empty($m['effect'])): ?>
@@ -277,8 +355,14 @@
 									<span class="option-card-points"><?= $this->h($t['points']); ?> pt</span>
 								<?php endif; ?>
 							</div>
-							<?php if (!empty($t['trigger_phase'])): ?>
-								<span class="option-badge"><?= $this->h($t['trigger_phase']); ?></span>
+							<?php $tFreq = $freqJa($t); ?>
+							<?php if ($tFreq !== ''): ?>
+								<span class="option-badge option-badge--cat"><?= $this->h($tFreq); ?></span>
+							<?php endif; ?>
+							<?php if (!empty($t['trigger_condition_ja'])): ?>
+								<span class="option-badge"><?= $this->h($t['trigger_condition_ja']); ?></span>
+							<?php elseif (!empty($t['trigger_phase'])): ?>
+								<span class="option-badge"><?= $this->h($phaseJa($t['trigger_phase'])); ?></span>
 							<?php endif; ?>
 							<div class="option-card-effect"><?= nl2br($this->h($t['effect'])); ?></div>
 							<?php if (!empty($t['description'])): ?>
@@ -310,8 +394,14 @@
 									<span class="option-card-points"><?= $this->h($a['points']); ?> pt</span>
 								<?php endif; ?>
 							</div>
-							<?php if (!empty($a['trigger_timing'])): ?>
-								<span class="option-badge"><?= $this->h($a['trigger_timing']); ?></span>
+							<?php $aFreq = $freqJa($a); ?>
+							<?php if ($aFreq !== ''): ?>
+								<span class="option-badge option-badge--cat"><?= $this->h($aFreq); ?></span>
+							<?php endif; ?>
+							<?php if (!empty($a['trigger_condition_ja'])): ?>
+								<span class="option-badge"><?= $this->h($a['trigger_condition_ja']); ?></span>
+							<?php elseif (!empty($a['trigger_phase'])): ?>
+								<span class="option-badge"><?= $this->h($phaseJa($a['trigger_phase'])); ?></span>
 							<?php endif; ?>
 							<div class="option-card-effect"><?= nl2br($this->h($a['effect'])); ?></div>
 							<?php if (!empty($a['flavor_text'])): ?>
@@ -337,19 +427,19 @@
 					</div>
 					<div class="detail-status-grid">
 						<div class="status-box">
-							<div class="status-label">MOVE</div>
+							<div class="status-label">移動力</div>
 							<div class="status-value" id="detailUnitMove">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">WOUNDS</div>
+							<div class="status-label">体力</div>
 							<div class="status-value" id="detailUnitWounds">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">SAVE</div>
+							<div class="status-label">防御力</div>
 							<div class="status-value" id="detailUnitSave">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">CONTROL</div>
+							<div class="status-label" id="detailControlLabel">確保力</div>
 							<div class="status-value" id="detailUnitControl">-</div>
 						</div>
 					</div>
@@ -363,10 +453,10 @@
 									<th>武器名</th>
 									<th>射程</th>
 									<th>回数</th>
-									<th>命中</th>
-									<th>負傷</th>
+									<th>ヒット</th>
+									<th>ウーンズ</th>
 									<th>貫通</th>
-									<th>威力</th>
+									<th>ダメージ</th>
 								</tr>
 							</thead>
 							<tbody id="detailWeaponsBody"></tbody>

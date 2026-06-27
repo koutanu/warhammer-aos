@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			</div>
 			<button type="button" class="ability-detail-toggle">詳細</button>
 			<div class="ability-effect-box" style="display:none;">
-				${conditionBlock}
+				<!-- ${conditionBlock} -->
 				<p>${escapeHtml(ab.effect || "")}</p>
 			</div>
 		`;

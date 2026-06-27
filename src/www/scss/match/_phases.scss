@@ -123,6 +123,57 @@
 		gap: 1rem;
 	}
 
+	.phase-passive-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid rgba($color-main, 0.35);
+	}
+
+	.phase-passive-toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		width: 100%;
+		padding: 0.4rem 0.55rem;
+		font-size: 0.82rem;
+		font-weight: bold;
+		letter-spacing: 0.02em;
+		text-align: left;
+		border: 1px solid rgba($color-main, 0.45);
+		background: rgba($color-background, 0.6);
+		color: rgba($color-text, 0.8);
+		border-radius: 4px;
+		cursor: pointer;
+		transition: border-color 0.15s, background 0.15s;
+
+		&:hover {
+			border-color: rgba($color-accent, 0.5);
+			color: rgba($color-text, 0.95);
+		}
+
+		&[aria-expanded="true"] {
+			border-color: rgba($color-accent, 0.5);
+		}
+	}
+
+	.phase-passive-arrow {
+		flex-shrink: 0;
+		font-size: 0.75rem;
+		color: rgba($color-text, 0.6);
+	}
+
+	.phase-passive-body {
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.phase-ability-card--passive {
+		border-left-color: rgba($color-main, 0.55);
+		background: rgba($color-background, 0.45);
+	}
+
 	.phase-ability-group {
 		display: flex;
 		flex-direction: column;
@@ -182,6 +233,50 @@
 		background: rgba($color-background, 0.55);
 		border-left: 3px solid transparent;
 
+		// タップ可能なカード（効果説明あり）はタッチ操作向けに調整。
+		&.is-expandable {
+			cursor: pointer;
+			min-height: 48px;
+			-webkit-tap-highlight-color: transparent;
+			user-select: none;
+			transition: background 0.12s ease, border-color 0.12s ease;
+
+			&:hover {
+				border-color: rgba($color-main, 0.7);
+			}
+
+			&:active {
+				transform: scale(0.99);
+			}
+
+			&:focus-visible {
+				outline: 2px solid $color-accent;
+				outline-offset: 2px;
+			}
+		}
+
+		// 効果説明のテキストは選択可能に戻す。
+		.ability-effect-box,
+		.ability-effect-box * {
+			user-select: text;
+		}
+
+		&.is-open {
+			border-left-color: $color-accent;
+
+			.ability-expand-chevron {
+				transform: rotate(180deg);
+			}
+		}
+
+		.ability-expand-chevron {
+			margin-left: auto;
+			color: rgba($color-text, 0.55);
+			font-size: 0.8rem;
+			line-height: 1;
+			transition: transform 0.15s ease;
+		}
+
 		&.is-used {
 			opacity: 0.85;
 			border-left-color: $color-accent;
@@ -208,6 +303,13 @@
 		gap: 0.3rem;
 		min-width: 0;
 		flex: 1;
+	}
+
+	.ability-badge-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem;
 	}
 
 	.ability-category-badge {
@@ -267,6 +369,12 @@
 			color: #9fe2e0;
 			border-color: rgba(95, 158, 160, 0.45);
 		}
+
+		&.cat-terrain {
+			background: rgba(47, 79, 79, 0.35);
+			color: rgba($color-text, 0.85);
+			border-color: rgba($color-main, 0.55);
+		}
 	}
 
 	.ability-cp-badge {
@@ -280,6 +388,19 @@
 		background: rgba(212, 175, 55, 0.22);
 		color: $color-accent;
 		border: 1px solid rgba($color-accent, 0.5);
+	}
+
+	.ability-cast-badge {
+		display: inline-block;
+		align-self: flex-start;
+		padding: 0.12rem 0.4rem;
+		border-radius: 3px;
+		font-size: 0.65rem;
+		font-weight: bold;
+		letter-spacing: 0.02em;
+		background: rgba(94, 150, 214, 0.22);
+		color: #9ec4f0;
+		border: 1px solid rgba(94, 150, 214, 0.5);
 	}
 
 	.ability-turn-badge {
@@ -340,14 +461,10 @@
 		font-size: 0.68rem;
 	}
 
-	.ability-detail-toggle {
-		font-size: 0.75rem;
-		padding: 0.15rem 0.4rem;
-		border: 1px solid rgba($color-main, 0.4);
-		background: transparent;
-		color: rgba($color-text, 0.75);
-		border-radius: 3px;
-		cursor: pointer;
+	// 発動条件(日本語)はフェイズ/ターンより長くなりがちなので折り返しを許可する
+	.ability-condition-badge {
+		white-space: normal;
+		line-height: 1.4;
 	}
 
 	.ability-effect-box {
@@ -357,7 +474,11 @@
 		background: rgba($color-background, 0.85);
 		font-size: 0.82rem;
 		line-height: 1.5;
-		white-space: pre-wrap;
+
+		p {
+			margin: 0;
+			white-space: pre-wrap;
+		};
 	}
 
 	.phase-panel-footer {

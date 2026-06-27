@@ -41,6 +41,24 @@
 				if (btn) toggleAbilityRemoval(btn.closest(".ability-edit-card"));
 			});
 		}
+
+		// 顕現(マニフェステーション)のときは CONTROL ラベルを「追放(BANISHMENT)」に切り替える
+		const manifestationCb = document.querySelector(
+			'input[name="is_manifestation"]',
+		);
+		if (manifestationCb) {
+			manifestationCb.addEventListener("change", syncControlLabel);
+		}
+		syncControlLabel();
+	}
+
+	function syncControlLabel() {
+		const cb = document.querySelector('input[name="is_manifestation"]');
+		const label = document.getElementById("controlLabel");
+		if (!cb || !label) return;
+		label.textContent = cb.checked
+			? label.dataset.labelBanishment
+			: label.dataset.labelControl;
 	}
 
 	function addWeaponRow() {
@@ -71,9 +89,15 @@
 		if (data) {
 			setFieldValue(card, "ability_id", data.id);
 			setFieldValue(card, "name", data.name);
-			setFieldValue(card, "trigger_phase", data.trigger_phase);
-			setFieldValue(card, "trigger_turn", data.trigger_turn);
-			setFieldValue(card, "ability_type", data.ability_type);
+			setFieldValue(card, "command_point", data.command_point);
+			setMultiSelectValue(card, "trigger_phase", data.trigger_phase);
+			setSelectValue(card, "trigger_turn", data.trigger_turn, "your");
+			setSelectValue(card, "activation", data.activation, "active");
+			setSelectValue(card, "usage_scope", data.usage_scope, "unlimited");
+			setSelectValue(card, "usage_per", data.usage_per, "unit");
+			setSelectValue(card, "icon_type", data.icon_type, "");
+			setSelectValue(card, "casting_type", data.casting_type, "");
+			setFieldValue(card, "casting_value", data.casting_value);
 			setFieldValue(card, "trigger_condition_ja", data.trigger_condition_ja);
 			setFieldValue(card, "effect", data.effect);
 			setFieldValue(card, "flavor_text", data.flavor_text);
@@ -88,6 +112,23 @@
 		if (el) el.value = value || "";
 	}
 
+	function setSelectValue(card, fieldSuffix, value, fallback) {
+		const el = card.querySelector(`select[name$="[${fieldSuffix}]"]`);
+		if (el) el.value = value || fallback || "";
+	}
+
+	function setMultiSelectValue(card, fieldSuffix, value) {
+		const el = card.querySelector(`select[name$="[${fieldSuffix}][]"]`);
+		if (!el) return;
+		const tokens = String(value || "")
+			.split(",")
+			.map((s) => s.trim())
+			.filter(Boolean);
+		Array.from(el.options).forEach((opt) => {
+			opt.selected = tokens.includes(opt.value);
+		});
+	}
+
 	function attachExistingAbility() {
 		const select = document.getElementById("existingAbilitySelect");
 		if (!select || !select.value) return;
@@ -96,9 +137,15 @@
 		addAbilityCard({
 			id: opt.value,
 			name: opt.dataset.name,
+			command_point: opt.dataset.command_point,
 			trigger_phase: opt.dataset.trigger_phase,
 			trigger_turn: opt.dataset.trigger_turn,
-			ability_type: opt.dataset.ability_type,
+			activation: opt.dataset.activation,
+			usage_scope: opt.dataset.usage_scope,
+			usage_per: opt.dataset.usage_per,
+			icon_type: opt.dataset.icon_type,
+			casting_value: opt.dataset.casting_value,
+			casting_type: opt.dataset.casting_type,
 			trigger_condition_ja: opt.dataset.trigger_condition_ja,
 			effect: opt.dataset.effect,
 			flavor_text: opt.dataset.flavor_text,

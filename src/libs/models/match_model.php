@@ -688,7 +688,11 @@ class Match_Model extends Model
             require_once MODELS . 'roster_model.php';
             $rosterModel = new Roster_Model();
             foreach ($rosterModel->getRosterAbilityDeckForMatch($rosterId) as $entry) {
-                $map[$entry['key']] = $entry['usageScope'] ?? 'turn';
+                // usage_scope(once_per_battle)のみ battle スコープ(ゲーム終了まで使用済み保持)。
+                // それ以外(once_per_turn/once_per_phase/unlimited)は turn スコープ(毎ターンリセット)。
+                $map[$entry['key']] = ($entry['usageScope'] ?? '') === 'once_per_battle'
+                    ? 'battle'
+                    : 'turn';
             }
         }
 

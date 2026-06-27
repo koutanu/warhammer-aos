@@ -11,6 +11,7 @@ $regimentOptions = $regiment_options ?? [];
 $eligibilityIds = array_map('intval', $unit_eligibility_ids ?? []);
 $heroOptionMap = $hero_regiment_option_map ?? [];
 $isHeroUnit = !empty($u['is_hero']);
+$isManifestationUnit = !empty($u['is_manifestation']);
 ?>
 <div class="unit unit-edit">
 
@@ -61,15 +62,17 @@ $isHeroUnit = !empty($u['is_hero']);
 					<input type="text" name="movement" value="<?= $this->h($u['movement'] ?? ''); ?>" placeholder='例: 6'>
 				</div>
 				<div class="form-group">
-					<label>傷 (WOUNDS)</label>
+					<label>体力 (WOUNDS)</label>
 					<input type="text" name="wounds" value="<?= $this->h($u['wounds'] ?? ''); ?>">
 				</div>
 				<div class="form-group">
-					<label>セーヴ (SAVE)</label>
+					<label>防御力 (SAVE)</label>
 					<input type="text" name="save" value="<?= $this->h($u['save'] ?? ''); ?>" placeholder='例: 4'>
 				</div>
 				<div class="form-group">
-					<label>コントロール (CONTROL)</label>
+					<label id="controlLabel"
+						data-label-control="確保力 (CONTROL)"
+						data-label-banishment="追放 (BANISHMENT)"><?= $isManifestationUnit ? '追放 (BANISHMENT)' : '確保力 (CONTROL)'; ?></label>
 					<input type="text" name="control" value="<?= $this->h($u['control'] ?? ''); ?>">
 				</div>
 			</div>
@@ -179,11 +182,11 @@ $isHeroUnit = !empty($u['is_hero']);
 							<th>武器名</th>
 							<th>種別</th>
 							<th>射程"</th>
-							<th>攻撃</th>
-							<th>命中</th>
-							<th>負傷</th>
+							<th>回数</th>
+							<th>ヒット</th>
+							<th>ウーンズ</th>
 							<th>貫通</th>
-							<th>威力</th>
+							<th>ダメージ</th>
 							<th>武器能力</th>
 							<th></th>
 						</tr>
@@ -229,9 +232,15 @@ $isHeroUnit = !empty($u['is_hero']);
 						<option
 							value="<?= $this->h($a['id']); ?>"
 							data-name="<?= $this->h($a['name']); ?>"
+							data-command_point="<?= $this->h($a['command_point'] ?? ''); ?>"
+							data-casting_value="<?= $this->h($a['casting_value'] ?? ''); ?>"
+							data-casting_type="<?= $this->h($a['casting_type'] ?? ''); ?>"
 							data-trigger_phase="<?= $this->h($a['trigger_phase']); ?>"
 							data-trigger_turn="<?= $this->h($a['trigger_turn']); ?>"
-							data-ability_type="<?= $this->h($a['ability_type']); ?>"
+							data-activation="<?= $this->h($a['activation'] ?? 'active'); ?>"
+							data-usage_scope="<?= $this->h($a['usage_scope'] ?? 'unlimited'); ?>"
+							data-usage_per="<?= $this->h($a['usage_per'] ?? 'unit'); ?>"
+							data-icon_type="<?= $this->h($a['icon_type'] ?? ''); ?>"
 							data-trigger_condition_en="<?= $this->h($a['trigger_condition_en'] ?? ''); ?>"
 							data-trigger_condition_ja="<?= $this->h($a['trigger_condition_ja'] ?? ''); ?>"
 							data-effect="<?= $this->h($a['effect']); ?>"
@@ -245,6 +254,89 @@ $isHeroUnit = !empty($u['is_hero']);
 				<button type="button" id="btnAddAbility" class="btn-add-row">＋ 新規能力を追加</button>
 			</div>
 
+			<?php
+			$ABILITY_PHASE_OPTS = ['hero' => 'ヒーロー', 'movement' => '移動', 'shooting' => '射撃', 'charge' => '突撃', 'combat' => '戦闘', 'end' => '終了', 'deployment' => '配置', 'any' => '全般'];
+			$ABILITY_TURN_OPTS = ['your' => '自分のターン', 'opponent' => '相手のターン', 'any' => 'いつでも', 'battle' => 'バトル中'];
+			$ABILITY_ACTIVATION_OPTS = ['active' => '能動（アクティブ）', 'passive' => 'パッシブ（常時）', 'reaction' => 'リアクション'];
+			$ABILITY_SCOPE_OPTS = ['unlimited' => '無制限', 'once_per_turn' => 'ターンに1回', 'once_per_phase' => 'フェイズに1回', 'once_per_battle' => 'バトルに1回'];
+			$ABILITY_PER_OPTS = ['unit' => 'ユニット', 'army' => 'アーミー'];
+			$ABILITY_ICON_OPTS = ['' => '（なし）', 'Offensive' => 'Offensive', 'Defensive' => 'Defensive', 'Movement' => 'Movement', 'Shooting' => 'Shooting', 'Damage' => 'Damage', 'Control' => 'Control', 'Rallying' => 'Rallying', 'Special' => 'Special'];
+			$ABILITY_CASTING_TYPE_OPTS = ['' => '（なし）', 'spell' => '詠唱値', 'prayer' => '祈祷値'];
+			$renderAbilityUsageFields = function ($idx, array $a = []) use ($ABILITY_PHASE_OPTS, $ABILITY_TURN_OPTS, $ABILITY_ACTIVATION_OPTS, $ABILITY_SCOPE_OPTS, $ABILITY_PER_OPTS, $ABILITY_ICON_OPTS, $ABILITY_CASTING_TYPE_OPTS) {
+				$selectedPhases = array_filter(array_map('trim', explode(',', (string)($a['trigger_phase'] ?? ''))));
+				$turn = $a['trigger_turn'] ?? 'your';
+				$activation = $a['activation'] ?? 'active';
+				$scope = $a['usage_scope'] ?? 'unlimited';
+				$per = $a['usage_per'] ?? 'unit';
+				$icon = (string)($a['icon_type'] ?? '');
+				$castingType = (string)($a['casting_type'] ?? '');
+				$castingValue = (string)($a['casting_value'] ?? '');
+				ob_start(); ?>
+				<div class="form-group">
+					<label>発動フェイズ（複数可）</label>
+					<select name="abilities[<?= $idx; ?>][trigger_phase][]" multiple size="4">
+						<?php foreach ($ABILITY_PHASE_OPTS as $val => $lbl): ?>
+							<option value="<?= $val; ?>" <?= in_array($val, $selectedPhases, true) ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>発動ターン</label>
+					<select name="abilities[<?= $idx; ?>][trigger_turn]">
+						<?php foreach ($ABILITY_TURN_OPTS as $val => $lbl): ?>
+							<option value="<?= $val; ?>" <?= $turn === $val ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>発動様式</label>
+					<select name="abilities[<?= $idx; ?>][activation]">
+						<?php foreach ($ABILITY_ACTIVATION_OPTS as $val => $lbl): ?>
+							<option value="<?= $val; ?>" <?= $activation === $val ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>使用回数</label>
+					<select name="abilities[<?= $idx; ?>][usage_scope]">
+						<?php foreach ($ABILITY_SCOPE_OPTS as $val => $lbl): ?>
+							<option value="<?= $val; ?>" <?= $scope === $val ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>対象（once-per単位）</label>
+					<select name="abilities[<?= $idx; ?>][usage_per]">
+						<?php foreach ($ABILITY_PER_OPTS as $val => $lbl): ?>
+							<option value="<?= $val; ?>" <?= $per === $val ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>アイコン分類</label>
+					<select name="abilities[<?= $idx; ?>][icon_type]">
+						<?php foreach ($ABILITY_ICON_OPTS as $val => $lbl): ?>
+							<option value="<?= $val; ?>" <?= $icon === $val ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>詠唱/祈祷</label>
+					<select name="abilities[<?= $idx; ?>][casting_type]">
+						<?php foreach ($ABILITY_CASTING_TYPE_OPTS as $val => $lbl): ?>
+							<option value="<?= $val; ?>" <?= $castingType === $val ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<div class="form-group">
+					<label>詠唱値/祈祷値</label>
+					<input type="text" name="abilities[<?= $idx; ?>][casting_value]" value="<?= $this->h($castingValue); ?>" class="cell-narrow" placeholder="例: 7">
+				</div>
+			<?php
+				return ob_get_clean();
+			};
+			?>
+
 			<div id="abilitiesContainer">
 				<?php foreach ($abilityRows as $i => $a): ?>
 					<div class="ability-edit-card" data-ability-existing="1">
@@ -255,17 +347,10 @@ $isHeroUnit = !empty($u['is_hero']);
 								<label>能力名</label>
 								<input type="text" name="abilities[<?= $i; ?>][name]" value="<?= $this->h($a['name'] ?? ''); ?>">
 							</div>
+							<?= $renderAbilityUsageFields($i, $a); ?>
 							<div class="form-group">
-								<label>発動フェイズ</label>
-								<input type="text" name="abilities[<?= $i; ?>][trigger_phase]" value="<?= $this->h($a['trigger_phase'] ?? ''); ?>">
-							</div>
-							<div class="form-group">
-								<label>発動ターン</label>
-								<input type="text" name="abilities[<?= $i; ?>][trigger_turn]" value="<?= $this->h($a['trigger_turn'] ?? ''); ?>">
-							</div>
-							<div class="form-group">
-								<label>種別</label>
-								<input type="text" name="abilities[<?= $i; ?>][ability_type]" value="<?= $this->h($a['ability_type'] ?? ''); ?>">
+								<label>コマンドポイント</label>
+								<input type="number" min="0" name="abilities[<?= $i; ?>][command_point]" value="<?= $this->h($a['command_point'] ?? ''); ?>" class="cell-narrow">
 							</div>
 						</div>
 						<?php if (!empty($a['trigger_condition_en'])): ?>
@@ -408,17 +493,10 @@ $isHeroUnit = !empty($u['is_hero']);
 					<label>能力名</label>
 					<input type="text" name="abilities[__IDX__][name]">
 				</div>
+				<?= $renderAbilityUsageFields('__IDX__'); ?>
 				<div class="form-group">
-					<label>発動フェイズ</label>
-					<input type="text" name="abilities[__IDX__][trigger_phase]">
-				</div>
-				<div class="form-group">
-					<label>発動ターン</label>
-					<input type="text" name="abilities[__IDX__][trigger_turn]">
-				</div>
-				<div class="form-group">
-					<label>種別</label>
-					<input type="text" name="abilities[__IDX__][ability_type]">
+					<label>コマンドポイント</label>
+					<input type="number" min="0" name="abilities[__IDX__][command_point]" class="cell-narrow">
 				</div>
 			</div>
 			<div class="form-group form-group--wide">

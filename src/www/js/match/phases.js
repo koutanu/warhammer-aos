@@ -11,7 +11,7 @@ const MatchPhases = {
 		hero: "ヒーロー",
 		movement: "移動",
 		shooting: "射撃",
-		charge: "チャージ",
+		charge: "突撃",
 		combat: "戦闘",
 		end: "終了",
 		any: "全般",
@@ -19,11 +19,11 @@ const MatchPhases = {
 
 	/** フェーズ正式名称（コアルール準拠） */
 	PHASE_LABELS_JA: {
-		deployment: "配置フェイズ",
+		deployment: "初期配置フェイズ",
 		hero: "ヒーローフェーズ",
 		movement: "移動フェイズ",
 		shooting: "射撃フェイズ",
-		charge: "チャージフェイズ",
+		charge: "突撃フェイズ",
 		combat: "戦闘フェイズ",
 		end: "ターン終了フェイズ",
 		any: "全フェーズ",
@@ -39,11 +39,11 @@ const MatchPhases = {
 	/** アビリティ種別（デッキ category） */
 	CATEGORY_LABELS_JA: {
 		common: "汎用コマンド/コアアビリティ",
-		battletrait: "バトルトレイト（アーミー）",
+		battletrait: "戦闘特性",
 		terrain: "陣営地形",
-		formation: "バトルフォーメーション",
-		trait: "英雄の特質",
-		artefact: "力の神器",
+		formation: "戦闘陣形",
+		trait: "英雄特性",
+		artefact: "神器",
 		spell: "呪文",
 		prayer: "祈祷",
 		manifestation: "顕現",
@@ -249,66 +249,60 @@ const MatchPhases = {
 	},
 
 	/**
-	 * ability_type 文字列から使用スコープ（"battle"|"turn"）を導出する。
-	 * "Once Per Battle" / "Once Per Battle (Army)" は battle。
-	 */
-	deriveUsageScope(abilityType) {
-		const t = String(abilityType || "")
-			.trim()
-			.toLowerCase();
-		if (t && t.includes("once per battle")) {
-			return "battle";
-		}
-		return "turn";
-	},
-
-	/**
-	 * アビリティオブジェクトの usageScope を解決する（バックエンド由来を優先）。
+	 * アビリティの使用リセットスコープ（"battle"|"turn"）を返す。
+	 * usage_scope = once_per_battle のみ battle（ゲーム終了まで使用済み保持）。
 	 */
 	usageScopeOf(ability) {
 		const ab = ability || {};
-		if (ab.usageScope) return ab.usageScope;
-		return this.deriveUsageScope(ab.abilityType || ab.ability_type);
+		return String(ab.usageScope || "").toLowerCase() === "once_per_battle"
+			? "battle"
+			: "turn";
 	},
 
 	isBattleScope(scope) {
 		return scope === "battle";
 	},
 
-	/** (Army) 表記の有無を判定 */
-	isArmyScoped(abilityType) {
-		return String(abilityType || "")
-			.toLowerCase()
-			.includes("(army)");
-	},
-
-	/**
-	 * カード用バッジ文言。battle スコープのみ文字列を返し、それ以外は空。
-	 */
-	labelUsageScopeJa(ability) {
+	/** usage_per = army か判定 */
+	isArmy(ability) {
 		const ab = ability || {};
-		if (this.usageScopeOf(ab) !== "battle") return "";
-		return this.isArmyScoped(ab.abilityType || ab.ability_type)
-			? "バトル中1回（アーミー）"
-			: "バトル中1回";
+		return String(ab.usagePer || "").toLowerCase() === "army";
 	},
 
 	/**
-	 * ability_type から使用頻度の表示情報を返す。kind は CSS 着色用。
-	 * カテゴリ(Offensive 等)のみで頻度制限が無いものは label を空にして非表示。
+	 * 使用済みトグルの対象か（回数制限あり かつ 非パッシブ）。
+	 * unlimited / passive はトグル非表示。reaction でも once_per_* なら追跡対象。
+	 */
+	isUsageTracked(ability) {
+		const ab = ability || {};
+		if (String(ab.activation || "").toLowerCase() === "passive") return false;
+		const scope = String(ab.usageScope || "unlimited").toLowerCase();
+		return (
+			scope === "once_per_turn" ||
+			scope === "once_per_phase" ||
+			scope === "once_per_battle"
+		);
+	},
+
+	/**
+	 * 構造化フィールド(activation / usage_scope / usage_per)から使用頻度の表示情報を返す。
+	 * kind は CSS 着色用。回数制限が無いものは label を空にして非表示。
 	 */
 	frequencyInfo(ability) {
 		const ab = ability || {};
-		const t = String(ab.abilityType || ab.ability_type || "")
-			.trim()
-			.toLowerCase();
-		const army = t.includes("(army)") ? "（アーミー）" : "";
-		if (t.includes("passive")) return { kind: "passive", label: "パッシブ" };
-		if (t.includes("once per battle"))
+		const activation = String(ab.activation || "active").toLowerCase();
+		const scope = String(ab.usageScope || "unlimited").toLowerCase();
+		const army = this.isArmy(ab) ? "（アーミー）" : "";
+
+		if (activation === "passive") return { kind: "passive", label: "パッシブ" };
+		if (scope === "once_per_battle")
 			return { kind: "battle", label: "バトルに1回" + army };
-		if (t.includes("once per turn"))
+		if (scope === "once_per_turn")
 			return { kind: "turn", label: "ターンに1回" + army };
-		if (t.includes("reaction")) return { kind: "reaction", label: "リアクション" };
+		if (scope === "once_per_phase")
+			return { kind: "turn", label: "フェイズに1回" + army };
+		if (activation === "reaction")
+			return { kind: "reaction", label: "リアクション" };
 		return { kind: "", label: "" };
 	},
 };

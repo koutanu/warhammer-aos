@@ -156,19 +156,19 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					</div>
 					<div class="detail-status-grid">
 						<div class="status-box">
-							<div class="status-label">MOVE</div>
+							<div class="status-label">移動力</div>
 							<div class="status-value" id="detailUnitMove">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">WOUNDS</div>
+							<div class="status-label">体力</div>
 							<div class="status-value" id="detailUnitWounds">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">SAVE</div>
+							<div class="status-label">防御力</div>
 							<div class="status-value" id="detailUnitSave">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">CONTROL</div>
+							<div class="status-label" id="detailControlLabel">確保力</div>
 							<div class="status-value" id="detailUnitControl">-</div>
 						</div>
 					</div>
@@ -181,11 +181,11 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 								<tr>
 									<th>武器</th>
 									<th>射程</th>
-									<th>攻撃</th>
-									<th>命中</th>
-									<th>負傷</th>
+									<th>回数</th>
+									<th>ヒット</th>
+									<th>ウーンズ</th>
 									<th>貫通</th>
-									<th>威力</th>
+									<th>ダメージ</th>
 								</tr>
 							</thead>
 							<tbody id="detailWeaponsBody"></tbody>
