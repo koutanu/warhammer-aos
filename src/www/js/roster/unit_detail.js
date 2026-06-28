@@ -228,9 +228,6 @@ window.RosterUnitDetail = (function () {
 										phaseNorm,
 									)
 								: ab.trigger_phase || "";
-						const phaseBadge = phaseLabel
-							? `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:3px; margin-left:8px; color:#ccc;">${phaseLabel}</span>`
-							: "";
 						const freqLabel =
 							typeof MatchPhases !== "undefined" &&
 							MatchPhases.frequencyInfo
@@ -240,9 +237,22 @@ window.RosterUnitDetail = (function () {
 										usagePer: ab.usage_per,
 									}).label
 								: "";
-						const typeBadge = freqLabel
-							? `<span style="font-size:0.7rem; background:#4a3b19; padding:2px 6px; border-radius:3px; margin-left:4px; color:#ffcc00;">${freqLabel}</span>`
-							: "";
+						// 手動翻訳(trigger_condition_ja)があるときは、フェイズ・頻度の情報を
+						// 内包する想定なので、両バッジをこの1バッジにまとめて置き換える。
+						const triggerConditionJa = (ab.trigger_condition_ja || "").trim();
+						let phaseBadge;
+						let typeBadge;
+						if (triggerConditionJa) {
+							phaseBadge = `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:3px; margin-left:8px; color:#ccc;">${triggerConditionJa}</span>`;
+							typeBadge = "";
+						} else {
+							phaseBadge = phaseLabel
+								? `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:3px; margin-left:8px; color:#ccc;">${phaseLabel}</span>`
+								: "";
+							typeBadge = freqLabel
+								? `<span style="font-size:0.7rem; background:#4a3b19; padding:2px 6px; border-radius:3px; margin-left:4px; color:#ffcc00;">${freqLabel}</span>`
+								: "";
+						}
 						const cpBadge =
 							ab.command_point && Number(ab.command_point) > 0
 								? `<span style="font-size:0.7rem; background:#1d3a5f; padding:2px 6px; border-radius:3px; margin-left:4px; color:#9ad;">CP ${Number(ab.command_point)}</span>`
