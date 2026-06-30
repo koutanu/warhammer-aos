@@ -34,6 +34,10 @@
 					<a href="<?= $this->h(URL); ?>unit"
 						class="nav-item <?= $class === 'unit' ? 'active' : ''; ?>">Units</a>
 				</li>
+				<li>
+					<a href="<?= $this->h(URL); ?>rule"
+						class="nav-item <?= $class === 'rule' ? 'active' : ''; ?>">Rule</a>
+				</li>
 			</ul>
 
 			<!-- 下部に配置したいメニュー（ログアウトなど） -->
