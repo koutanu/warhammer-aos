@@ -123,7 +123,7 @@ class Unit_Model extends Model
 	 */
 	public function getUnitAbilities($unitId)
 	{
-		$sql = "SELECT m.id, m.name, m.trigger_phase, m.trigger_turn, m.ability_type, m.trigger_condition_en, m.trigger_condition_ja, m.icon_type, m.effect, m.flavor_text, m.keywords
+		$sql = "SELECT m.id, m.name, m.command_point, m.casting_value, m.casting_type, m.trigger_phase, m.trigger_turn, m.activation, m.usage_scope, m.usage_per, m.trigger_condition_en, m.trigger_condition_ja, m.icon_type, m.effect, m.flavor_text, m.keywords
                 FROM m_unit_abilities AS ua
                 JOIN m_ability_master AS m ON ua.ability_id = m.id
                 WHERE ua.unit_id = :unit_id
@@ -136,7 +136,7 @@ class Unit_Model extends Model
 	 */
 	public function getAllAbilities()
 	{
-		$sql = "SELECT id, name, trigger_phase, trigger_turn, ability_type, trigger_condition_en, trigger_condition_ja, icon_type, effect, flavor_text, keywords
+		$sql = "SELECT id, name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_en, trigger_condition_ja, icon_type, effect, flavor_text, keywords
                 FROM m_ability_master
                 ORDER BY name ASC, id ASC;";
 		return $this->db->select($sql);
@@ -208,9 +208,18 @@ class Unit_Model extends Model
 		return $this->db->select($sql, ['id' => (int)$factionId]);
 	}
 
+	public function getBattleTraitsForFaction($factionId)
+	{
+		$sql = "SELECT id, faction_id, sub_faction_name, name, command_point, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, keywords, flavor_text
+                FROM m_battle_traits
+                WHERE faction_id = :id
+                ORDER BY sub_faction_name ASC, id ASC;";
+		return $this->db->select($sql, ['id' => (int)$factionId]);
+	}
+
 	public function getHeroicTraitsForFaction($factionId)
 	{
-		$sql = "SELECT id, category, name, points, is_hero_only, trigger_phase, ability_type, effect, description
+		$sql = "SELECT id, category, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, description
                 FROM m_heroic_traits
                 WHERE faction_id = :id
                 ORDER BY category ASC, name ASC;";
@@ -219,7 +228,7 @@ class Unit_Model extends Model
 
 	public function getArtefactsForFaction($factionId)
 	{
-		$sql = "SELECT id, category, name, points, is_hero_only, trigger_timing, ability_type, effect, flavor_text
+		$sql = "SELECT id, category, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, flavor_text
                 FROM m_artefacts_of_power
                 WHERE faction_id = :id
                 ORDER BY category ASC, name ASC;";
@@ -374,14 +383,16 @@ class Unit_Model extends Model
 	{
 		$updateMaster = $this->db->prepare(
 			'UPDATE m_ability_master
-                SET name = :name, trigger_phase = :trigger_phase, trigger_turn = :trigger_turn,
-                    ability_type = :ability_type, trigger_condition_ja = :trigger_condition_ja,
+                SET name = :name, command_point = :command_point, casting_value = :casting_value, casting_type = :casting_type,
+                    trigger_phase = :trigger_phase, trigger_turn = :trigger_turn,
+                    activation = :activation, usage_scope = :usage_scope, usage_per = :usage_per,
+                    icon_type = :icon_type, trigger_condition_ja = :trigger_condition_ja,
                     effect = :effect, flavor_text = :flavor_text, keywords = :keywords
                 WHERE id = :id;'
 		);
 		$insertMaster = $this->db->prepare(
-			'INSERT INTO m_ability_master (name, trigger_phase, trigger_turn, ability_type, trigger_condition_ja, effect, flavor_text, keywords)
-             VALUES (:name, :trigger_phase, :trigger_turn, :ability_type, :trigger_condition_ja, :effect, :flavor_text, :keywords);'
+			'INSERT INTO m_ability_master (name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, icon_type, trigger_condition_ja, effect, flavor_text, keywords)
+             VALUES (:name, :command_point, :casting_value, :casting_type, :trigger_phase, :trigger_turn, :activation, :usage_scope, :usage_per, :icon_type, :trigger_condition_ja, :effect, :flavor_text, :keywords);'
 		);
 		$attach = $this->db->prepare(
 			'INSERT INTO m_unit_abilities (unit_id, ability_id) VALUES (:unit_id, :ability_id);'
@@ -406,11 +417,18 @@ class Unit_Model extends Model
 
 			$fields = [
 				':name'                 => mb_substr($abName, 0, 255),
-				':trigger_phase'        => $this->nullableStr($ab['trigger_phase'] ?? null),
-				':trigger_turn'         => $this->nullableStr($ab['trigger_turn'] ?? null),
-				':ability_type'         => $this->nullableStr($ab['ability_type'] ?? null),
+				':command_point'        => $this->nullableInt($ab['command_point'] ?? null),
+				':casting_value'        => $this->nullableStr($ab['casting_value'] ?? null),
+				':casting_type'         => $this->sanitizeCastingType($ab['casting_type'] ?? null),
+				':trigger_phase'        => $this->sanitizeTriggerPhaseSet($ab['trigger_phase'] ?? null),
+				':trigger_turn'         => $this->sanitizeEnum($ab['trigger_turn'] ?? null, ['your', 'opponent', 'any', 'battle'], 'your'),
+				':activation'           => $this->sanitizeEnum($ab['activation'] ?? null, ['active', 'passive', 'reaction'], 'active'),
+				':usage_scope'          => $this->sanitizeEnum($ab['usage_scope'] ?? null, ['unlimited', 'once_per_turn', 'once_per_phase', 'once_per_battle'], 'unlimited'),
+				':usage_per'            => $this->sanitizeEnum($ab['usage_per'] ?? null, ['unit', 'army'], 'unit'),
+				':icon_type'            => $this->nullableStr($ab['icon_type'] ?? null),
 				':trigger_condition_ja' => $this->nullableStr($ab['trigger_condition_ja'] ?? null),
-				':effect'               => $this->nullableStr($ab['effect'] ?? null),
+				// effect は m_ability_master で NOT NULL のため、未入力時は NULL ではなく空文字にする
+				':effect'               => (string)($ab['effect'] ?? ''),
 				':flavor_text'          => $this->nullableStr($ab['flavor_text'] ?? null),
 				':keywords'             => $this->nullableStr($ab['keywords'] ?? null),
 			];
@@ -562,5 +580,41 @@ class Unit_Model extends Model
 		}
 		$value = trim((string)$value);
 		return $value === '' ? null : $value;
+	}
+
+	/**
+	 * 詠唱/祈祷の種別を 'spell'/'prayer' のみ許容。範囲外・空は NULL。
+	 */
+	private function sanitizeCastingType($value): ?string
+	{
+		$v = strtolower(trim((string)($value ?? '')));
+		return in_array($v, ['spell', 'prayer'], true) ? $v : null;
+	}
+
+	/**
+	 * ENUM カラム向けに値を許容リストへ丸める。範囲外/空は $default を返す。
+	 */
+	private function sanitizeEnum($value, array $allowed, string $default): string
+	{
+		$v = strtolower(trim((string)($value ?? '')));
+		return in_array($v, $allowed, true) ? $v : $default;
+	}
+
+	/**
+	 * SET(trigger_phase) 向け。配列 or カンマ区切り文字列を許容トークンのみのカンマ区切りへ。
+	 * 空なら NULL。
+	 */
+	private function sanitizeTriggerPhaseSet($value): ?string
+	{
+		$allowed = ['deployment', 'hero', 'movement', 'shooting', 'charge', 'combat', 'end', 'any'];
+		$parts = is_array($value) ? $value : explode(',', (string)($value ?? ''));
+		$clean = [];
+		foreach ($parts as $p) {
+			$p = strtolower(trim((string)$p));
+			if ($p !== '' && in_array($p, $allowed, true) && !in_array($p, $clean, true)) {
+				$clean[] = $p;
+			}
+		}
+		return empty($clean) ? null : implode(',', $clean);
 	}
 }

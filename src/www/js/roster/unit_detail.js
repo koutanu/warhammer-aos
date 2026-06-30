@@ -11,6 +11,17 @@ window.RosterUnitDetail = (function () {
 	}
 
 	/**
+	 * 詠唱値/祈祷値の整形。数値のみなら "+" を補い、既に付いていれば重複させない。
+	 */
+	function formatCastingValue(value) {
+		if (value === null || value === undefined) return "";
+		const str = String(value).trim();
+		if (str === "") return "";
+		if (/\+$/.test(str)) return str;
+		return /^\d+$/.test(str) ? `${str}+` : str;
+	}
+
+	/**
 	 * アビリティのアイコン分類(icon_type)からアイコン <img> を生成する。
 	 * 解決ロジックは MatchPhases に集約し、未読込時は最低限のフォールバックを使う。
 	 */
@@ -106,8 +117,23 @@ window.RosterUnitDetail = (function () {
 					? `${info.save}+`
 					: "-";
 			}
+			// 顕現(マニフェステーション)は 確保力(CONTROL) の代わりに 追放(BANISHMENT) を持ち、
+			// 値は "7+" のように + を後置で表記する。
+			const isManifestation = Number(info.is_manifestation);
+			if (getEl("detailControlLabel")) {
+				getEl("detailControlLabel").textContent = isManifestation
+					? "追放"
+					: "確保力";
+			}
 			if (getEl("detailUnitControl")) {
-				getEl("detailUnitControl").textContent = info.control ?? "-";
+				const ctrl = info.control;
+				const hasCtrl =
+					ctrl !== null && ctrl !== undefined && ctrl !== "";
+				getEl("detailUnitControl").textContent = !hasCtrl
+					? "-"
+					: isManifestation
+						? `${ctrl}+`
+						: `${ctrl}`;
 			}
 			if (keywordsEl) {
 				let kw = info.keywords || unit.keywords || "-";
@@ -202,11 +228,39 @@ window.RosterUnitDetail = (function () {
 										phaseNorm,
 									)
 								: ab.trigger_phase || "";
-						const phaseBadge = phaseLabel
-							? `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:3px; margin-left:8px; color:#ccc;">${phaseLabel}</span>`
-							: "";
-						const typeBadge = ab.ability_type
-							? `<span style="font-size:0.7rem; background:#4a3b19; padding:2px 6px; border-radius:3px; margin-left:4px; color:#ffcc00;">${ab.ability_type}</span>`
+						const freqLabel =
+							typeof MatchPhases !== "undefined" &&
+							MatchPhases.frequencyInfo
+								? MatchPhases.frequencyInfo({
+										activation: ab.activation,
+										usageScope: ab.usage_scope,
+										usagePer: ab.usage_per,
+									}).label
+								: "";
+						// 手動翻訳(trigger_condition_ja)があるときは、フェイズ・頻度の情報を
+						// 内包する想定なので、両バッジをこの1バッジにまとめて置き換える。
+						const triggerConditionJa = (ab.trigger_condition_ja || "").trim();
+						let phaseBadge;
+						let typeBadge;
+						if (triggerConditionJa) {
+							phaseBadge = `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:3px; margin-left:8px; color:#ccc;">${triggerConditionJa}</span>`;
+							typeBadge = "";
+						} else {
+							phaseBadge = phaseLabel
+								? `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:3px; margin-left:8px; color:#ccc;">${phaseLabel}</span>`
+								: "";
+							typeBadge = freqLabel
+								? `<span style="font-size:0.7rem; background:#4a3b19; padding:2px 6px; border-radius:3px; margin-left:4px; color:#ffcc00;">${freqLabel}</span>`
+								: "";
+						}
+						const cpBadge =
+							ab.command_point && Number(ab.command_point) > 0
+								? `<span style="font-size:0.7rem; background:#1d3a5f; padding:2px 6px; border-radius:3px; margin-left:4px; color:#9ad;">CP ${Number(ab.command_point)}</span>`
+								: "";
+						const castStr = formatCastingValue(ab.casting_value);
+						const castLabel = ab.casting_type === "prayer" ? "祈祷" : "詠唱";
+						const castBadge = castStr
+							? `<span style="font-size:0.7rem; background:#3a1d4f; padding:2px 6px; border-radius:3px; margin-left:4px; color:#caa;">${castLabel} ${castStr}</span>`
 							: "";
 						const abilityIcon = buildAbilityIcon(
 							baseUrl,
@@ -216,7 +270,7 @@ window.RosterUnitDetail = (function () {
 
 						abBox.innerHTML = `
 							<div class="ability-title" style="font-weight:bold; color:#ffcc00; margin-bottom:6px; border-bottom:1px solid #444; padding-bottom:3px;">
-							${abilityIcon}${ab.name}${phaseBadge}${typeBadge}
+							${abilityIcon}${ab.name}${phaseBadge}${typeBadge}${cpBadge}${castBadge}
 							</div>
 							<p class="ability-effect" style="margin:0; white-space:pre-wrap; font-size:0.9rem; line-height:1.4; color:#eee;">${effectText}</p>
 						`;

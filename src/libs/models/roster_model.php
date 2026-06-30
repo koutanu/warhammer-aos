@@ -287,7 +287,7 @@ class Roster_Model extends Model
 	 */
 	public function getHeroicTraitsForFaction(int $factionId): array
 	{
-		$sql = "SELECT id, category, source_reference, name, points, is_hero_only, trigger_phase, ability_type, effect, description
+		$sql = "SELECT id, category, source_reference, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, description
                 FROM m_heroic_traits
                 WHERE faction_id = :id AND is_hero_only = 1
                 ORDER BY source_reference ASC, category ASC, name ASC;";
@@ -296,7 +296,7 @@ class Roster_Model extends Model
 
 	public function getArtefactsForFaction(int $factionId): array
 	{
-		$sql = "SELECT id, category, source_reference, name, points, is_hero_only, trigger_timing, ability_type, effect, flavor_text
+		$sql = "SELECT id, category, source_reference, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, flavor_text
                 FROM m_artefacts_of_power
                 WHERE faction_id = :id AND is_hero_only = 1
                 ORDER BY source_reference ASC, category ASC, name ASC;";
@@ -369,9 +369,14 @@ class Roster_Model extends Model
 		$sql = "SELECT 
                     m.id, 
                     m.name, 
+                    m.command_point,
+                    m.casting_value,
+                    m.casting_type,
                     m.trigger_phase, 
                     m.trigger_turn, 
-                    m.ability_type, 
+                    m.activation,
+                    m.usage_scope,
+                    m.usage_per,
                     m.trigger_condition_en,
                     m.trigger_condition_ja,
                     m.icon_type, 
@@ -675,7 +680,10 @@ class Roster_Model extends Model
 					'formation',
 					null,
 					null,
-					$formation['ability_type'] ?? ''
+					$formation['activation'] ?? 'active',
+					$formation['usage_scope'] ?? 'unlimited',
+					$formation['usage_per'] ?? 'unit',
+					trim((string)($formation['trigger_condition_ja'] ?? ''))
 				);
 			}
 		}
@@ -695,13 +703,16 @@ class Roster_Model extends Model
 					$trait['name'],
 					$trait['effect'] ?? $trait['description'] ?? '',
 					$trait['trigger_phase'] ?? '',
-					'',
+					$trait['trigger_turn'] ?? '',
 					'英雄特性',
 					$heroName,
 					'trait',
 					null,
 					null,
-					$trait['ability_type'] ?? ''
+					$trait['activation'] ?? 'active',
+					$trait['usage_scope'] ?? 'unlimited',
+					$trait['usage_per'] ?? 'unit',
+					trim((string)($trait['trigger_condition_ja'] ?? ''))
 				);
 			}
 		}
@@ -720,14 +731,17 @@ class Roster_Model extends Model
 					'army:artefact:' . $artefactId,
 					$artefact['name'],
 					$artefact['effect'] ?? $artefact['flavor_text'] ?? '',
-					$artefact['trigger_timing'] ?? '',
-					'',
+					$artefact['trigger_phase'] ?? '',
+					$artefact['trigger_turn'] ?? '',
 					'神器',
 					$heroName,
 					'artefact',
 					null,
 					null,
-					$artefact['ability_type'] ?? ''
+					$artefact['activation'] ?? 'active',
+					$artefact['usage_scope'] ?? 'unlimited',
+					$artefact['usage_per'] ?? 'unit',
+					trim((string)($artefact['trigger_condition_ja'] ?? ''))
 				);
 			}
 		}
@@ -751,7 +765,10 @@ class Roster_Model extends Model
 					'battletrait',
 					$key,
 					null,
-					$bt['ability_type'] ?? ''
+					$bt['activation'] ?? 'active',
+					$bt['usage_scope'] ?? 'unlimited',
+					$bt['usage_per'] ?? 'unit',
+					trim((string)($bt['trigger_condition_ja'] ?? ''))
 				);
 			}
 
@@ -770,6 +787,9 @@ class Roster_Model extends Model
 					if ($triggerCondition === '') {
 						$triggerCondition = trim((string)($ability['trigger_condition_en'] ?? ''));
 					}
+					$terrainCp = ($ability['command_point'] === null || $ability['command_point'] === '')
+						? null
+						: (int)$ability['command_point'];
 					$key = 'army:terrain:' . $abilityId;
 					$deck[] = $this->buildDeckEntry(
 						$key,
@@ -781,9 +801,13 @@ class Roster_Model extends Model
 						$terrainName,
 						'terrain',
 						$key,
-						null,
-						$ability['ability_type'] ?? '',
-						$triggerCondition
+						$terrainCp,
+						$ability['activation'] ?? 'active',
+						$ability['usage_scope'] ?? 'unlimited',
+						$ability['usage_per'] ?? 'unit',
+						$triggerCondition,
+						$ability['casting_value'] ?? null,
+						$ability['casting_type'] ?? null
 					);
 				}
 			}
@@ -839,6 +863,9 @@ class Roster_Model extends Model
 					if ($triggerCondition === '') {
 						$triggerCondition = trim((string)($ability['trigger_condition_en'] ?? ''));
 					}
+					$unitAbilityCp = ($ability['command_point'] === null || $ability['command_point'] === '')
+						? null
+						: (int)$ability['command_point'];
 					$deck[] = $this->buildDeckEntry(
 						$dedupeKey,
 						$ability['name'] ?? '',
@@ -849,9 +876,13 @@ class Roster_Model extends Model
 						$unit['name'] ?? '',
 						'unit',
 						$dedupeKey,
-						null,
-						$ability['ability_type'] ?? '',
-						$triggerCondition
+						$unitAbilityCp,
+						$ability['activation'] ?? 'active',
+						$ability['usage_scope'] ?? 'unlimited',
+						$ability['usage_per'] ?? 'unit',
+						$triggerCondition,
+						$ability['casting_value'] ?? null,
+						$ability['casting_type'] ?? null
 					);
 				}
 			}
@@ -877,7 +908,10 @@ class Roster_Model extends Model
 				'common',
 				$key,
 				$commandCost,
-				$common['ability_type'] ?? ''
+				$common['activation'] ?? 'active',
+				$common['usage_scope'] ?? 'unlimited',
+				$common['usage_per'] ?? 'unit',
+				trim((string)($common['trigger_condition_ja'] ?? ''))
 			);
 		}
 
@@ -891,7 +925,7 @@ class Roster_Model extends Model
 	private function getCommonAbilities(): array
 	{
 		return $this->db->select(
-			'SELECT id, name, command_cost, trigger_phase, trigger_turn, ability_type, icon_type, effect, flavor_text
+			'SELECT id, name, command_cost, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, icon_type, effect, flavor_text
              FROM m_common_abilities
              WHERE is_hidden = 0 OR is_hidden IS NULL
              ORDER BY sort_order ASC, name ASC;'
@@ -940,11 +974,22 @@ class Roster_Model extends Model
 		string $category,
 		?string $dedupeKey = null,
 		?int $commandCost = null,
-		?string $abilityType = '',
-		?string $triggerCondition = ''
+		?string $activation = 'active',
+		?string $usageScope = 'unlimited',
+		?string $usagePer = 'unit',
+		?string $triggerCondition = '',
+		?string $castingValue = null,
+		?string $castingType = null
 	): array {
 		$dedupeKey = $dedupeKey ?? $key;
 		$unitNames = $unitName ? [$unitName] : [];
+
+		$castingValue = $castingValue !== null ? trim((string)$castingValue) : '';
+		$castingType = $castingType !== null ? trim((string)$castingType) : '';
+
+		$activation = $this->normalizeActivation($activation);
+		$usageScope = $this->normalizeUsageScope($usageScope);
+		$usagePer   = $this->normalizeUsagePer($usagePer);
 
 		return [
 			'key'              => $dedupeKey,
@@ -961,24 +1006,35 @@ class Roster_Model extends Model
 			'unitNames'        => $unitNames,
 			'category'         => $category,
 			'commandCost'      => $commandCost,
-			'abilityType'      => (string)($abilityType ?? ''),
-			'usageScope'       => $this->deriveUsageScope($abilityType),
+			'activation'       => $activation,
+			'usageScope'       => $usageScope,
+			'usagePer'         => $usagePer,
 			'triggerCondition' => (string)($triggerCondition ?? ''),
+			'castingValue'     => $castingValue !== '' ? $castingValue : null,
+			'castingType'      => $castingType !== '' ? $castingType : null,
 		];
 	}
 
-	/**
-	 * ability_type 文字列から使用スコープを導出する。
-	 * "Once Per Battle" / "Once Per Battle (Army)" は battle（ゲーム終了まで使用済みを保持）。
-	 * (Army) 表記の有無はバッジ文言のみに使い、トグル挙動は同一。
-	 */
-	private function deriveUsageScope(?string $abilityType): string
+	/** activation を正規化(active/passive/reaction)。 */
+	private function normalizeActivation(?string $value): string
 	{
-		$t = strtolower(trim((string)($abilityType ?? '')));
-		if ($t !== '' && strpos($t, 'once per battle') !== false) {
-			return 'battle';
-		}
-		return 'turn';
+		$v = strtolower(trim((string)($value ?? '')));
+		return in_array($v, ['active', 'passive', 'reaction'], true) ? $v : 'active';
+	}
+
+	/** usage_scope を正規化(unlimited/once_per_turn/once_per_phase/once_per_battle)。 */
+	private function normalizeUsageScope(?string $value): string
+	{
+		$v = strtolower(trim((string)($value ?? '')));
+		$allowed = ['unlimited', 'once_per_turn', 'once_per_phase', 'once_per_battle'];
+		return in_array($v, $allowed, true) ? $v : 'unlimited';
+	}
+
+	/** usage_per を正規化(unit/army)。 */
+	private function normalizeUsagePer(?string $value): string
+	{
+		$v = strtolower(trim((string)($value ?? '')));
+		return $v === 'army' ? 'army' : 'unit';
 	}
 
 	private function getBattleFormationById(int $id): ?array
@@ -1021,20 +1077,27 @@ class Roster_Model extends Model
 			]
 		);
 
+		// 祈祷は詠唱値(chanting_value)、呪文/顕現は発動値(casting_value)を保持する。
+		$valueColumn = ($category === 'prayer') ? 'chanting_value' : 'casting_value';
+
 		$entries = [];
 		foreach ($rows as $row) {
 			$entries[] = $this->buildDeckEntry(
 				$keyPrefix . ':' . $loreRowId . ':' . (int)$row['id'],
 				$row[$nameColumn] ?? $row['lore_name'] ?? '',
 				$row['effect'] ?? '',
-				$row['trigger_phase'] ?? 'YOUR HERO PHASE',
-				'',
+				$row['trigger_phase'] ?? 'hero',
+				$row['trigger_turn'] ?? '',
 				$sourceLabel,
 				$row['lore_name'] ?? null,
 				$category,
 				null,
 				null,
-				$row['ability_type'] ?? ''
+				$row['activation'] ?? 'active',
+				$row['usage_scope'] ?? 'unlimited',
+				$row['usage_per'] ?? 'unit',
+				trim((string)($row['trigger_condition_ja'] ?? '')),
+				$row[$valueColumn] ?? null
 			);
 		}
 		return $entries;

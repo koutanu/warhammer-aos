@@ -143,14 +143,40 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 
 		els.abilityList?.addEventListener("click", (e) => {
-			const detailBtn = e.target.closest(".ability-detail-toggle");
-			if (!detailBtn) return;
-			const box = detailBtn.parentElement?.querySelector(".ability-effect-box");
-			if (!box) return;
-			const open = box.style.display === "block";
-			box.style.display = open ? "none" : "block";
-			detailBtn.textContent = open ? "詳細" : "閉じる";
+			// 使用済みトグルのタップはアコーディオンを開閉しない。
+			if (e.target.closest(".ability-used-toggle")) return;
+			toggleAbilityCard(e.target.closest(".phase-ability-card"));
 		});
+
+		els.abilityList?.addEventListener("keydown", (e) => {
+			if (e.key !== "Enter" && e.key !== " ") return;
+			const card = e.target.closest(".phase-ability-card.is-expandable");
+			if (!card || e.target !== card) return;
+			e.preventDefault();
+			toggleAbilityCard(card);
+		});
+
+		els.abilityList?.addEventListener("click", (e) => {
+			const toggle = e.target.closest(".phase-passive-toggle");
+			if (!toggle) return;
+			const body = toggle.parentElement?.querySelector(".phase-passive-body");
+			if (!body) return;
+			const open = body.style.display === "flex";
+			body.style.display = open ? "none" : "flex";
+			toggle.setAttribute("aria-expanded", String(!open));
+			const arrow = toggle.querySelector(".phase-passive-arrow");
+			if (arrow) arrow.textContent = open ? "▸" : "▾";
+		});
+	}
+
+	function toggleAbilityCard(card) {
+		if (!card) return;
+		const box = card.querySelector(".ability-effect-box");
+		if (!box) return; // 効果説明のないカードは無反応。
+		const open = box.style.display === "block";
+		box.style.display = open ? "none" : "block";
+		card.classList.toggle("is-open", !open);
+		card.setAttribute("aria-expanded", String(!open));
 	}
 
 	function updateTurnTabs() {
@@ -230,6 +256,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		return Number.isNaN(raw) ? 0 : raw;
 	}
 
+	function isPassiveAbility(ab) {
+		return MatchPhases.frequencyInfo(ab).kind === "passive";
+	}
+
 	function formatUnitNames(ab) {
 		const names = ab.unitNames?.length
 			? ab.unitNames
@@ -272,7 +302,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		if (!filtered.length) {
+		// パッシブ（常時発動）は操作対象リストから切り離し、別セクションにまとめる。
+		const passives = filtered.filter((ab) => isPassiveAbility(ab));
+		const actives = filtered.filter((ab) => !isPassiveAbility(ab));
+
+		if (!actives.length && !passives.length) {
 			if (els.abilityEmpty) {
 				els.abilityEmpty.style.display = "block";
 				els.abilityEmpty.textContent = isMyTurn
@@ -285,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (els.abilityEmpty) els.abilityEmpty.style.display = "none";
 
 		const groups = new Map();
-		filtered.forEach((ab) => {
+		actives.forEach((ab) => {
 			const cat = ab.category || "unit";
 			if (!groups.has(cat)) groups.set(cat, []);
 			groups.get(cat).push(ab);
@@ -321,23 +355,65 @@ document.addEventListener("DOMContentLoaded", () => {
 				els.abilityList.appendChild(groupEl);
 			},
 		);
+
+		if (passives.length) {
+			const section = document.createElement("section");
+			section.className = "phase-passive-section";
+
+			const toggle = document.createElement("button");
+			toggle.type = "button";
+			toggle.className = "phase-passive-toggle";
+			toggle.setAttribute("aria-expanded", "false");
+			toggle.innerHTML = `<span class="phase-passive-arrow">▸</span>常時発動（パッシブ）（${passives.length}）`;
+			section.appendChild(toggle);
+
+			const body = document.createElement("div");
+			body.className = "phase-passive-body";
+			body.style.display = "none";
+			passives
+				.slice()
+				.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+				.forEach((ab) =>
+					body.appendChild(buildAbilityCard(ab, { passive: true })),
+				);
+			section.appendChild(body);
+
+			els.abilityList.appendChild(section);
+		}
 	}
 
-	function buildAbilityCard(ab) {
+	function buildAbilityCard(ab, opts = {}) {
+		const isPassive = !!opts.passive;
 		const state = MatchStateManager.getState();
 		const game = state.game || { usedAbilities: {} };
 		const usedMap = game.usedAbilities?.[viewerSlot] || {};
 		{
-			const used = !!usedMap[ab.key]?.used;
+			// パッシブ/回数無制限(unlimited)は使用済み管理対象外なのでトグル/使用済み表現を出さない。
+			const tracked = !isPassive && MatchPhases.isUsageTracked(ab);
+			const used = tracked && !!usedMap[ab.key]?.used;
+			const effectText = String(ab.effect || "").trim();
+			const hasEffect = effectText !== "";
 			const card = document.createElement("article");
 			card.className =
 				"phase-ability-card" +
 				(used ? " is-used" : "") +
+				(isPassive ? " phase-ability-card--passive" : "") +
+				(hasEffect ? " is-expandable" : "") +
 				(ab.category ? ` cat-${ab.category}` : "");
 			card.dataset.abilityKey = ab.key;
 			card.dataset.triggerTurn = ab.triggerTurn || "";
+			// 効果説明があるカードのみアコーディオン開閉のタップ対象にする。
+			if (hasEffect) {
+				card.setAttribute("role", "button");
+				card.setAttribute("tabindex", "0");
+				card.setAttribute("aria-expanded", "false");
+			}
 
-			const unitLabel = formatUnitNames(ab);
+			// 呪文/祈祷/顕現は lore 名（unitName=lore_name）をメタに表示しない。
+			const loreCategories = ["spell", "prayer", "manifestation"];
+			const unitLabel = loreCategories.includes(ab.category)
+				? ""
+				: formatUnitNames(ab);
 			const categoryLabel = MatchPhases.labelCategoryJa(ab.category);
 			const phaseNorms =
 				ab.triggerPhaseNorms ||
@@ -363,43 +439,70 @@ document.addEventListener("DOMContentLoaded", () => {
 					? `<span class="ability-cp-badge">CP ${commandCost}</span>`
 					: "";
 
+			// ユニット能力で casting_type が指定されていればそれを優先（詠唱/祈祷）。
+			// 伝承(lore)など未指定の場合は従来どおりカテゴリで判定する。
+			const castLabel = ab.castingType
+				? ab.castingType === "prayer"
+					? "祈祷"
+					: "詠唱"
+				: ab.category === "prayer"
+					? "詠唱"
+					: "発動";
+			const castingValue = formatCastingValue(ab.castingValue);
+			const castBadge = castingValue
+				? `<span class="ability-cast-badge">${escapeHtml(castLabel)} ${escapeHtml(castingValue)}</span>`
+				: "";
+
 			const freq = MatchPhases.frequencyInfo(ab);
 			const freqBadge = freq.label
 				? `<span class="ability-freq-badge freq-${escapeHtml(freq.kind)}">${escapeHtml(freq.label)}</span>`
 				: "";
 
 			const conditionText = String(ab.triggerCondition || "").trim();
-			const conditionBlock = conditionText
-				? `<p class="ability-trigger-condition"><span class="ability-trigger-condition-label">発動条件</span>${escapeHtml(conditionText)}</p>`
+			// 発動条件(日本語)があればフェイズ/ターンのバッジより優先してメタに表示する。
+			const metaBadges = conditionText
+				? `<span class="ability-phase-badge ability-condition-badge">${escapeHtml(conditionText)}</span>`
+				: `${phaseLabel ? `<span class="ability-phase-badge">${escapeHtml(phaseLabel)}</span>` : ""}${turnLabel ? `<span class="ability-turn-badge">${escapeHtml(turnLabel)}</span>` : ""}`;
+
+			const usedToggle = tracked
+				? `<button type="button" class="ability-used-toggle" aria-pressed="${used}">
+						${used ? "使用済み" : "使用する"}
+					</button>`
 				: "";
 
 			card.innerHTML = `
 				<div class="ability-card-head">
 					<div class="ability-card-title-block">
-						<span class="ability-category-badge cat-${escapeHtml(ab.category || "unit")}">${escapeHtml(categoryLabel)}</span>
+						<div class="ability-badge-row">
+							<span class="ability-category-badge cat-${escapeHtml(ab.category || "unit")}">${escapeHtml(categoryLabel)}</span>
+							${cpBadge}
+							${castBadge}
+						</div>
 						<strong class="ability-name">${escapeHtml(ab.name)}</strong>
-						${cpBadge}
 					</div>
-					<button type="button" class="ability-used-toggle" aria-pressed="${used}">
-						${used ? "使用済み" : "未使用"}
-					</button>
+					${usedToggle}
 				</div>
 				<div class="ability-card-meta">
 					${metaParts.length ? `<span class="ability-source">${escapeHtml(metaParts.join(" / "))}</span>` : ""}
-					${phaseLabel ? `<span class="ability-phase-badge">${escapeHtml(phaseLabel)}</span>` : ""}
-					${turnLabel ? `<span class="ability-turn-badge">${escapeHtml(turnLabel)}</span>` : ""}
+					${metaBadges}
 					${freqBadge}
 					${used ? '<span class="ability-used-badge">使用済み</span>' : ""}
+					${hasEffect ? '<span class="ability-expand-chevron" aria-hidden="true">▾</span>' : ""}
 				</div>
-				<button type="button" class="ability-detail-toggle">詳細</button>
-				<div class="ability-effect-box" style="display:none;">
-					${conditionBlock}
-					<p>${escapeHtml(ab.effect || "")}</p>
-				</div>
+				${hasEffect ? `<div class="ability-effect-box" style="display:none;"><p>${escapeHtml(effectText)}</p></div>` : ""}
 			`;
 
 			return card;
 		}
+	}
+
+	function formatCastingValue(value) {
+		if (value === null || value === undefined) return "";
+		const str = String(value).trim();
+		if (str === "") return "";
+		// 既に "+" が付いている場合は重複させない。数値のみなら "+" を補う。
+		if (/\+$/.test(str)) return str;
+		return /^\d+$/.test(str) ? `${str}+` : str;
 	}
 
 	function escapeHtml(text) {

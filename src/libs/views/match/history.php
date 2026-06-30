@@ -66,13 +66,13 @@ $deleteToken = $delete_token ?? '';
 									}
 								}
 								?>
-								<?php if (!empty($playedRounds)): ?>
+								<!-- <?php if (!empty($playedRounds)): ?>
 									<span class="match-round-breakdown" aria-label="ラウンド別スコア">
 										<?php foreach ($playedRounds as $r => $info): ?>
 											<span class="match-round-chip<?= $info['double_turn'] ? ' is-double-turn' : ''; ?>"<?= $info['double_turn'] ? ' title="ダブルターン"' : ''; ?>><span class="round-no">R<?= $r; ?></span><?= $info['vp'][0]; ?>-<?= $info['vp'][1]; ?><?php if ($info['double_turn']): ?><span class="double-turn-mark">DT</span><?php endif; ?></span>
 										<?php endforeach; ?>
 									</span>
-								<?php endif; ?>
+								<?php endif; ?> -->
 							</td>
 							<td>
 								<?php if ($isDraw): ?>

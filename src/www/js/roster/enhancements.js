@@ -135,9 +135,13 @@ document.addEventListener("DOMContentLoaded", () => {
 		setArtefact("", { regimentIndex: "", unitSlot: "", unitId: "" }, null);
 	}
 
-	function getItemTrigger(item, type) {
+	function getItemTrigger(item) {
 		if (!item) return "";
-		return type === "trait" ? item.trigger_phase || "" : item.trigger_timing || "";
+		const raw = item.trigger_phase || "";
+		if (typeof MatchPhases !== "undefined" && MatchPhases.formatTriggerPhases) {
+			return MatchPhases.formatTriggerPhases(raw);
+		}
+		return raw;
 	}
 
 	function getItemEffect(item) {
