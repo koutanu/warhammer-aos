@@ -69,6 +69,10 @@
 	.detail-weapons-col {
 		flex-grow: 1;
 		min-width: 0;
+
+		.detail-weapons-section-title {
+			margin-top: 1.2rem;
+		}
 	}
 
 	.detail-unit-image-wrap {
@@ -207,6 +211,75 @@
 			border-radius: 6px;
 			cursor: pointer;
 			border: 1px solid #444;
+		}
+	}
+
+	/* ----------------------------------------------------------
+	   3段構成のデータシート風レイアウト（図鑑モーダル専用）
+	   1段目: 画像 / 連隊編成 / キーワード
+	   2段目: 基本情報ステータス / 武器テーブル
+	   3段目: アビリティ
+	   ---------------------------------------------------------- */
+	.detail-modal-content--datasheet {
+		.detail-top-row,
+		.detail-stats-row {
+			display: flex;
+			gap: 25px;
+			flex-wrap: wrap;
+			align-items: flex-start;
+		}
+
+		.detail-stats-row {
+			margin-top: 1.5rem;
+		}
+
+		// 1段目
+		.detail-top-image {
+			flex: 0 0 280px;
+			max-width: 100%;
+		}
+		// 連隊編成とキーワードは右側で縦に並べる
+		.detail-top-meta {
+			flex: 1 1 240px;
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+			gap: 1.2rem;
+		}
+		.detail-top-regiment,
+		.detail-top-keywords {
+			min-width: 0;
+		}
+
+		// 2段目（基本情報の横幅を画像と揃える）
+		.detail-stats-info {
+			flex: 0 0 280px;
+			max-width: 100%;
+		}
+		.detail-stats-weapons {
+			flex: 1 1 320px;
+			min-width: 0;
+		}
+
+		// 新レイアウトでは画像とステータスが各段の先頭になるため余白を詰める
+		.detail-unit-image-wrap,
+		.detail-status-grid {
+			margin-top: 0;
+		}
+		// 1段目内のセクション見出しは段直下にくるので上余白を抑える
+		.detail-top-regiment .detail-description-section:first-child,
+		.detail-top-keywords .detail-description-section:first-child {
+			margin-top: 0;
+		}
+
+		// 狭い画面では各段を縦積みに折り返す
+		@media (max-width: 768px) {
+			.detail-top-image,
+			.detail-top-meta,
+			.detail-stats-info,
+			.detail-stats-weapons {
+				flex-basis: 100%;
+			}
 		}
 	}
 }

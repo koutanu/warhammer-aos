@@ -160,13 +160,29 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 	</div>
 
 	<div id="unitDetailModal" class="modal match-unit-detail-modal" style="display: none;">
-		<div class="modal-content detail-modal-content">
+		<div class="modal-content detail-modal-content detail-modal-content--datasheet">
 			<h3 id="detailUnitName">ユニット名</h3>
-			<div class="detail-modal-body-wrapper">
-				<div class="detail-main-info-col">
+
+			<!-- 1段目: 画像 / キーワード -->
+			<div class="detail-top-row">
+				<div class="detail-top-image">
 					<div class="detail-unit-image-wrap">
 						<img id="detailUnitImage" src="" alt="" loading="lazy" style="display:none;">
 					</div>
+				</div>
+				<div class="detail-top-meta">
+					<div class="detail-top-keywords">
+						<div class="detail-description-section">
+							<h4>KEYWORDS / キーワード</h4>
+							<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 2段目: 基本情報 / 武器 -->
+			<div class="detail-stats-row">
+				<div class="detail-stats-info">
 					<div class="detail-status-grid">
 						<div class="status-box">
 							<div class="status-label">移動力</div>
@@ -186,8 +202,8 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 						</div>
 					</div>
 				</div>
-				<div class="detail-weapons-col">
-					<h4>WEAPONS / 武器</h4>
+				<div class="detail-stats-weapons">
+					<h4 class="detail-weapons-section-title">WEAPONS / 武器</h4>
 					<div class="table-responsive">
 						<table class="detail-weapons-table">
 							<thead>
@@ -204,12 +220,10 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 							<tbody id="detailWeaponsBody"></tbody>
 						</table>
 					</div>
-					<div class="detail-description-section">
-						<h4>KEYWORDS / キーワード</h4>
-						<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
-					</div>
 				</div>
 			</div>
+
+			<!-- 3段目: アビリティ -->
 			<div class="detail-description-section">
 				<h4>ABILITIES / 特殊能力</h4>
 				<div id="detailUnitAbilitiesContainer"></div>

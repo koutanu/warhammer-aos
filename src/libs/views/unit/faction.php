@@ -418,13 +418,39 @@ $freqJa = function (array $row) {
 	<!-- ユニット詳細モーダル（roster/unit_detail.js が制御）。
 	     タブパネルの display:none の影響を受けないよう、タブの外側に配置する。 -->
 	<div id="unitDetailModal" class="modal" style="display: none;">
-		<div class="modal-content detail-modal-content">
+		<div class="modal-content detail-modal-content detail-modal-content--datasheet">
 			<h3 id="detailUnitName">ユニット名</h3>
-			<div class="detail-modal-body-wrapper">
-				<div class="detail-main-info-col">
+
+			<!-- 1段目: 画像 / 連隊編成 / キーワード -->
+			<div class="detail-top-row">
+				<div class="detail-top-image">
 					<div class="detail-unit-image-wrap">
 						<img id="detailUnitImage" src="" alt="" loading="lazy" style="display:none;">
 					</div>
+				</div>
+				<div class="detail-top-meta">
+					<div class="detail-top-regiment">
+						<div class="detail-description-section" id="detailRegimentSection" style="display:none;">
+							<h4>連隊編成 / REGIMENT</h4>
+							<div id="detailRegimentOptions" class="detail-regiment-options"></div>
+						</div>
+					</div>
+					<div class="detail-top-keywords">
+						<div class="detail-description-section">
+							<h4>KEYWORDS / キーワード</h4>
+							<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
+						</div>
+						<div class="detail-description-section">
+							<p id="detailUnitFlavorText" class="detail-flavor-text">-</p>
+						</div>
+						<span id="detailUnitPoints" class="unit-card-points">pt</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- 2段目: 基本情報 / 武器 -->
+			<div class="detail-stats-row">
+				<div class="detail-stats-info">
 					<div class="detail-status-grid">
 						<div class="status-box">
 							<div class="status-label">移動力</div>
@@ -444,8 +470,8 @@ $freqJa = function (array $row) {
 						</div>
 					</div>
 				</div>
-				<div class="detail-weapons-col">
-					<h4>⚔️ WEAPONS PROFILE</h4>
+				<div class="detail-stats-weapons">
+					<h4 class="detail-weapons-section-title">WEAPONS / 武器</h4>
 					<div class="table-responsive">
 						<table class="detail-weapons-table">
 							<thead>
@@ -462,20 +488,10 @@ $freqJa = function (array $row) {
 							<tbody id="detailWeaponsBody"></tbody>
 						</table>
 					</div>
-					<div class="detail-description-section" id="detailRegimentSection" style="display:none;">
-						<h4>連隊編成 / REGIMENT</h4>
-						<div id="detailRegimentOptions" class="detail-regiment-options"></div>
-					</div>
-					<div class="detail-description-section">
-						<h4>KEYWORDS / キーワード</h4>
-						<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
-					</div>
-					<div class="detail-description-section">
-						<p id="detailUnitFlavorText" class="detail-flavor-text">-</p>
-					</div>
-					<span id="detailUnitPoints" class="unit-card-points">pt</span>
 				</div>
 			</div>
+
+			<!-- 3段目: アビリティ -->
 			<div class="detail-description-section">
 				<h4>ABILITIES / 特殊能力</h4>
 				<div id="detailUnitAbilitiesContainer"></div>
