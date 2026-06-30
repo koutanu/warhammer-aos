@@ -8,6 +8,7 @@ const MatchPhases = {
 	/** ステッパー短縮ラベル */
 	LABELS: {
 		deployment: "配置",
+		round_start: "ラウンド開始",
 		hero: "ヒーロー",
 		movement: "移動",
 		shooting: "射撃",
@@ -20,6 +21,7 @@ const MatchPhases = {
 	/** フェーズ正式名称（コアルール準拠） */
 	PHASE_LABELS_JA: {
 		deployment: "初期配置フェイズ",
+		round_start: "ラウンド開始時",
 		hero: "ヒーローフェーズ",
 		movement: "移動フェイズ",
 		shooting: "射撃フェイズ",
@@ -80,6 +82,7 @@ const MatchPhases = {
 
 	/** icon_type が無い旧データ向けのフォールバック（正規化フェイズ → アイコン） */
 	ICON_BY_PHASE: {
+		round_start: "abSpecial.png",
 		hero: "abControl.png",
 		movement: "abMovement.png",
 		shooting: "abShooting.png",
@@ -120,6 +123,7 @@ const MatchPhases = {
 			.toUpperCase();
 		if (!raw) return "any";
 		if (raw.includes("DEPLOY")) return "deployment";
+		if (raw.includes("ROUND") && raw.includes("START")) return "round_start";
 		if (raw.includes("START") && raw.includes("TURN")) return "hero";
 		if (raw.includes("HERO")) return "hero";
 		if (raw.includes("MOVEMENT") || raw === "MOVE") return "movement";
@@ -280,6 +284,7 @@ const MatchPhases = {
 		return (
 			scope === "once_per_turn" ||
 			scope === "once_per_phase" ||
+			scope === "once_per_round" ||
 			scope === "once_per_battle"
 		);
 	},
@@ -297,6 +302,8 @@ const MatchPhases = {
 		if (activation === "passive") return { kind: "passive", label: "パッシブ" };
 		if (scope === "once_per_battle")
 			return { kind: "battle", label: "バトルに1回" + army };
+		if (scope === "once_per_round")
+			return { kind: "turn", label: "ラウンドに1回" + army };
 		if (scope === "once_per_turn")
 			return { kind: "turn", label: "ターンに1回" + army };
 		if (scope === "once_per_phase")

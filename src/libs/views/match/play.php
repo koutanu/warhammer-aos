@@ -108,6 +108,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					<div class="phase-turn-tabs">
 						<button type="button" id="phaseTurnMy" class="phase-turn-tab active">自分のターン</button>
 						<button type="button" id="phaseTurnOpponent" class="phase-turn-tab">相手のターン</button>
+						<button type="button" id="btnShowRoundStart" class="btn-show-round-start" style="display:none;">ラウンド開始字に使えるアビリティ</button>
 					</div>
 					<p id="phaseStatusLine" class="phase-status-line">-</p>
 					<div id="phaseStepper" class="phase-stepper"></div>
@@ -131,6 +132,18 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 			</div>
 			<div class="first-player-modal-actions">
 				<button type="button" id="firstPlayerModalCancel" class="btn-secondary">キャンセル</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="roundStartModal" class="modal-overlay" style="display:none;">
+		<div class="modal-content round-start-modal-content">
+			<h3 id="roundStartTitle">ラウンド開始時に使えるアビリティ</h3>
+			<p class="round-start-modal-lead">このラウンドの開始時に確認・使用するアビリティです。</p>
+			<div id="roundStartList" class="phase-ability-list"></div>
+			<p id="roundStartEmpty" class="phase-ability-empty" style="display:none;"></p>
+			<div class="round-start-modal-actions">
+				<button type="button" id="roundStartClose" class="btn-submit">確認した</button>
 			</div>
 		</div>
 	</div>

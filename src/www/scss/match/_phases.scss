@@ -46,6 +46,27 @@
 		display: flex;
 		gap: 0.35rem;
 		margin-bottom: 0.75rem;
+		align-items: center;
+
+		.btn-show-round-start {
+			margin-left: auto;
+			padding: 0.35rem 0.6rem;
+			border: 1px solid $color-accent;
+			background: rgba($color-accent, 0.12);
+			color: $color-accent;
+			border-radius: 4px;
+			font-size: 0.75rem;
+			font-weight: bold;
+			cursor: pointer;
+
+			&:hover {
+				background: rgba($color-accent, 0.22);
+			}
+
+			&:active {
+				transform: scale(0.97);
+			}
+		}
 	}
 
 	.phase-turn-tab {
@@ -607,6 +628,11 @@
 		background: rgba($color-background, 0.6);
 		border: 1px solid rgba($color-main, 0.4);
 		border-radius: 6px;
+		cursor: pointer;
+
+		&:hover {
+			border-color: rgba($color-accent, 0.6);
+		}
 
 		&.is-hero {
 			border-color: rgba($color-accent, 0.6);

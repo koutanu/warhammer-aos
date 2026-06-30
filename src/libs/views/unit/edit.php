@@ -255,10 +255,10 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 			</div>
 
 			<?php
-			$ABILITY_PHASE_OPTS = ['hero' => 'ヒーロー', 'movement' => '移動', 'shooting' => '射撃', 'charge' => '突撃', 'combat' => '戦闘', 'end' => '終了', 'deployment' => '配置', 'any' => '全般'];
+			$ABILITY_PHASE_OPTS = ['round_start' => 'ラウンド開始', 'hero' => 'ヒーロー', 'movement' => '移動', 'shooting' => '射撃', 'charge' => '突撃', 'combat' => '戦闘', 'end' => '終了', 'deployment' => '配置', 'any' => '全般'];
 			$ABILITY_TURN_OPTS = ['your' => '自分のターン', 'opponent' => '相手のターン', 'any' => 'いつでも', 'battle' => 'バトル中'];
 			$ABILITY_ACTIVATION_OPTS = ['active' => '能動（アクティブ）', 'passive' => 'パッシブ（常時）', 'reaction' => 'リアクション'];
-			$ABILITY_SCOPE_OPTS = ['unlimited' => '無制限', 'once_per_turn' => 'ターンに1回', 'once_per_phase' => 'フェイズに1回', 'once_per_battle' => 'バトルに1回'];
+			$ABILITY_SCOPE_OPTS = ['unlimited' => '無制限', 'once_per_turn' => 'ターンに1回', 'once_per_phase' => 'フェイズに1回', 'once_per_round' => 'ラウンドに1回', 'once_per_battle' => 'バトルに1回'];
 			$ABILITY_PER_OPTS = ['unit' => 'ユニット', 'army' => 'アーミー'];
 			$ABILITY_ICON_OPTS = ['' => '（なし）', 'Offensive' => 'Offensive', 'Defensive' => 'Defensive', 'Movement' => 'Movement', 'Shooting' => 'Shooting', 'Damage' => 'Damage', 'Control' => 'Control', 'Rallying' => 'Rallying', 'Special' => 'Special'];
 			$ABILITY_CASTING_TYPE_OPTS = ['' => '（なし）', 'spell' => '詠唱値', 'prayer' => '祈祷値'];

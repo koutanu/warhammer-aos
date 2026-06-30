@@ -88,6 +88,28 @@ document.addEventListener("DOMContentLoaded", () => {
 			box.style.display = open ? "none" : "block";
 			detailBtn.textContent = open ? "詳細" : "閉じる";
 		});
+
+		els.regiments?.addEventListener("click", (e) => {
+			openUnitDetailFromRow(e.target.closest(".deployment-unit"));
+		});
+
+		els.regiments?.addEventListener("keydown", (e) => {
+			if (e.key !== "Enter" && e.key !== " ") return;
+			const row = e.target.closest(".deployment-unit");
+			if (!row) return;
+			e.preventDefault();
+			openUnitDetailFromRow(row);
+		});
+	}
+
+	function openUnitDetailFromRow(row) {
+		if (!row || !row.dataset.unitId) return;
+		if (!window.RosterUnitDetail) return;
+		window.RosterUnitDetail.show({
+			id: parseInt(row.dataset.unitId, 10),
+			name: row.dataset.unitName,
+			keywords: row.dataset.unitKeywords,
+		});
 	}
 
 	function getPlayer() {
@@ -233,7 +255,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			role || reinforced
 				? `<span class="deployment-unit-badges">${role}${reinforced}</span>`
 				: "";
-		return `<div class="deployment-unit${isHero ? " is-hero" : ""}">
+		return `<div class="deployment-unit${isHero ? " is-hero" : ""}"
+			role="button" tabindex="0"
+			data-unit-id="${unit.id}"
+			data-unit-name="${escapeAttr(unit.name)}"
+			data-unit-keywords="${escapeAttr(unit.keywords || "")}">
 			<span class="deployment-unit-thumb">${unitThumbHtml(unit)}</span>
 			<span class="deployment-unit-info">
 				<span class="deployment-unit-name">${escapeHtml(unit.name)}${badges}</span>

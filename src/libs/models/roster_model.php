@@ -1167,6 +1167,9 @@ class Roster_Model extends Model
 		if (strpos($raw, 'DEPLOY') !== false) {
 			return 'deployment';
 		}
+		if (strpos($raw, 'ROUND') !== false && strpos($raw, 'START') !== false) {
+			return 'round_start';
+		}
 		if (strpos($raw, 'HERO') !== false) {
 			return 'hero';
 		}

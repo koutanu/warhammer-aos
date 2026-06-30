@@ -251,16 +251,32 @@
 			border-radius: 8px;
 
 			&.alliance-order {
-				background: linear-gradient(180deg, rgba($color-accent, 0.08), transparent);
+				background: linear-gradient(
+					180deg,
+					rgba($color-accent, 0.08),
+					transparent
+				);
 			}
 			&.alliance-chaos {
-				background: linear-gradient(180deg, rgba($color-blood, 0.1), transparent);
+				background: linear-gradient(
+					180deg,
+					rgba($color-blood, 0.1),
+					transparent
+				);
 			}
 			&.alliance-death {
-				background: linear-gradient(180deg, rgba($color-magic, 0.08), transparent);
+				background: linear-gradient(
+					180deg,
+					rgba($color-magic, 0.08),
+					transparent
+				);
 			}
 			&.alliance-destruction {
-				background: linear-gradient(180deg, rgba($color-brick, 0.08), transparent);
+				background: linear-gradient(
+					180deg,
+					rgba($color-brick, 0.08),
+					transparent
+				);
 			}
 		}
 
@@ -429,16 +445,32 @@
 		}
 
 		&.alliance-order {
-			background: linear-gradient(180deg, rgba($color-accent, 0.06), transparent);
+			background: linear-gradient(
+				180deg,
+				rgba($color-accent, 0.06),
+				transparent
+			);
 		}
 		&.alliance-chaos {
-			background: linear-gradient(180deg, rgba($color-blood, 0.08), transparent);
+			background: linear-gradient(
+				180deg,
+				rgba($color-blood, 0.08),
+				transparent
+			);
 		}
 		&.alliance-death {
-			background: linear-gradient(180deg, rgba($color-magic, 0.06), transparent);
+			background: linear-gradient(
+				180deg,
+				rgba($color-magic, 0.06),
+				transparent
+			);
 		}
 		&.alliance-destruction {
-			background: linear-gradient(180deg, rgba($color-brick, 0.06), transparent);
+			background: linear-gradient(
+				180deg,
+				rgba($color-brick, 0.06),
+				transparent
+			);
 		}
 
 		.player-header {
@@ -1145,7 +1177,8 @@
 			border-collapse: collapse;
 			font-size: 0.8rem;
 
-			th, td {
+			th,
+			td {
 				padding: 0.5rem;
 				border-bottom: 1px solid #444;
 				text-align: center;

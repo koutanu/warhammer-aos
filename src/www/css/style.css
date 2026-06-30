@@ -3516,6 +3516,38 @@ button {
 	border: 1px solid #2f4f4f;
 	color: #f0ead6;
 }
+.match.scoreboard .modal-overlay .round-start-modal-content {
+	background: #1a2626;
+	border: 2px solid #2f4f4f;
+	border-radius: 8px;
+	padding: 1.5rem;
+	max-width: 560px;
+	width: 92%;
+	max-height: 85vh;
+	display: flex;
+	flex-direction: column;
+}
+.match.scoreboard .modal-overlay .round-start-modal-content h3 {
+	margin: 0 0 0.5rem;
+	color: #d4af37;
+	text-align: center;
+}
+.match.scoreboard .modal-overlay .round-start-modal-content .round-start-modal-lead {
+	margin: 0 0 1rem;
+	color: rgba(240, 234, 214, 0.8);
+	font-size: 0.85rem;
+	text-align: center;
+}
+.match.scoreboard .modal-overlay .round-start-modal-content .phase-ability-list {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+.match.scoreboard .modal-overlay .round-start-modal-content .round-start-modal-actions {
+	display: flex;
+	justify-content: center;
+	margin-top: 1.25rem;
+}
 .match.scoreboard .match-roster-view {
 	flex: 1;
 	min-height: 0;
@@ -3876,6 +3908,24 @@ button {
 	display: flex;
 	gap: 0.35rem;
 	margin-bottom: 0.75rem;
+	align-items: center;
+}
+.match.scoreboard .phase-turn-tabs .btn-show-round-start {
+	margin-left: auto;
+	padding: 0.35rem 0.6rem;
+	border: 1px solid #d4af37;
+	background: rgba(212, 175, 55, 0.12);
+	color: #d4af37;
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: bold;
+	cursor: pointer;
+}
+.match.scoreboard .phase-turn-tabs .btn-show-round-start:hover {
+	background: rgba(212, 175, 55, 0.22);
+}
+.match.scoreboard .phase-turn-tabs .btn-show-round-start:active {
+	transform: scale(0.97);
 }
 .match.scoreboard .phase-turn-tab {
 	padding: 0.35rem 0.75rem;
@@ -4360,6 +4410,10 @@ button {
 	background: rgba(19, 28, 28, 0.6);
 	border: 1px solid rgba(47, 79, 79, 0.4);
 	border-radius: 6px;
+	cursor: pointer;
+}
+.match.scoreboard .deployment-unit:hover {
+	border-color: rgba(212, 175, 55, 0.6);
 }
 .match.scoreboard .deployment-unit.is-hero {
 	border-color: rgba(212, 175, 55, 0.6);

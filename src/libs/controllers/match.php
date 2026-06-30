@@ -161,6 +161,7 @@ class Matchplay extends Controller
                 $this->class_name . '/state.js',
                 $this->class_name . '/scoreboard.js',
                 $this->class_name . '/ability_panel.js',
+                $this->class_name . '/round_start.js',
                 'roster/unit_detail.js',
                 $this->class_name . '/roster_panel.js',
                 $this->class_name . '/deployment.js',

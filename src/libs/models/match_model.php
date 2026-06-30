@@ -366,19 +366,24 @@ class Match_Model extends Model
         }
 
         $turnCounter = (int)($match['game_turn_counter'] ?? 1);
+        $gameRound = (int)($match['game_battle_round'] ?? 1);
         $map = [];
 
         foreach ($this->getAbilityUsageRows($matchId) as $row) {
             $slot = (int)$row['player_slot'];
             $key = $row['ability_key'];
             $usedInTurn = (int)$row['used_in_turn'];
-            $battleScoped = $this->getAbilityScopeFromKey($key, $slot, $matchId) === 'battle';
+            $usedInGameRound = (int)$row['used_in_game_round'];
+            $scope = $this->getAbilityScopeFromKey($key, $slot, $matchId);
+            $battleScoped = $scope === 'battle';
+            $roundScoped = $scope === 'round';
             $activeThisTurn = $usedInTurn === $turnCounter;
+            $activeThisRound = $roundScoped && $usedInGameRound === $gameRound;
 
             $map[$slot][$key] = [
-                'used'             => $battleScoped || $activeThisTurn,
+                'used'             => $battleScoped || $activeThisRound || $activeThisTurn,
                 'usedInTurn'       => $usedInTurn,
-                'usedInGameRound'  => (int)$row['used_in_game_round'],
+                'usedInGameRound'  => $usedInGameRound,
                 'usedAtPhase'      => $row['used_at_phase'] ?? '',
                 'activeThisTurn'   => $activeThisTurn,
                 'battleScoped'     => $battleScoped,
@@ -590,13 +595,16 @@ class Match_Model extends Model
             ]
         );
 
-        $isBattleScoped = $this->getAbilityScopeFromKey($abilityKey, $playerSlot, $matchId) === 'battle';
+        $scope = $this->getAbilityScopeFromKey($abilityKey, $playerSlot, $matchId);
+        $isBattleScoped = $scope === 'battle';
+        $isRoundScoped = $scope === 'round';
 
         if (!empty($rows)) {
             $row = $rows[0];
             $isActive = (int)$row['used_in_turn'] === $turnCounter;
-            // battle スコープは過去ターンに使用済みでも、再タップで使用取り消し（DELETE）できる
-            if ($isActive || $isBattleScoped) {
+            $isActiveThisRound = $isRoundScoped && (int)$row['used_in_game_round'] === $gameRound;
+            // battle/round スコープは過去ターンに使用済みでも、対象期間内なら再タップで使用取り消し（DELETE）できる
+            if ($isActive || $isBattleScoped || $isActiveThisRound) {
                 $this->db->executesql(
                     'DELETE FROM t_match_ability_usage WHERE id = :id;',
                     ['id' => $row['id']]
@@ -653,7 +661,10 @@ class Match_Model extends Model
         );
 
         foreach ($rows as $row) {
-            if ($this->getAbilityScopeFromKey($row['ability_key'], $playerSlot, $matchId) !== 'battle') {
+            // battle/round スコープはターン終了では消さない。
+            // round はラウンド進行時に used_in_game_round の不一致で未使用扱いになる。
+            $scope = $this->getAbilityScopeFromKey($row['ability_key'], $playerSlot, $matchId);
+            if ($scope !== 'battle' && $scope !== 'round') {
                 $this->db->executesql(
                     'DELETE FROM t_match_ability_usage WHERE id = :id;',
                     ['id' => $row['id']]
@@ -687,12 +698,19 @@ class Match_Model extends Model
         if ($rosterId > 0) {
             require_once MODELS . 'roster_model.php';
             $rosterModel = new Roster_Model();
-            foreach ($rosterModel->getRosterAbilityDeckForMatch($rosterId) as $entry) {
-                // usage_scope(once_per_battle)のみ battle スコープ(ゲーム終了まで使用済み保持)。
-                // それ以外(once_per_turn/once_per_phase/unlimited)は turn スコープ(毎ターンリセット)。
-                $map[$entry['key']] = ($entry['usageScope'] ?? '') === 'once_per_battle'
-                    ? 'battle'
-                    : 'turn';
+			foreach ($rosterModel->getRosterAbilityDeckForMatch($rosterId) as $entry) {
+                // usage_scope によって使用済みの保持スコープを決める。
+                // once_per_battle -> battle (ゲーム終了まで保持)
+                // once_per_round  -> round  (同一バトルラウンド内のみ保持)
+                // それ以外(once_per_turn/once_per_phase/unlimited) -> turn (毎ターンリセット)
+                $scope = $entry['usageScope'] ?? '';
+                if ($scope === 'once_per_battle') {
+                    $map[$entry['key']] = 'battle';
+                } elseif ($scope === 'once_per_round') {
+                    $map[$entry['key']] = 'round';
+                } else {
+                    $map[$entry['key']] = 'turn';
+                }
             }
         }
 
