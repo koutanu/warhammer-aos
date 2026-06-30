@@ -471,7 +471,7 @@ $freqJa = function (array $row) {
 					</div>
 				</div>
 				<div class="detail-stats-weapons">
-					<h4 class="detail-weapons-section-title">WEAPONS / 武器</h4>
+					<!-- <h4 class="detail-weapons-section-title">WEAPONS / 武器</h4> -->
 					<div class="table-responsive">
 						<table class="detail-weapons-table">
 							<thead>
