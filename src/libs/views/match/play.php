@@ -18,7 +18,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 
 			<div class="match-mode-tabs">
 				<button type="button" id="tabModeRoster" class="match-mode-tab active">ロスター</button>
-				<button type="button" id="tabModePhase" class="match-mode-tab">フェーズ</button>
+				<button type="button" id="tabModePhase" class="match-mode-tab">フェイズ</button>
 			</div>
 
 			<div class="vp-bar" id="vpBar">

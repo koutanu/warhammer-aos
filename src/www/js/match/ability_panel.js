@@ -272,6 +272,17 @@ document.addEventListener("DOMContentLoaded", () => {
 		return `${names[0]} 他${names.length - 1}`;
 	}
 
+	// 参照ユニットが1体だけのアビリティを同一ユニットでまとめるためのソートキー。
+	// 複数ユニット共有・ユニット無しは "" を返し、従来位置にまとめる。
+	function unitGroupKey(ab) {
+		const names = ab.unitNames?.length
+			? ab.unitNames
+			: ab.unitName
+				? [ab.unitName]
+				: [];
+		return names.length === 1 ? names[0] : "";
+	}
+
 	function renderAbilities(state, game, myPlayer, isMyTurn) {
 		if (!els.abilityList) return;
 
@@ -340,6 +351,10 @@ document.addEventListener("DOMContentLoaded", () => {
 						if (aHasCp !== bHasCp) return aHasCp - bHasCp;
 						if (aCp !== bCp) return aCp - bCp;
 					}
+					// 参照ユニットが1体だけのアビリティを同一ユニットで連続表示
+					const aUnit = unitGroupKey(a);
+					const bUnit = unitGroupKey(b);
+					if (aUnit !== bUnit) return aUnit.localeCompare(bUnit);
 					return (a.name || "").localeCompare(b.name || "");
 				});
 
@@ -372,7 +387,13 @@ document.addEventListener("DOMContentLoaded", () => {
 			body.style.display = "none";
 			passives
 				.slice()
-				.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+				.sort((a, b) => {
+					// 参照ユニットが1体だけのアビリティを同一ユニットで連続表示
+					const aUnit = unitGroupKey(a);
+					const bUnit = unitGroupKey(b);
+					if (aUnit !== bUnit) return aUnit.localeCompare(bUnit);
+					return (a.name || "").localeCompare(b.name || "");
+				})
 				.forEach((ab) =>
 					body.appendChild(buildAbilityCard(ab, { passive: true })),
 				);

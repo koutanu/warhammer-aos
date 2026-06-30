@@ -16,7 +16,7 @@ class Rule_Model extends Model
 
 	public function getCommonAbilities()
 	{
-		$sql = "SELECT * FROM m_common_abilities ORDER BY line_number;";
+		$sql = "SELECT * FROM m_common_abilities ORDER BY sort_order;";
 		return $this->db->select($sql);
 	}
 }

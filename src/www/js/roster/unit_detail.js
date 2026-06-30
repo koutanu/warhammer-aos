@@ -36,6 +36,29 @@ window.RosterUnitDetail = (function () {
 		return `<img src="${src}" alt="${alt}" onerror="this.onerror=null;this.src='${fallbackSrc}';" style="vertical-align:middle;height:20px;margin-right:5px;">`;
 	}
 
+	/**
+	 * 武器の種別（近接/射撃）からアイコン <img> を生成する。
+	 * フェーズアイコンと同じ流儀で、近接=combat / 射撃=shooting のアイコンを流用する。
+	 * 判定は w.type（'melee'/'ranged'）優先、欠落時は w.rng の有無でフォールバック。
+	 */
+	function buildWeaponIcon(baseUrl, weapon) {
+		const w = weapon || {};
+		const type = String(w.type || "")
+			.trim()
+			.toLowerCase();
+		const isRanged = type === "ranged" || (type === "" && !!w.rng);
+		const phase = isRanged ? "shooting" : "combat";
+		const file =
+			typeof MatchPhases !== "undefined" && MatchPhases.ICON_BY_PHASE
+				? MatchPhases.ICON_BY_PHASE[phase]
+				: isRanged
+					? "abShooting.png"
+					: "abOffensive.png";
+		const alt = isRanged ? "射撃武器" : "近接武器";
+		const fallbackSrc = `${baseUrl}assets/icons/${ABILITY_ICON_FALLBACK}`;
+		return `<img src="${baseUrl}assets/icons/${file}" alt="${alt}" title="${alt}" onerror="this.onerror=null;this.src='${fallbackSrc}';" style="vertical-align:middle;height:20px;margin-right:5px;">`;
+	}
+
 	async function show(unit) {
 		const unitDetailModal = getEl(modalId);
 		if (!unitDetailModal || !unit) return;
@@ -186,12 +209,13 @@ window.RosterUnitDetail = (function () {
 				if (detailData.weapons && detailData.weapons.length > 0) {
 					detailData.weapons.forEach((w) => {
 						const tr = document.createElement("tr");
-						const rangeDisplay = w.rng ? `${w.rng}"` : "Melee";
+						const rangeDisplay = w.rng ? `${w.rng}"` : "近接";
 						const badge = w.abilities
 							? `<br><small style="color: #ffcc00; font-size:0.75rem;">★ ${w.abilities}</small>`
 							: "";
+						const weaponIcon = buildWeaponIcon(baseUrl, w);
 						tr.innerHTML = `
-							<td><strong>${w.name || "不明な武器"}</strong>${badge}</td>
+							<td>${weaponIcon}<strong>${w.name || "不明な武器"}</strong>${badge}</td>
 							<td>${rangeDisplay}</td>
 							<td>${w.atk ?? "-"}</td>
 							<td>${w.hit ? w.hit + "+" : "-"}</td>
@@ -239,7 +263,9 @@ window.RosterUnitDetail = (function () {
 								: "";
 						// 手動翻訳(trigger_condition_ja)があるときは、フェイズ・頻度の情報を
 						// 内包する想定なので、両バッジをこの1バッジにまとめて置き換える。
-						const triggerConditionJa = (ab.trigger_condition_ja || "").trim();
+						const triggerConditionJa = (
+							ab.trigger_condition_ja || ""
+						).trim();
 						let phaseBadge;
 						let typeBadge;
 						if (triggerConditionJa) {
@@ -258,7 +284,8 @@ window.RosterUnitDetail = (function () {
 								? `<span style="font-size:0.7rem; background:#1d3a5f; padding:2px 6px; border-radius:3px; margin-left:4px; color:#9ad;">CP ${Number(ab.command_point)}</span>`
 								: "";
 						const castStr = formatCastingValue(ab.casting_value);
-						const castLabel = ab.casting_type === "prayer" ? "祈祷" : "詠唱";
+						const castLabel =
+							ab.casting_type === "prayer" ? "祈祷" : "詠唱";
 						const castBadge = castStr
 							? `<span style="font-size:0.7rem; background:#3a1d4f; padding:2px 6px; border-radius:3px; margin-left:4px; color:#caa;">${castLabel} ${castStr}</span>`
 							: "";
