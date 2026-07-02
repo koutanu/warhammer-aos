@@ -186,7 +186,7 @@ class Unit_Model extends Model
 
 	public function getBattleFormations($factionId)
 	{
-		$sql = "SELECT * FROM m_battle_formations WHERE faction_id = :id ORDER BY formation_name ASC, id ASC;";
+		$sql = "SELECT * FROM m_battle_formations WHERE faction_id = :id AND is_hidden = 0 ORDER BY formation_name ASC, id ASC;";
 		return $this->db->select($sql, ['id' => (int)$factionId]);
 	}
 
@@ -221,7 +221,7 @@ class Unit_Model extends Model
 	{
 		$sql = "SELECT id, category, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, description
                 FROM m_heroic_traits
-                WHERE faction_id = :id
+                WHERE faction_id = :id AND is_hidden = 0 
                 ORDER BY category ASC, name ASC;";
 		return $this->db->select($sql, ['id' => (int)$factionId]);
 	}
@@ -230,7 +230,7 @@ class Unit_Model extends Model
 	{
 		$sql = "SELECT id, category, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, flavor_text
                 FROM m_artefacts_of_power
-                WHERE faction_id = :id
+                WHERE faction_id = :id AND is_hidden = 0 
                 ORDER BY category ASC, name ASC;";
 		return $this->db->select($sql, ['id' => (int)$factionId]);
 	}

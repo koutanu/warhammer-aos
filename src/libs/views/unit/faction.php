@@ -185,10 +185,10 @@ $freqJa = function (array $row) {
 						<div class="option-card">
 							<div class="option-card-head">
 								<span class="option-card-name"><?= $this->h($f['formation_name']); ?></span>
-								<?php $fFreq = $freqJa($f); ?>
-								<?php if ($fFreq !== ''): ?>
-									<span class="option-badge option-badge--cat"><?= $this->h($fFreq); ?></span>
-								<?php endif; ?>
+								<!-- <?php $fFreq = $freqJa($f); ?> -->
+								<!-- <?php if ($fFreq !== ''): ?> -->
+								<!-- <span class="option-badge option-badge--cat"><?= $this->h($fFreq); ?></span> -->
+								<!-- <?php endif; ?> -->
 								<?php if (!empty($f['trigger_condition_ja'])): ?>
 									<span class="option-badge"><?= $this->h($f['trigger_condition_ja']); ?></span>
 								<?php elseif (!empty($f['trigger_phase'])): ?>
@@ -221,10 +221,10 @@ $freqJa = function (array $row) {
 						<div class="option-card">
 							<div class="option-card-head">
 								<span class="option-card-name"><?= $this->h($bt['name']); ?></span>
-								<?php $btFreq = $freqJa($bt); ?>
+								<!-- <?php $btFreq = $freqJa($bt); ?>
 								<?php if ($btFreq !== ''): ?>
 									<span class="option-badge option-badge--cat"><?= $this->h($btFreq); ?></span>
-								<?php endif; ?>
+								<?php endif; ?> -->
 								<?php if (isset($bt['command_point']) && $bt['command_point'] !== null && $bt['command_point'] !== ''): ?>
 									<span class="option-card-points"><?= $this->h($bt['command_point']); ?> CP</span>
 								<?php endif; ?>
@@ -348,17 +348,17 @@ $freqJa = function (array $row) {
 						<div class="option-card">
 							<div class="option-card-head">
 								<span class="option-card-name"><?= $this->h($t['name']); ?></span>
-								<?php if (!empty($t['category'])): ?>
+								<!-- <?php if (!empty($t['category'])): ?>
 									<span class="option-badge option-badge--cat"><?= $this->h($t['category']); ?></span>
-								<?php endif; ?>
+								<?php endif; ?> -->
 								<?php if (!empty($t['points'])): ?>
 									<span class="option-card-points"><?= $this->h($t['points']); ?> pt</span>
 								<?php endif; ?>
 							</div>
 							<?php $tFreq = $freqJa($t); ?>
-							<?php if ($tFreq !== ''): ?>
+							<!-- <?php if ($tFreq !== ''): ?>
 								<span class="option-badge option-badge--cat"><?= $this->h($tFreq); ?></span>
-							<?php endif; ?>
+							<?php endif; ?> -->
 							<?php if (!empty($t['trigger_condition_ja'])): ?>
 								<span class="option-badge"><?= $this->h($t['trigger_condition_ja']); ?></span>
 							<?php elseif (!empty($t['trigger_phase'])): ?>
@@ -387,17 +387,17 @@ $freqJa = function (array $row) {
 						<div class="option-card">
 							<div class="option-card-head">
 								<span class="option-card-name"><?= $this->h($a['name']); ?></span>
-								<?php if (!empty($a['category'])): ?>
+								<!-- <?php if (!empty($a['category'])): ?>
 									<span class="option-badge option-badge--cat"><?= $this->h($a['category']); ?></span>
-								<?php endif; ?>
+								<?php endif; ?> -->
 								<?php if (!empty($a['points'])): ?>
 									<span class="option-card-points"><?= $this->h($a['points']); ?> pt</span>
 								<?php endif; ?>
 							</div>
-							<?php $aFreq = $freqJa($a); ?>
+							<!-- <?php $aFreq = $freqJa($a); ?>
 							<?php if ($aFreq !== ''): ?>
 								<span class="option-badge option-badge--cat"><?= $this->h($aFreq); ?></span>
-							<?php endif; ?>
+							<?php endif; ?> -->
 							<?php if (!empty($a['trigger_condition_ja'])): ?>
 								<span class="option-badge"><?= $this->h($a['trigger_condition_ja']); ?></span>
 							<?php elseif (!empty($a['trigger_phase'])): ?>

@@ -35,7 +35,7 @@ class Roster_Model extends Model
 
 	public function getBattleFormations($id)
 	{
-		$sql = "SELECT * FROM m_battle_formations WHERE faction_id = :id;";
+		$sql = "SELECT * FROM m_battle_formations WHERE faction_id = :id AND is_hidden = 0;";
 		return $this->db->select($sql, ['id' => $id]);
 	}
 
@@ -289,7 +289,7 @@ class Roster_Model extends Model
 	{
 		$sql = "SELECT id, category, source_reference, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, description
                 FROM m_heroic_traits
-                WHERE faction_id = :id AND is_hero_only = 1
+                WHERE faction_id = :id AND is_hero_only = 1 AND is_hidden = 0
                 ORDER BY source_reference ASC, category ASC, name ASC;";
 		return $this->db->select($sql, ['id' => $factionId]);
 	}
@@ -298,7 +298,7 @@ class Roster_Model extends Model
 	{
 		$sql = "SELECT id, category, source_reference, name, points, is_hero_only, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, effect, flavor_text
                 FROM m_artefacts_of_power
-                WHERE faction_id = :id AND is_hero_only = 1
+                WHERE faction_id = :id AND is_hero_only = 1 AND is_hidden = 0
                 ORDER BY source_reference ASC, category ASC, name ASC;";
 		return $this->db->select($sql, ['id' => $factionId]);
 	}
@@ -486,13 +486,13 @@ class Roster_Model extends Model
 				'sort_order'          => (int)$row['sort_order'],
 				'is_general'          => (int)$row['is_general'],
 				'enhancement_trait'   => $row['enhancement_trait'],
-				'enhancement_artefact'=> $row['enhancement_artefact'],
+				'enhancement_artefact' => $row['enhancement_artefact'],
 				'hero' => [
 					'id'       => (int)$row['hero_unit_id'],
 					'name'     => $row['hero_name'],
 					'points'   => (int)$row['hero_points'],
 					'keywords' => $row['hero_keywords'],
-					'unit_size'=> (int)$row['hero_unit_size'],
+					'unit_size' => (int)$row['hero_unit_size'],
 					'is_general' => (int)($row['hero_is_general'] ?? 0),
 					'is_unique'  => (int)($row['hero_is_unique'] ?? 0),
 					'regiment_options' => $row['hero_regiment_options'],
