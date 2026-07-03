@@ -19,7 +19,7 @@ class Rule extends Controller
 			'token' => $token,
 			'date'  => date('Y-m-d'),
 			'js'    => [$this->class_name . '/index.js'],
-			'coreAbilities' => $this->model->getCoreAbilities(),
+			'unitKeywords' => $this->model->getKeywordsByType('unit'),
 			'commonAbilities' => $this->model->getCommonAbilities(),
 		];
 

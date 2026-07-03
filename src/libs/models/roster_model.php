@@ -72,7 +72,7 @@ class Roster_Model extends Model
 	public function getUnits($faction_id)
 	{
 		$sql = "SELECT u.id, u.name, u.points,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords,
+                       " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
                        u.unit_size, u.is_hero, u.can_reinforce FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.faction_id = :id AND (u.is_hidden = 0 OR u.is_hidden IS NULL)
@@ -112,7 +112,7 @@ class Roster_Model extends Model
 		}
 
 		$sql = "SELECT u.*,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords
+                       " . KeywordSql::displayExpr('u', 'f') . " AS keywords
                 FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.faction_id = :id AND u.{$flagColumn} = 1
@@ -134,7 +134,7 @@ class Roster_Model extends Model
 	{
 		$regimentText = $this->regimentOptionsTextSubquery('u');
 		$sql = "SELECT u.id, u.name, u.points,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords,
+                       " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
                        u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique,
                        {$regimentText} AS regiment_options
                 FROM m_units u
@@ -193,7 +193,7 @@ class Roster_Model extends Model
 	public function getRegimentUnits($faction_id)
 	{
 		$sql = "SELECT u.id, u.name, u.points,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords,
+                       " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
                        u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique                 FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.faction_id = :id AND (u.is_hero = 0 OR u.is_hero IS NULL)
@@ -261,7 +261,7 @@ class Roster_Model extends Model
 	public function getCompanionUnitsForHero(int $heroId, int $factionId): array
 	{
 		$sql = "SELECT u.id, u.name, u.points,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords,
+                       " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
                        u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique,
                        GROUP_CONCAT(DISTINCT ho.option_id) AS option_ids
                 FROM m_units u
@@ -334,7 +334,8 @@ class Roster_Model extends Model
                     JOIN m_regiment_options ro ON ro.id = ue.option_id
                     WHERE ue.unit_id = u.id)";
 		$sql = "SELECT u.*,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords,
+                       " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
+                       " . KeywordSql::wardParamSubquery('u') . " AS ward,
                        {$regimentText} AS regiment_options,
                        {$eligibilityNames} AS regiment_eligibility_names
                 FROM m_units u
@@ -434,10 +435,10 @@ class Roster_Model extends Model
 	{
 		$regimentText = $this->regimentOptionsTextSubquery('u');
 		$sql = "SELECT rr.*, u.name AS hero_name, u.points AS hero_points,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS hero_keywords,
+                       " . KeywordSql::displayExpr('u', 'f') . " AS hero_keywords,
                        u.unit_size AS hero_unit_size, u.is_general AS hero_is_general, u.is_unique AS hero_is_unique,
                        {$regimentText} AS hero_regiment_options,
-                       u.image AS hero_image
+                       u.image AS hero_image, u.movement AS hero_movement
                 FROM t_roster_regiments rr
                 JOIN m_units u ON u.id = rr.hero_unit_id
                 JOIN m_factions f ON f.id = u.faction_id
@@ -454,8 +455,8 @@ class Roster_Model extends Model
 	public function getRosterRegimentUnits(int $regimentId, int $heroId = 0): array
 	{
 		$sql = "SELECT ru.*, u.name, u.points,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords,
-                       u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique, u.image,
+                       " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
+                       u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique, u.image, u.movement,
                        (SELECT GROUP_CONCAT(DISTINCT ue.option_id)
                           FROM t_unit_regiment_eligibility ue
                           JOIN t_hero_regiment_options ho
@@ -469,6 +470,62 @@ class Roster_Model extends Model
 		return $this->db->select($sql, ['regiment_id' => $regimentId, 'hero_id' => $heroId]);
 	}
 
+	/**
+	 * 射撃武器(type=ranged)を1つ以上持つユニット id の一覧を返す。
+	 *
+	 * @param int[] $unitIds
+	 * @return int[]
+	 */
+	private function getUnitIdsWithRangedWeapons(array $unitIds): array
+	{
+		$unitIds = array_values(array_unique(array_filter(array_map('intval', $unitIds))));
+		if (empty($unitIds)) {
+			return [];
+		}
+
+		$bind = [];
+		$placeholders = [];
+		foreach ($unitIds as $i => $id) {
+			$key = 'uid' . $i;
+			$placeholders[] = ':' . $key;
+			$bind[$key] = $id;
+		}
+
+		$sql = 'SELECT DISTINCT unit_id FROM m_unit_weapons
+                WHERE type = \'ranged\' AND unit_id IN (' . implode(',', $placeholders) . ')';
+		$rows = $this->db->select($sql, $bind);
+
+		return array_map('intval', array_column($rows, 'unit_id'));
+	}
+
+	/**
+	 * 武器プロファイル（近接・射撃いずれか）を1つ以上持つユニット id の一覧を返す。
+	 *
+	 * @param int[] $unitIds
+	 * @return int[]
+	 */
+	private function getUnitIdsWithWeapons(array $unitIds): array
+	{
+		$unitIds = array_values(array_unique(array_filter(array_map('intval', $unitIds))));
+		if (empty($unitIds)) {
+			return [];
+		}
+
+		$bind = [];
+		$placeholders = [];
+		foreach ($unitIds as $i => $id) {
+			$key = 'uid' . $i;
+			$placeholders[] = ':' . $key;
+			$bind[$key] = $id;
+		}
+
+		$sql = 'SELECT DISTINCT unit_id FROM m_unit_weapons
+                WHERE unit_id IN (' . implode(',', $placeholders) . ')';
+		$rows = $this->db->select($sql, $bind);
+
+		return array_map('intval', array_column($rows, 'unit_id'));
+	}
+
 	public function getRosterWithDetails(int $rosterId, ?int $userId = null): ?array
 	{
 		$roster = $this->getRosterById($rosterId, $userId);
@@ -477,10 +534,36 @@ class Roster_Model extends Model
 		}
 
 		$regimentRows = $this->getRosterRegiments($rosterId);
+		$regimentUnitsByRow = [];
+		$allUnitIds = [];
+
+		foreach ($regimentRows as $row) {
+			$heroId = (int)$row['hero_unit_id'];
+			if ($heroId > 0) {
+				$allUnitIds[] = $heroId;
+			}
+			$units = $this->getRosterRegimentUnits((int)$row['id'], $heroId);
+			$regimentUnitsByRow[(int)$row['id']] = $units;
+			foreach ($units as $u) {
+				$unitId = (int)($u['unit_id'] ?? 0);
+				if ($unitId > 0) {
+					$allUnitIds[] = $unitId;
+				}
+			}
+		}
+
+		$rangedSet = array_flip(
+			$this->getUnitIdsWithRangedWeapons($allUnitIds)
+		);
+		$weaponSet = array_flip(
+			$this->getUnitIdsWithWeapons($allUnitIds)
+		);
+
 		$regiments = [];
 
 		foreach ($regimentRows as $row) {
-			$units = $this->getRosterRegimentUnits((int)$row['id'], (int)$row['hero_unit_id']);
+			$units = $regimentUnitsByRow[(int)$row['id']];
+			$heroId = (int)$row['hero_unit_id'];
 			$regiments[] = [
 				'id'                  => (int)$row['id'],
 				'sort_order'          => (int)$row['sort_order'],
@@ -488,7 +571,7 @@ class Roster_Model extends Model
 				'enhancement_trait'   => $row['enhancement_trait'],
 				'enhancement_artefact' => $row['enhancement_artefact'],
 				'hero' => [
-					'id'       => (int)$row['hero_unit_id'],
+					'id'       => $heroId,
 					'name'     => $row['hero_name'],
 					'points'   => (int)$row['hero_points'],
 					'keywords' => $row['hero_keywords'],
@@ -498,11 +581,15 @@ class Roster_Model extends Model
 					'regiment_options' => $row['hero_regiment_options'],
 					'regiment_option_limits' => $row['regiment_option_limits'] ?? [],
 					'image'    => $row['hero_image'] ?? null,
+					'movement' => $row['hero_movement'] ?? null,
+					'hasRangedWeapon' => isset($rangedSet[$heroId]),
+					'hasWeapon' => isset($weaponSet[$heroId]),
 				],
-				'units' => array_map(function ($u) {
+				'units' => array_map(function ($u) use ($rangedSet, $weaponSet) {
 					$basePts = (int)$u['points'];
+					$unitId = (int)$u['unit_id'];
 					return [
-						'id'            => (int)$u['unit_id'],
+						'id'            => $unitId,
 						'name'          => $u['name'],
 						'points'        => !empty($u['is_reinforced']) ? $basePts * 2 : $basePts,
 						'basePoints'    => $basePts,
@@ -515,6 +602,9 @@ class Roster_Model extends Model
 						'is_reinforced' => (int)$u['is_reinforced'],
 						'sort_order'    => (int)$u['sort_order'],
 						'image'         => $u['image'] ?? null,
+						'movement'      => $u['movement'] ?? null,
+						'hasRangedWeapon' => isset($rangedSet[$unitId]),
+						'hasWeapon'     => isset($weaponSet[$unitId]),
 						'option_ids'    => $this->parseOptionIds($u['option_ids'] ?? null),
 						'assigned_option_id' => isset($u['assigned_option_id']) && $u['assigned_option_id'] !== null
 							? (int)$u['assigned_option_id'] : null,
@@ -598,7 +688,7 @@ class Roster_Model extends Model
 
 			$unit = $this->db->select(
 				'SELECT u.id, u.name, u.points, u.image,
-				        CONCAT_WS(\', \', NULLIF(u.unit_keywords, \'\'), NULLIF(u.faction_keywords, \'\')) AS keywords
+				        ' . KeywordSql::displayExprBasic('u') . ' AS keywords
 				 FROM m_units u
 				 WHERE u.id = :id LIMIT 1;',
 				['id' => $unitId]
@@ -635,7 +725,7 @@ class Roster_Model extends Model
 
 		$unit = $this->db->select(
 			'SELECT u.id, u.name, u.points, u.image,
-			        CONCAT_WS(\', \', NULLIF(u.unit_keywords, \'\'), NULLIF(u.faction_keywords, \'\')) AS keywords
+			        ' . KeywordSql::displayExprBasic('u') . ' AS keywords
 			 FROM m_units u
 			 WHERE u.id = :id LIMIT 1;',
 			['id' => $terrainId]

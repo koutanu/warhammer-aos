@@ -120,6 +120,9 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					<div id="phaseStepper" class="phase-stepper"></div>
 				</div>
 				<div class="phase-panel-body">
+					<div id="phaseMovementStrip" class="phase-movement-strip" style="display:none;" hidden></div>
+					<div id="phaseShootingStrip" class="phase-shooting-strip" style="display:none;" hidden></div>
+					<div id="phaseCombatStrip" class="phase-combat-strip" style="display:none;" hidden></div>
 					<h4 class="phase-list-title">使えるアビリティ（参照）</h4>
 					<p id="phaseAbilityEmpty" class="phase-ability-empty" style="display:none;"></p>
 					<div id="phaseAbilityList" class="phase-ability-list"></div>
@@ -167,6 +170,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 
 	<div id="unitDetailModal" class="modal match-unit-detail-modal" style="display: none;">
 		<div class="modal-content detail-modal-content detail-modal-content--datasheet">
+			<button type="button" class="detail-modal-close-top" aria-label="閉じる">×</button>
 			<h3 id="detailUnitName">ユニット名</h3>
 
 			<!-- 1段目: 画像 / キーワード -->
@@ -199,7 +203,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 							<div class="status-value" id="detailUnitWounds">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">防御力</div>
+							<div class="status-label" id="detailSaveLabel">防御力</div>
 							<div class="status-value" id="detailUnitSave">-</div>
 						</div>
 						<div class="status-box">
@@ -209,7 +213,6 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					</div>
 				</div>
 				<div class="detail-stats-weapons">
-					<h4 class="detail-weapons-section-title">WEAPONS / 武器</h4>
 					<div class="table-responsive">
 						<table class="detail-weapons-table">
 							<thead>

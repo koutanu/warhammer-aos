@@ -1,0 +1,69 @@
+@use "../fundamental" as *;
+@use "sass:color";
+
+.active-match-banner {
+	margin: 1rem;
+	padding: 0.85rem 1rem;
+	background: rgba($color-accent, 0.12);
+	border: 1px solid rgba($color-accent, 0.45);
+	border-radius: 8px;
+	color: color.adjust($color-accent, $lightness: 15%);
+	box-sizing: border-box;
+
+	.active-match-banner-lead {
+		margin: 0 0 0.6rem;
+		font-size: 0.9rem;
+		font-weight: bold;
+	}
+
+	.active-match-banner-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.active-match-banner-item {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem 1rem;
+	}
+
+	.active-match-banner-summary {
+		font-size: 0.85rem;
+		line-height: 1.4;
+
+		small {
+			display: block;
+			margin-top: 0.15rem;
+			color: rgba($color-text, 0.55);
+		}
+	}
+
+	.active-match-banner-link {
+		flex-shrink: 0;
+		padding: 0.45rem 0.9rem;
+		background: $color-accent;
+		color: $color-background;
+		border-radius: 4px;
+		font-size: 0.85rem;
+		font-weight: bold;
+		text-decoration: none;
+		min-height: 40px;
+		display: inline-flex;
+		align-items: center;
+
+		&:active {
+			transform: scale(0.97);
+			background-color: color.adjust($color-accent, $lightness: -8%);
+		}
+	}
+}
+
+.match.setup .active-match-banner {
+	margin: 0 0 1.25rem;
+}

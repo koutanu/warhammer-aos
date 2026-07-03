@@ -13,11 +13,13 @@ class Matchplay extends Controller
     public function setup()
     {
         $token = Session::setToken($this->class_name . '/create');
+        $userId = (int)Session::getUserInfo('user_id');
         $data = [
-            'token'        => $token,
-            'js'           => [$this->class_name . '/setup.js'],
-            'battleplans'  => $this->model->getBattleplans(),
-            'factions'     => $this->model->getFactionsWithRoster(),
+            'token'          => $token,
+            'js'             => [$this->class_name . '/setup.js'],
+            'battleplans'    => $this->model->getBattleplans(),
+            'factions'       => $this->model->getFactionsWithRoster(),
+            'active_matches' => $this->model->getActiveMatchesByUser($userId),
         ];
         $this->view->render($this->class_name, 'setup', 'マッチプレイ設定', $data);
     }

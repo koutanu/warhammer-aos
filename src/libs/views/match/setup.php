@@ -1,6 +1,11 @@
 <div class="match setup">
+	<?php require __DIR__ . '/_active_match_banner.php'; ?>
 	<h2>マッチプレイ設定</h2>
-	<p class="setup-lead">バトルプランとプレイヤー情報を入力して、対戦を開始します。</p>
+	<?php if (!empty($active_matches)): ?>
+		<p class="setup-lead">進行中の試合に戻るか、下のフォームで新しい対戦を開始できます。</p>
+	<?php else: ?>
+		<p class="setup-lead">バトルプランとプレイヤー情報を入力して、対戦を開始します。</p>
+	<?php endif; ?>
 
 	<form id="matchSetupForm" action="<?= URL; ?>match/create" method="POST">
 		<input type="hidden" name="token" value="<?= $this->h($token); ?>">

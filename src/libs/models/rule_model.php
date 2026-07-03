@@ -8,10 +8,11 @@ class Rule_Model extends Model
 		parent::__construct();
 	}
 
-	public function getCoreAbilities()
+	public function getKeywordsByType(string $type = 'unit')
 	{
-		$sql = "SELECT * FROM m_core_abilities ORDER BY id ASC;";
-		return $this->db->select($sql);
+		$type = ($type === 'faction') ? 'faction' : 'unit';
+		$sql = "SELECT * FROM m_keywords_master WHERE keyword_type = :type ORDER BY sort_order ASC, id ASC;";
+		return $this->db->select($sql, ['type' => $type]);
 	}
 
 	public function getCommonAbilities()

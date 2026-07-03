@@ -50,6 +50,60 @@
 			manifestationCb.addEventListener("change", syncControlLabel);
 		}
 		syncControlLabel();
+		initHeroRegimentToggle();
+		initKeywordParamInputs();
+	}
+
+	function initKeywordParamInputs() {
+		const form = document.getElementById("unitEditForm");
+		document.querySelectorAll(".keyword-option-row").forEach(function (row) {
+			const cb = row.querySelector('input[type="checkbox"][name="unit_keyword_ids[]"]');
+			const param = row.querySelector(".keyword-param-input");
+			if (!cb || !param) return;
+
+			function sync() {
+				param.disabled = false;
+				param.readOnly = !cb.checked;
+				if (!cb.checked) {
+					param.value = "";
+				}
+			}
+			cb.addEventListener("change", sync);
+			sync();
+		});
+
+		if (form) {
+			form.addEventListener("submit", function () {
+				document.querySelectorAll(".keyword-option-row").forEach(function (row) {
+					const cb = row.querySelector('input[type="checkbox"][name="unit_keyword_ids[]"]');
+					const param = row.querySelector(".keyword-param-input");
+					if (cb && param && cb.checked) {
+						param.disabled = false;
+						param.readOnly = false;
+					}
+				});
+			});
+		}
+	}
+
+	function initHeroRegimentToggle() {
+		const heroGroup = document.getElementById("heroRegimentGroup");
+		const heroHint = document.getElementById("heroRegimentHint");
+		const heroChecks = document.querySelectorAll(
+			'input[name="unit_keyword_ids[]"][data-hero-keyword="1"]',
+		);
+		if (!heroGroup || heroChecks.length === 0) return;
+
+		function sync() {
+			const isHero = Array.from(heroChecks).some((cb) => cb.checked);
+			heroGroup.style.display = isHero ? "" : "none";
+			if (heroHint) heroHint.style.display = isHero ? "none" : "";
+		}
+
+		document.querySelectorAll('input[name="unit_keyword_ids[]"]').forEach((cb) => {
+			cb.addEventListener("change", sync);
+		});
+		sync();
 	}
 
 	function syncControlLabel() {

@@ -14,10 +14,10 @@
 	<section class="rule-section">
 		<h1 class="rule-section-title">ユニットキーワード</h1>
 		<div class="rule-card-list">
-			<?php foreach ($coreAbilities as $ability): ?>
+			<?php foreach ($unitKeywords as $keyword): ?>
 				<div class="rule-card">
-					<h2 class="rule-card-name"><?= $ability['name']; ?></h2>
-					<p class="rule-card-effect"><?= $ability['effect']; ?></p>
+					<h2 class="rule-card-name"><?= $keyword['name']; ?></h2>
+					<p class="rule-card-effect"><?= $keyword['effect']; ?></p>
 				</div>
 			<?php endforeach; ?>
 		</div>

@@ -22,6 +22,27 @@ window.RosterUnitDetail = (function () {
 	}
 
 	/**
+	 * 防御力・加護など、数値 + 「+」表記の整形。
+	 */
+	function formatStatPlus(value) {
+		if (value === null || value === undefined) return "";
+		const str = String(value).trim();
+		if (str === "") return "";
+		if (/\+$/.test(str)) return str;
+		return /^\d+$/.test(str) ? `${str}+` : str;
+	}
+
+	/**
+	 * 防御力表示。加護 param があるときは「4+/5+」形式。
+	 */
+	function formatSaveDisplay(save, ward) {
+		const saveStr = formatStatPlus(save);
+		if (!saveStr) return "-";
+		const wardStr = formatStatPlus(ward);
+		return wardStr ? `${saveStr}/${wardStr}` : saveStr;
+	}
+
+	/**
 	 * アビリティのアイコン分類(icon_type)からアイコン <img> を生成する。
 	 * 解決ロジックは MatchPhases に集約し、未読込時は最低限のフォールバックを使う。
 	 */
@@ -83,6 +104,8 @@ window.RosterUnitDetail = (function () {
 			getEl("detailUnitWounds").textContent = "...";
 		if (getEl("detailUnitSave"))
 			getEl("detailUnitSave").textContent = "...";
+		if (getEl("detailSaveLabel"))
+			getEl("detailSaveLabel").textContent = "防御力";
 		if (getEl("detailUnitControl"))
 			getEl("detailUnitControl").textContent = "...";
 		if (keywordsEl) keywordsEl.textContent = unit.keywords || "...";
@@ -136,9 +159,16 @@ window.RosterUnitDetail = (function () {
 				getEl("detailUnitWounds").textContent = info.wounds ?? "-";
 			}
 			if (getEl("detailUnitSave")) {
-				getEl("detailUnitSave").textContent = info.save
-					? `${info.save}+`
-					: "-";
+				getEl("detailUnitSave").textContent = formatSaveDisplay(
+					info.save,
+					info.ward,
+				);
+			}
+			if (getEl("detailSaveLabel")) {
+				const wardStr = formatStatPlus(info.ward);
+				getEl("detailSaveLabel").textContent = wardStr
+					? "防御力/加護"
+					: "防御力";
 			}
 			// 顕現(マニフェステーション)は 確保力(CONTROL) の代わりに 追放(BANISHMENT) を持ち、
 			// 値は "7+" のように + を後置で表記する。
@@ -334,6 +364,9 @@ window.RosterUnitDetail = (function () {
 			btnCloseDetailModal.addEventListener("click", close);
 		}
 		if (unitDetailModal) {
+			unitDetailModal
+				.querySelectorAll(".detail-modal-close-top")
+				.forEach((btn) => btn.addEventListener("click", close));
 			unitDetailModal.addEventListener("click", (e) => {
 				if (e.target === unitDetailModal) close();
 			});

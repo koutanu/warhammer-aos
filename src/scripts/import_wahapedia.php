@@ -9,6 +9,8 @@
  * (powered by Wahapedia)
  */
 require_once __DIR__ . '/../libs/core/Config.php';
+require_once __DIR__ . '/../libs/common/UnitKeywordFlags.php';
+require_once __DIR__ . '/../libs/common/KeywordDisplay.php';
 
 const WAHAPEDIA_BASE = 'https://wahapedia.ru/aos4/';
 const DATA_DIR = __DIR__ . '/../data/wahapedia';
@@ -138,6 +140,8 @@ function ensureSchema(PDO $pdo): void
         $pdo->exec('CREATE UNIQUE INDEX uq_m_units_wahapedia_id ON m_units (wahapedia_id)');
         echo "INDEX: uq_m_units_wahapedia_id\n";
     }
+
+    ensureKeywordsTables($pdo);
 
     // アビリティのアイコン分類(icon_type)。発動タイミング種別(ability_type)とは別軸。
     $abilityCols = $pdo->query('DESCRIBE m_ability_master')->fetchAll(PDO::FETCH_COLUMN);
@@ -311,8 +315,6 @@ function importFaction(
                 'points'       => parseStatInt($ws['Cost'] ?? '') ?? 0,
                 'unit_size'    => parseStatInt($ws['UnitSize'] ?? ''),
                 'base_size'    => null,
-                'unit_keywords'    => $unitKeywords,
-                'faction_keywords' => $factionKeywords,
                 'image'        => null,
                 'is_terrain'   => $isTerrain,
                 'is_manifestation' => $isManifestation,
@@ -322,27 +324,28 @@ function importFaction(
                 $unitId = $byWahapediaId[$wahapediaId];
                 $sql = 'UPDATE m_units SET faction_id=:faction_id, name=:name, movement=:movement, wounds=:wounds,
                         save=:save, control=:control, points=:points, unit_size=:unit_size, base_size=:base_size,
-                        unit_keywords=:unit_keywords, faction_keywords=:faction_keywords, image=:image, is_terrain=:is_terrain, is_manifestation=:is_manifestation, wahapedia_id=:wahapedia_id WHERE id=:id';
+                        image=:image, is_terrain=:is_terrain, is_manifestation=:is_manifestation, wahapedia_id=:wahapedia_id WHERE id=:id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($unitData + ['id' => $unitId]);
                 $updated++;
             } else {
-                // 新規ユニットのみ HERO 判定と増強可否の初期値を付与する
-                // （既存ユニットは管理画面での手動調整を尊重して UPDATE では触らない）
-                $isHero = str_contains(strtoupper($unitKeywords), 'HERO') ? 1 : 0;
+                $flags = deriveUnitFlagsFromKeywordString($unitKeywords, $isSpecial);
                 $insertData = $unitData + [
-                    'is_hero'       => $isSpecial ? 0 : $isHero,
-                    'can_reinforce' => (!$isSpecial && !$isHero && (int)($unitData['unit_size'] ?? 1) > 1) ? 1 : 0,
+                    'is_hero'       => $flags['is_hero'],
+                    'can_reinforce' => (!$isSpecial && !$flags['is_hero'] && (int)($unitData['unit_size'] ?? 1) > 1) ? 1 : 0,
                     'is_hidden'     => $isSpecial ? 1 : 0,
                 ];
-                $sql = 'INSERT INTO m_units (faction_id, wahapedia_id, name, movement, wounds, save, control, points, unit_size, base_size, unit_keywords, faction_keywords, image, is_terrain, is_manifestation, is_hero, can_reinforce, is_hidden)
-                        VALUES (:faction_id, :wahapedia_id, :name, :movement, :wounds, :save, :control, :points, :unit_size, :base_size, :unit_keywords, :faction_keywords, :image, :is_terrain, :is_manifestation, :is_hero, :can_reinforce, :is_hidden)';
+                $sql = 'INSERT INTO m_units (faction_id, wahapedia_id, name, movement, wounds, save, control, points, unit_size, base_size, image, is_terrain, is_manifestation, is_hero, can_reinforce, is_hidden)
+                        VALUES (:faction_id, :wahapedia_id, :name, :movement, :wounds, :save, :control, :points, :unit_size, :base_size, :image, :is_terrain, :is_manifestation, :is_hero, :can_reinforce, :is_hidden)';
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($insertData);
                 $unitId = (int)$pdo->lastInsertId();
                 $byWahapediaId[$wahapediaId] = $unitId;
                 $inserted++;
             }
+
+            syncUnitKeywordsFromStrings($pdo, $unitId, $unitKeywords, $factionKeywords);
+            syncUnitFlagsFromKeywords($pdo, $unitId, $unitKeywords, $isSpecial);
 
             replaceUnitChildren(
                 $pdo,
@@ -479,6 +482,7 @@ function remapLegacyRosterUnits(PDO $pdo, int $dbFactionId, array $byWahapediaId
 
         $pdo->prepare('DELETE FROM m_unit_weapons WHERE unit_id = ?')->execute([$oldId]);
         $pdo->prepare('DELETE FROM m_unit_abilities WHERE unit_id = ?')->execute([$oldId]);
+        $pdo->prepare('DELETE FROM m_unit_keywords WHERE unit_id = ?')->execute([$oldId]);
         $pdo->prepare('DELETE FROM t_unit_regiment_eligibility WHERE unit_id = ?')->execute([$oldId]);
         $pdo->prepare('DELETE FROM t_hero_regiment_options WHERE hero_unit_id = ?')->execute([$oldId]);
         $pdo->prepare('DELETE FROM m_units WHERE id = ?')->execute([$oldId]);
@@ -509,6 +513,7 @@ function purgeStaleFactionUnits(PDO $pdo, int $dbFactionId, array $keepWahapedia
         $unitId = (int)$row['id'];
         $pdo->prepare('DELETE FROM m_unit_weapons WHERE unit_id = ?')->execute([$unitId]);
         $pdo->prepare('DELETE FROM m_unit_abilities WHERE unit_id = ?')->execute([$unitId]);
+        $pdo->prepare('DELETE FROM m_unit_keywords WHERE unit_id = ?')->execute([$unitId]);
         $pdo->prepare('DELETE FROM t_unit_regiment_eligibility WHERE unit_id = ?')->execute([$unitId]);
         $pdo->prepare('DELETE FROM t_hero_regiment_options WHERE hero_unit_id = ?')->execute([$unitId]);
         $pdo->prepare('DELETE FROM m_units WHERE id = ?')->execute([$unitId]);
@@ -523,7 +528,7 @@ function seedRegimentEligibility(PDO $pdo, int $dbFactionId, string $wahapediaFa
         return;
     }
 
-    $units = $pdo->prepare('SELECT id, unit_keywords, faction_keywords, is_hero, is_terrain, is_manifestation FROM m_units WHERE faction_id = ?');
+    $units = $pdo->prepare('SELECT id, is_terrain, is_manifestation FROM m_units WHERE faction_id = ?');
     $units->execute([$dbFactionId]);
     $allUnits = $units->fetchAll(PDO::FETCH_ASSOC);
 
@@ -540,12 +545,16 @@ function seedRegimentEligibility(PDO $pdo, int $dbFactionId, string $wahapediaFa
         if (!empty($unit['is_terrain']) || !empty($unit['is_manifestation'])) {
             continue;
         }
-        $unitKeywords = strtoupper($unit['unit_keywords'] ?? '');
-        $factionKeywords = strtoupper($unit['faction_keywords'] ?? '');
-        $isHero = isset($unit['is_hero'])
-            ? (int)$unit['is_hero'] === 1
-            : str_contains($unitKeywords, 'HERO');
         $unitId = (int)$unit['id'];
+        $unitKeywordNames = getUnitKeywordNamesByType($pdo, $unitId, 'unit');
+        $factionKeywordNames = getUnitKeywordNamesByType($pdo, $unitId, 'faction');
+        $isHero = false;
+        foreach ($unitKeywordNames as $name) {
+            if (UnitKeywordFlags::isHeroKeyword($name)) {
+                $isHero = true;
+                break;
+            }
+        }
 
         if ($isHero) {
             $insertHero->execute([$unitId, $generalId, 0]);
@@ -564,7 +573,7 @@ function seedRegimentEligibility(PDO $pdo, int $dbFactionId, string $wahapediaFa
             'GRYPH-HOUNDS'       => 2,
         ];
         foreach ($stormcastOptions as $keyword => $limit) {
-            if (!str_contains($factionKeywords, $keyword)) {
+            if (!in_array($keyword, $factionKeywordNames, true)) {
                 continue;
             }
             $optionId = $regimentOptions[$keyword] ?? null;
@@ -581,16 +590,200 @@ function seedRegimentEligibility(PDO $pdo, int $dbFactionId, string $wahapediaFa
 }
 
 /**
+ * キーワード正規化テーブル（m_keywords_master / m_unit_keywords）を確保する。
+ */
+function ensureKeywordsTables(PDO $pdo): void
+{
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS m_keywords_master (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            keyword_type ENUM(\'unit\',\'faction\') NOT NULL DEFAULT \'unit\',
+            effect TEXT NULL,
+            sort_order INT NOT NULL DEFAULT 0,
+            UNIQUE KEY uq_m_keywords_master_name_type (name, keyword_type)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    );
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS m_unit_keywords (
+            unit_id INT NOT NULL,
+            keyword_id INT NOT NULL,
+            PRIMARY KEY (unit_id, keyword_id),
+            INDEX idx_m_unit_keywords_keyword_id (keyword_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    );
+
+    $cols = $pdo->query('DESCRIBE m_keywords_master')->fetchAll(PDO::FETCH_COLUMN);
+    if (in_array('keyword', $cols, true) && !in_array('name', $cols, true)) {
+        $pdo->exec('ALTER TABLE m_keywords_master CHANGE COLUMN keyword name VARCHAR(255) NOT NULL');
+    }
+    $cols = $pdo->query('DESCRIBE m_keywords_master')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('accepts_param', $cols, true)) {
+        $pdo->exec('ALTER TABLE m_keywords_master ADD COLUMN accepts_param TINYINT(1) NOT NULL DEFAULT 0 AFTER sort_order');
+    }
+    $ukCols = $pdo->query('DESCRIBE m_unit_keywords')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('param_value', $ukCols, true)) {
+        $pdo->exec('ALTER TABLE m_unit_keywords ADD COLUMN param_value VARCHAR(20) NULL DEFAULT NULL AFTER keyword_id');
+    }
+}
+
+function parseKeywordTokenList(?string $raw): array
+{
+    if ($raw === null || trim($raw) === '') {
+        return [];
+    }
+    $parts = preg_split('/,\s*/', $raw) ?: [];
+    $out = [];
+    foreach ($parts as $part) {
+        $token = trim($part);
+        if ($token === '') {
+            continue;
+        }
+        $out[] = $token;
+    }
+    return array_values(array_unique($out));
+}
+
+/**
+ * 1トークンまたは role 断片を [baseName, param|null] に分解
+ *
+ * @return array{name: string, param: ?string}
+ */
+function parseKeywordPart(string $token): array
+{
+    [$base, $param] = KeywordDisplay::parseToken($token);
+    $name = trim($base);
+    if ($name === '') {
+        return ['name' => '', 'param' => null];
+    }
+    // 英語キーワードは従来どおり大文字化、日本語はそのまま
+    if (preg_match('/^[A-Za-z][A-Za-z\s\-]*$/', $name)) {
+        $name = strtoupper($name);
+    }
+    return ['name' => $name, 'param' => $param];
+}
+
+function findOrCreateKeywordMaster(PDO $pdo, string $name, string $type): int
+{
+    $type = ($type === 'faction') ? 'faction' : 'unit';
+    $parsed = parseKeywordPart($name);
+    $baseName = $parsed['name'];
+    if ($baseName === '') {
+        return 0;
+    }
+    $acceptsParam = KeywordDisplay::isParamCapableName($baseName) ? 1 : 0;
+
+    $find = $pdo->prepare(
+        'SELECT id FROM m_keywords_master WHERE name = ? AND keyword_type = ? LIMIT 1'
+    );
+    $find->execute([$baseName, $type]);
+    $id = $find->fetchColumn();
+    if ($id !== false) {
+        $kid = (int)$id;
+        if ($acceptsParam) {
+            $pdo->prepare('UPDATE m_keywords_master SET accepts_param = 1 WHERE id = ?')->execute([$kid]);
+        }
+        return $kid;
+    }
+
+    $insert = $pdo->prepare(
+        'INSERT INTO m_keywords_master (name, keyword_type, effect, sort_order, accepts_param)
+         VALUES (?, ?, NULL, 0, ?)'
+    );
+    $insert->execute([$baseName, $type, $acceptsParam]);
+    return (int)$pdo->lastInsertId();
+}
+
+function syncUnitKeywordsFromStrings(PDO $pdo, int $unitId, string $unitKeywords, string $factionKeywords): void
+{
+    $pdo->prepare('DELETE FROM m_unit_keywords WHERE unit_id = ?')->execute([$unitId]);
+    $attach = $pdo->prepare(
+        'INSERT IGNORE INTO m_unit_keywords (unit_id, keyword_id, param_value) VALUES (?, ?, ?)'
+    );
+
+    foreach (parseKeywordTokenList($unitKeywords) as $token) {
+        $parsed = parseKeywordPart($token);
+        if ($parsed['name'] === '') {
+            continue;
+        }
+        $keywordId = findOrCreateKeywordMaster($pdo, $parsed['name'], 'unit');
+        if ($keywordId <= 0) {
+            continue;
+        }
+        $param = KeywordDisplay::normalizeParam($parsed['param']);
+        $attach->execute([$unitId, $keywordId, $param]);
+    }
+    foreach (parseKeywordTokenList($factionKeywords) as $token) {
+        $parsed = parseKeywordPart($token);
+        if ($parsed['name'] === '') {
+            continue;
+        }
+        $keywordId = findOrCreateKeywordMaster($pdo, $parsed['name'], 'faction');
+        if ($keywordId <= 0) {
+            continue;
+        }
+        $param = KeywordDisplay::normalizeParam($parsed['param']);
+        $attach->execute([$unitId, $keywordId, $param]);
+    }
+}
+
+function deriveUnitFlagsFromKeywordString(string $unitKeywords, bool $isSpecial): array
+{
+    if ($isSpecial) {
+        return ['is_hero' => 0, 'is_general' => 0, 'is_unique' => 0];
+    }
+    $names = [];
+    foreach (parseKeywordTokenList($unitKeywords) as $token) {
+        $parsed = parseKeywordPart($token);
+        if ($parsed['name'] !== '') {
+            $names[] = $parsed['name'];
+        }
+    }
+    return UnitKeywordFlags::deriveFlagsFromNames($names);
+}
+
+function syncUnitFlagsFromKeywords(PDO $pdo, int $unitId, string $unitKeywords, bool $isSpecial): void
+{
+    $flags = deriveUnitFlagsFromKeywordString($unitKeywords, $isSpecial);
+    $pdo->prepare('UPDATE m_units SET is_hero = ?, is_general = ?, is_unique = ? WHERE id = ?')
+        ->execute([$flags['is_hero'], $flags['is_general'], $flags['is_unique'], $unitId]);
+}
+
+function getUnitKeywordNamesByType(PDO $pdo, int $unitId, string $type): array
+{
+    $type = ($type === 'faction') ? 'faction' : 'unit';
+    $expr = KeywordDisplay::sqlNameExpr('km.name', 'uk.param_value');
+    $stmt = $pdo->prepare(
+        "SELECT {$expr} AS display_name
+         FROM m_unit_keywords uk
+         JOIN m_keywords_master km ON km.id = uk.keyword_id AND km.keyword_type = ?
+         WHERE uk.unit_id = ?"
+    );
+    $stmt->execute([$type, $unitId]);
+    return array_map(
+        static fn($row) => strtoupper((string)$row['display_name']),
+        $stmt->fetchAll(PDO::FETCH_ASSOC)
+    );
+}
+
+/**
  * ユニット自身のルール系キーワード（role 由来: HERO / INFANTRY など）を組み立てる。
  */
 function buildUnitKeywords(array $ws): string
 {
+    $role = trim($ws['role'] ?? '');
+    if ($role === '') {
+        return '';
+    }
+
     $parts = [];
-    $role = $ws['role'] ?? '';
-    foreach (preg_split('/\s+/', $role) as $token) {
-        $token = trim($token);
-        if ($token !== '') {
-            $parts[] = strtoupper($token);
+    if (preg_match_all('/\S+(?:\s*\([^)]+\))?/u', $role, $matches)) {
+        foreach ($matches[0] as $chunk) {
+            $parsed = parseKeywordPart($chunk);
+            if ($parsed['name'] === '') {
+                continue;
+            }
+            $parts[] = KeywordDisplay::format($parsed['name'], $parsed['param']);
         }
     }
 

@@ -20,6 +20,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		phaseStepper: document.getElementById("phaseStepper"),
 		abilityList: document.getElementById("phaseAbilityList"),
 		abilityEmpty: document.getElementById("phaseAbilityEmpty"),
+		phaseMovementStrip: document.getElementById("phaseMovementStrip"),
+		phaseShootingStrip: document.getElementById("phaseShootingStrip"),
+		phaseCombatStrip: document.getElementById("phaseCombatStrip"),
 		turnMy: document.getElementById("phaseTurnMy"),
 		turnOpponent: document.getElementById("phaseTurnOpponent"),
 	};
@@ -40,7 +43,10 @@ document.addEventListener("DOMContentLoaded", () => {
 	if (initialState?.updatedAt) {
 		lastServerUpdatedAt = initialState.updatedAt;
 	}
-	if (initialState?.game?.phase && MatchPhases.ORDER.includes(initialState.game.phase)) {
+	if (
+		initialState?.game?.phase &&
+		MatchPhases.ORDER.includes(initialState.game.phase)
+	) {
 		viewPhase = initialState.game.phase;
 	}
 
@@ -64,8 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
 	function setMode(mode) {
 		const isRoster = mode === "roster";
 		phaseModeActive = !isRoster;
-		if (els.rosterView) els.rosterView.style.display = isRoster ? "" : "none";
-		if (els.phasePanel) els.phasePanel.style.display = isRoster ? "none" : "flex";
+		if (els.rosterView)
+			els.rosterView.style.display = isRoster ? "" : "none";
+		if (els.phasePanel)
+			els.phasePanel.style.display = isRoster ? "none" : "flex";
 		els.tabRoster?.classList.toggle("active", isRoster);
 		els.tabPhase?.classList.toggle("active", !isRoster);
 
@@ -97,9 +105,16 @@ document.addEventListener("DOMContentLoaded", () => {
 			.then((data) => {
 				if (!data.success || !data.state?.game) return;
 				const serverUpdated = data.state.updatedAt || "";
-				if (lastServerUpdatedAt && serverUpdated === lastServerUpdatedAt) return;
+				if (
+					lastServerUpdatedAt &&
+					serverUpdated === lastServerUpdatedAt
+				)
+					return;
 				lastServerUpdatedAt = serverUpdated;
-				MatchStateManager.applyServerGameSync(data.state.game, serverUpdated);
+				MatchStateManager.applyServerGameSync(
+					data.state.game,
+					serverUpdated,
+				);
 			})
 			.catch(() => {});
 	}
@@ -143,9 +158,36 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 
 		els.abilityList?.addEventListener("click", (e) => {
+			const thumb = e.target.closest(".ability-unit-thumb");
+			if (thumb) {
+				e.stopPropagation();
+				openUnitDetailFromThumb(thumb);
+				return;
+			}
 			// 使用済みトグルのタップはアコーディオンを開閉しない。
 			if (e.target.closest(".ability-used-toggle")) return;
 			toggleAbilityCard(e.target.closest(".phase-ability-card"));
+		});
+
+		els.phaseMovementStrip?.addEventListener("click", (e) => {
+			const thumb = e.target.closest(".ability-unit-thumb");
+			if (!thumb) return;
+			e.stopPropagation();
+			openUnitDetailFromThumb(thumb);
+		});
+
+		els.phaseShootingStrip?.addEventListener("click", (e) => {
+			const thumb = e.target.closest(".ability-unit-thumb");
+			if (!thumb) return;
+			e.stopPropagation();
+			openUnitDetailFromThumb(thumb);
+		});
+
+		els.phaseCombatStrip?.addEventListener("click", (e) => {
+			const thumb = e.target.closest(".ability-unit-thumb");
+			if (!thumb) return;
+			e.stopPropagation();
+			openUnitDetailFromThumb(thumb);
 		});
 
 		els.abilityList?.addEventListener("keydown", (e) => {
@@ -159,7 +201,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		els.abilityList?.addEventListener("click", (e) => {
 			const toggle = e.target.closest(".phase-passive-toggle");
 			if (!toggle) return;
-			const body = toggle.parentElement?.querySelector(".phase-passive-body");
+			const body = toggle.parentElement?.querySelector(
+				".phase-passive-body",
+			);
 			if (!body) return;
 			const open = body.style.display === "flex";
 			body.style.display = open ? "none" : "flex";
@@ -199,7 +243,8 @@ document.addEventListener("DOMContentLoaded", () => {
 					alert(data.message || "更新に失敗しました。");
 					return;
 				}
-				lastServerUpdatedAt = data.state?.updatedAt || lastServerUpdatedAt;
+				lastServerUpdatedAt =
+					data.state?.updatedAt || lastServerUpdatedAt;
 				MatchStateManager.applyServerState(data.state);
 			})
 			.catch(() => alert("通信エラーが発生しました。"))
@@ -233,6 +278,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		renderStepper(viewPhase);
+		renderMovementStrip(viewPhase, myPlayer?.roster || null);
+		renderShootingStrip(viewPhase, myPlayer?.roster || null);
+		renderCombatStrip(viewPhase, myPlayer?.roster || null);
 		renderAbilities(state, game, myPlayer, isMyTurn);
 	}
 
@@ -243,7 +291,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		MatchPhases.ORDER.forEach((phase) => {
 			const btn = document.createElement("button");
 			btn.type = "button";
-			btn.className = "phase-step" + (phase === currentPhase ? " active" : "");
+			btn.className =
+				"phase-step" + (phase === currentPhase ? " active" : "");
 			btn.dataset.phase = phase;
 			btn.textContent = MatchPhases.label(phase);
 			els.phaseStepper.appendChild(btn);
@@ -281,6 +330,281 @@ document.addEventListener("DOMContentLoaded", () => {
 				? [ab.unitName]
 				: [];
 		return names.length === 1 ? names[0] : "";
+	}
+
+	function collectRosterUnits(roster) {
+		const seen = new Map();
+		(roster?.regiments || []).forEach((reg) => {
+			[reg.hero, ...(reg.units || [])]
+				.filter(Boolean)
+				.forEach((unit) => {
+					const id = unit.id;
+					if (id && !seen.has(id)) seen.set(id, unit);
+				});
+		});
+		const terrain = roster?.terrain;
+		if (terrain?.id && !seen.has(terrain.id)) {
+			seen.set(terrain.id, terrain);
+		}
+		return [...seen.values()];
+	}
+
+	function keywordBaseName(token) {
+		const trimmed = String(token || "").trim();
+		if (!trimmed) return "";
+		const match = trimmed.match(/^(.+?)\s*\([^)]*\)\s*$/u);
+		return (match ? match[1] : trimmed).trim();
+	}
+
+	function hasKeyword(unit, ...bases) {
+		const keywords = String(unit?.keywords || "");
+		if (!keywords) return false;
+		const normalizedBases = bases.map((b) => b.toUpperCase());
+		return keywords.split(/,\s*/).some((token) => {
+			const base = keywordBaseName(token).toUpperCase();
+			return normalizedBases.includes(base);
+		});
+	}
+
+	function findKeywordToken(unit, ...bases) {
+		const keywords = String(unit?.keywords || "");
+		if (!keywords) return "";
+		const normalizedBases = bases.map((b) => b.toUpperCase());
+		for (const token of keywords.split(/,\s*/)) {
+			const trimmed = token.trim();
+			if (!trimmed) continue;
+			const base = keywordBaseName(trimmed).toUpperCase();
+			if (normalizedBases.includes(base)) return trimmed;
+		}
+		return "";
+	}
+
+	function labelBasesForCategory(category) {
+		if (category === "spell" || category === "manifestation") {
+			return ["魔術師", "WIZARD"];
+		}
+		if (category === "prayer") {
+			return ["神官", "PRIEST"];
+		}
+		return null;
+	}
+
+	function resolveAbilityUnits(ab, roster) {
+		if (!roster) return [];
+		const allUnits = collectRosterUnits(roster);
+		const category = ab.category || "unit";
+
+		if (category === "spell" || category === "manifestation") {
+			return allUnits.filter((u) =>
+				hasKeyword(u, "魔術師", "WIZARD"),
+			);
+		}
+		if (category === "prayer") {
+			return allUnits.filter((u) => hasKeyword(u, "神官", "PRIEST"));
+		}
+
+		const names = ab.unitNames?.length
+			? ab.unitNames
+			: ab.unitName
+				? [ab.unitName]
+				: [];
+		if (!names.length) return [];
+
+		const byName = new Map();
+		allUnits.forEach((u) => {
+			if (u.name) byName.set(u.name, u);
+		});
+		return names.map((name) => byName.get(name)).filter(Boolean);
+	}
+
+	function unitThumbImageHtml(unit) {
+		const image = unit.image || "";
+		if (image) {
+			return `<img src="${escapeAttr(baseUrl + image)}" alt="" loading="lazy">`;
+		}
+		const initial = (unit.name || "?").trim().charAt(0).toUpperCase();
+		return `<span class="ability-unit-thumb-placeholder">${escapeHtml(initial)}</span>`;
+	}
+
+	function buildUnitThumbsHtml(units, category) {
+		if (!units.length) return "";
+		const labelBases = labelBasesForCategory(category);
+		const buttons = units
+			.map((unit) => {
+				const label = labelBases
+					? findKeywordToken(unit, ...labelBases)
+					: "";
+				const labelHtml = label
+					? `<span class="ability-unit-thumb-label">${escapeHtml(label)}</span>`
+					: "";
+				return `<button type="button" class="ability-unit-thumb"
+						data-unit-id="${unit.id}"
+						data-unit-name="${escapeAttr(unit.name || "")}"
+						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
+						aria-label="${escapeAttr(unit.name || "ユニット")}">
+						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>${labelHtml}
+					</button>`;
+			})
+			.join("");
+		return `<div class="ability-unit-thumbs" role="list">${buttons}</div>`;
+	}
+
+	function openUnitDetailFromThumb(thumb) {
+		if (!thumb?.dataset?.unitId || !window.RosterUnitDetail) return;
+		window.RosterUnitDetail.show({
+			id: parseInt(thumb.dataset.unitId, 10),
+			name: thumb.dataset.unitName,
+			keywords: thumb.dataset.unitKeywords,
+		});
+	}
+
+	function formatMovement(value) {
+		if (value === null || value === undefined) return "-";
+		const str = String(value).trim();
+		if (str === "") return "-";
+		return /"$/.test(str) ? str : `${str}"`;
+	}
+
+	function buildMovementStripHtml(units) {
+		if (!units.length) return "";
+		const buttons = units
+			.map(
+				(unit) =>
+					`<button type="button" class="phase-movement-unit ability-unit-thumb"
+						data-unit-id="${unit.id}"
+						data-unit-name="${escapeAttr(unit.name || "")}"
+						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
+						aria-label="${escapeAttr((unit.name || "ユニット") + " 移動力 " + formatMovement(unit.movement))}">
+						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
+						<span class="phase-movement-value">${escapeHtml(formatMovement(unit.movement))}</span>
+					</button>`,
+			)
+			.join("");
+		return `<section class="phase-movement-section">
+			<h4 class="phase-movement-title">移動力（参照）</h4>
+			<div class="phase-movement-units" role="list">${buttons}</div>
+		</section>`;
+	}
+
+	function renderMovementStrip(viewPhase, roster) {
+		const strip = els.phaseMovementStrip;
+		if (!strip) return;
+
+		if (viewPhase !== "movement" || !roster) {
+			strip.innerHTML = "";
+			strip.style.display = "none";
+			strip.hidden = true;
+			return;
+		}
+
+		const units = collectRosterUnits(roster)
+			.filter((u) => u.id)
+			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+		if (!units.length) {
+			strip.innerHTML = "";
+			strip.style.display = "none";
+			strip.hidden = true;
+			return;
+		}
+
+		strip.innerHTML = buildMovementStripHtml(units);
+		strip.style.display = "";
+		strip.hidden = false;
+	}
+
+	function buildShootingStripHtml(units) {
+		if (!units.length) return "";
+		const buttons = units
+			.map(
+				(unit) =>
+					`<button type="button" class="phase-shooting-unit ability-unit-thumb"
+						data-unit-id="${unit.id}"
+						data-unit-name="${escapeAttr(unit.name || "")}"
+						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
+						aria-label="${escapeAttr(unit.name || "ユニット")}">
+						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
+					</button>`,
+			)
+			.join("");
+		return `<section class="phase-shooting-section">
+			<h4 class="phase-shooting-title">射撃可能ユニット（参照）</h4>
+			<div class="phase-shooting-units" role="list">${buttons}</div>
+		</section>`;
+	}
+
+	function renderShootingStrip(viewPhase, roster) {
+		const strip = els.phaseShootingStrip;
+		if (!strip) return;
+
+		if (viewPhase !== "shooting" || !roster) {
+			strip.innerHTML = "";
+			strip.style.display = "none";
+			strip.hidden = true;
+			return;
+		}
+
+		const units = collectRosterUnits(roster)
+			.filter((u) => u.id && u.hasRangedWeapon)
+			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+		if (!units.length) {
+			strip.innerHTML = "";
+			strip.style.display = "none";
+			strip.hidden = true;
+			return;
+		}
+
+		strip.innerHTML = buildShootingStripHtml(units);
+		strip.style.display = "";
+		strip.hidden = false;
+	}
+
+	function buildCombatStripHtml(units) {
+		if (!units.length) return "";
+		const buttons = units
+			.map(
+				(unit) =>
+					`<button type="button" class="phase-combat-unit ability-unit-thumb"
+						data-unit-id="${unit.id}"
+						data-unit-name="${escapeAttr(unit.name || "")}"
+						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
+						aria-label="${escapeAttr(unit.name || "ユニット")}">
+						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
+					</button>`,
+			)
+			.join("");
+		return `<section class="phase-combat-section">
+			<h4 class="phase-combat-title">戦闘可能ユニット（参照）</h4>
+			<div class="phase-combat-units" role="list">${buttons}</div>
+		</section>`;
+	}
+
+	function renderCombatStrip(viewPhase, roster) {
+		const strip = els.phaseCombatStrip;
+		if (!strip) return;
+
+		if (viewPhase !== "combat" || !roster) {
+			strip.innerHTML = "";
+			strip.style.display = "none";
+			strip.hidden = true;
+			return;
+		}
+
+		const units = collectRosterUnits(roster)
+			.filter((u) => u.id && u.hasWeapon)
+			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+		if (!units.length) {
+			strip.innerHTML = "";
+			strip.style.display = "none";
+			strip.hidden = true;
+			return;
+		}
+
+		strip.innerHTML = buildCombatStripHtml(units);
+		strip.style.display = "";
+		strip.hidden = false;
 	}
 
 	function renderAbilities(state, game, myPlayer, isMyTurn) {
@@ -329,6 +653,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		if (els.abilityEmpty) els.abilityEmpty.style.display = "none";
 
+		const roster = myPlayer?.roster || null;
+
 		const groups = new Map();
 		actives.forEach((ab) => {
 			const cat = ab.category || "unit";
@@ -366,7 +692,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				title.textContent = `${MatchPhases.labelCategoryJa(cat)}（${items.length}）`;
 				groupEl.appendChild(title);
 
-				items.forEach((ab) => groupEl.appendChild(buildAbilityCard(ab)));
+				items.forEach((ab) =>
+					groupEl.appendChild(buildAbilityCard(ab, {}, roster)),
+				);
 				els.abilityList.appendChild(groupEl);
 			},
 		);
@@ -395,7 +723,9 @@ document.addEventListener("DOMContentLoaded", () => {
 					return (a.name || "").localeCompare(b.name || "");
 				})
 				.forEach((ab) =>
-					body.appendChild(buildAbilityCard(ab, { passive: true })),
+					body.appendChild(
+						buildAbilityCard(ab, { passive: true }, roster),
+					),
 				);
 			section.appendChild(body);
 
@@ -403,7 +733,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	}
 
-	function buildAbilityCard(ab, opts = {}) {
+	function buildAbilityCard(ab, opts = {}, roster = null) {
 		const isPassive = !!opts.passive;
 		const state = MatchStateManager.getState();
 		const game = state.game || { usedAbilities: {} };
@@ -446,7 +776,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			const turnNorm =
 				ab.triggerTurnNorm ||
 				MatchPhases.normalizeTriggerTurn(ab.triggerTurn);
-			const turnLabel = MatchPhases.formatTriggerTurn(ab.triggerTurn, turnNorm);
+			const turnLabel = MatchPhases.formatTriggerTurn(
+				ab.triggerTurn,
+				turnNorm,
+			);
 
 			const metaParts = [];
 			if (unitLabel) metaParts.push(unitLabel);
@@ -456,7 +789,9 @@ document.addEventListener("DOMContentLoaded", () => {
 					? Number(ab.commandCost)
 					: null;
 			const cpBadge =
-				commandCost !== null && !Number.isNaN(commandCost) && commandCost > 0
+				commandCost !== null &&
+				!Number.isNaN(commandCost) &&
+				commandCost > 0
 					? `<span class="ability-cp-badge">CP ${commandCost}</span>`
 					: "";
 
@@ -464,7 +799,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			// 伝承(lore)など未指定の場合は従来どおりカテゴリで判定する。
 			const castLabel = ab.castingType
 				? ab.castingType === "prayer"
-					? "祈祷"
+					? "奇蹟"
 					: "詠唱"
 				: ab.category === "prayer"
 					? "詠唱"
@@ -491,6 +826,11 @@ document.addEventListener("DOMContentLoaded", () => {
 					</button>`
 				: "";
 
+			const abilityUnits = hasEffect
+				? resolveAbilityUnits(ab, roster)
+				: [];
+			const unitThumbsHtml = buildUnitThumbsHtml(abilityUnits, ab.category);
+
 			card.innerHTML = `
 				<div class="ability-card-head">
 					<div class="ability-card-title-block">
@@ -510,7 +850,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					${used ? '<span class="ability-used-badge">使用済み</span>' : ""}
 					${hasEffect ? '<span class="ability-expand-chevron" aria-hidden="true">▾</span>' : ""}
 				</div>
-				${hasEffect ? `<div class="ability-effect-box" style="display:none;"><p>${escapeHtml(effectText)}</p></div>` : ""}
+				${hasEffect ? `<div class="ability-effect-box" style="display:none;"><p>${escapeHtml(effectText)}</p>${unitThumbsHtml}</div>` : ""}
 			`;
 
 			return card;
@@ -530,5 +870,12 @@ document.addEventListener("DOMContentLoaded", () => {
 		const div = document.createElement("div");
 		div.textContent = text;
 		return div.innerHTML;
+	}
+
+	function escapeAttr(str) {
+		return String(str || "")
+			.replace(/&/g, "&amp;")
+			.replace(/"/g, "&quot;")
+			.replace(/</g, "&lt;");
 	}
 });

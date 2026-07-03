@@ -10,7 +10,19 @@ $allAbilities = $all_abilities ?? [];
 $regimentOptions = $regiment_options ?? [];
 $eligibilityIds = array_map('intval', $unit_eligibility_ids ?? []);
 $heroOptionMap = $hero_regiment_option_map ?? [];
-$isHeroUnit = !empty($u['is_hero']);
+$allUnitKeywords = $all_unit_keywords ?? [];
+$allFactionKeywords = $all_faction_keywords ?? [];
+$unitKeywordLinks = $unit_keyword_links ?? [];
+$factionKeywordLinks = $faction_keyword_links ?? [];
+$unitKeywordIds = array_map('intval', array_keys($unitKeywordLinks));
+$factionKeywordIds = array_map('intval', array_keys($factionKeywordLinks));
+$isHeroUnit = false;
+foreach ($allUnitKeywords as $kw) {
+	if (in_array((int)$kw['id'], $unitKeywordIds, true) && UnitKeywordFlags::isHeroKeyword($kw['name'])) {
+		$isHeroUnit = true;
+		break;
+	}
+}
 $isManifestationUnit = !empty($u['is_manifestation']);
 ?>
 <div class="unit unit-edit">
@@ -106,47 +118,67 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 			</div>
 
 			<div class="form-group form-group--wide">
-				<label>ユニットキーワード (カンマ区切り)</label>
-				<textarea name="unit_keywords" rows="2" placeholder="例: HERO, INFANTRY, FLY, WARD (5+)"><?= $this->h($u['unit_keywords'] ?? ''); ?></textarea>
-				<small class="unit-image-hint">ユニット自身のルール系キーワード（HERO や INFANTRY など）。</small>
+				<label>ユニットキーワード</label>
+				<div class="regiment-option-checks keyword-option-checks">
+					<?php if (empty($allUnitKeywords)): ?>
+						<p class="unit-empty">ユニットキーワードマスタが未登録です（マイグレーションまたはインポートを実行してください）。</p>
+					<?php else: ?>
+						<?php foreach ($allUnitKeywords as $kw): ?>
+							<?php
+							$kid = (int)$kw['id'];
+							$acceptsParam = !empty($kw['accepts_param']);
+							$paramVal = $unitKeywordLinks[$kid] ?? '';
+							$isChecked = array_key_exists($kid, $unitKeywordLinks);
+							?>
+							<label class="regiment-option-check keyword-option-row">
+								<input type="checkbox" name="unit_keyword_ids[]" value="<?= $this->h($kid); ?>"
+									<?= UnitKeywordFlags::isHeroKeyword($kw['name']) ? 'data-hero-keyword="1"' : ''; ?>
+									<?= $acceptsParam ? 'data-accepts-param="1"' : ''; ?>
+									<?= $isChecked ? 'checked' : ''; ?>>
+								<span><?= $this->h($kw['name']); ?></span>
+								<?php if ($acceptsParam): ?>
+									<input type="text"
+										name="unit_keyword_params[<?= $this->h($kid); ?>]"
+										value="<?= $this->h($paramVal); ?>"
+										class="keyword-param-input"
+										placeholder="例: 1 / 5+"
+										<?= $isChecked ? '' : 'readonly tabindex="-1"'; ?>>
+								<?php endif; ?>
+							</label>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</div>
+				<small class="unit-image-hint">ユニット自身のルール系キーワード。魔術師・神官・加護などは括弧内の数値を入力すると「魔術師(1)」のように表示されます。</small>
 			</div>
 
-			<div class="form-group form-group--wide">
-				<label>連隊枠キーワード (カンマ区切り)</label>
-				<textarea name="faction_keywords" rows="2" placeholder="例: RUINATION CHAMBER / WARRIOR CHAMBER / ESHIN"><?= $this->h($u['faction_keywords'] ?? ''); ?></textarea>
-				<small class="unit-image-hint">連隊の適格性判定に使うチェンバー/クラン等のキーワードのみを入力します。大同盟・軍勢キーワードはファクションから自動付与されるため入力不要です。</small>
-			</div>
+			<!-- <div class="form-group form-group--wide">
+				<label>連隊枠キーワード</label>
+				<div class="regiment-option-checks">
+					<?php if (empty($allFactionKeywords)): ?>
+						<p class="unit-empty">連隊枠キーワードマスタが未登録です。</p>
+					<?php else: ?>
+						<?php foreach ($allFactionKeywords as $kw): ?>
+							<?php $kid = (int)$kw['id']; ?>
+							<label class="regiment-option-check">
+								<input type="checkbox" name="faction_keyword_ids[]" value="<?= $this->h($kid); ?>"
+									<?= in_array($kid, $factionKeywordIds, true) ? 'checked' : ''; ?>>
+								<span><?= $this->h($kw['name']); ?></span>
+							</label>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</div>
+				<small class="unit-image-hint">連隊の適格性判定に使うチェンバー/クラン等のキーワード。大同盟・軍勢キーワードはファクションから自動付与されます。</small>
+			</div> -->
 
-			<div class="form-group form-group--wide">
+			<!-- <div class="form-group form-group--wide">
 				<label>フレーバーテキスト</label>
 				<textarea name="flavor_text" rows="2"><?= $this->h($u['flavor_text'] ?? ''); ?></textarea>
-			</div>
-
-			<div class="form-group form-check">
-				<label>
-					<input type="checkbox" name="is_hero" value="1" <?= !empty($u['is_hero']) ? 'checked' : ''; ?>>
-					HERO（連隊長として選択可能にする）
-				</label>
-			</div>
+			</div> -->
 
 			<div class="form-group form-check">
 				<label>
 					<input type="checkbox" name="can_reinforce" value="1" <?= !empty($u['can_reinforce']) ? 'checked' : ''; ?>>
 					増強可能（ロスターで増強＝ポイント2倍を選べるようにする）
-				</label>
-			</div>
-
-			<div class="form-group form-check">
-				<label>
-					<input type="checkbox" name="is_general" value="1" <?= !empty($u['is_general']) ? 'checked' : ''; ?>>
-					総大将（ロスターに入れるとジェネラルに指定が必要）
-				</label>
-			</div>
-
-			<div class="form-group form-check">
-				<label>
-					<input type="checkbox" name="is_unique" value="1" <?= !empty($u['is_unique']) ? 'checked' : ''; ?>>
-					固有（ロスター全体で1体まで・神器/英雄特性を付与不可）
 				</label>
 			</div>
 
@@ -415,44 +447,41 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 					</div>
 				</div>
 
-				<?php if ($isHeroUnit): ?>
-					<div class="regiment-edit-group hero-regiment-group">
-						<h4 class="regiment-edit-subtitle">連隊に編成できるオプション枠 (HERO)</h4>
-						<p class="unit-image-hint">この HERO が連隊長として編成できるオプション枠を選択します。上限は 0 で無制限。</p>
-						<table class="hero-regiment-table">
-							<thead>
+				<div class="regiment-edit-group hero-regiment-group" id="heroRegimentGroup" <?= $isHeroUnit ? '' : ' style="display:none"'; ?>>
+					<h4 class="regiment-edit-subtitle">連隊に編成できるオプション枠 (HERO)</h4>
+					<p class="unit-image-hint">この HERO が連隊長として編成できるオプション枠を選択します。上限は 0 で無制限。</p>
+					<table class="hero-regiment-table">
+						<thead>
+							<tr>
+								<th>オプション</th>
+								<th>編成可</th>
+								<th>上限 (0=無制限)</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ($regimentOptions as $opt): ?>
+								<?php
+								$oid = (int)$opt['id'];
+								$enabled = array_key_exists($oid, $heroOptionMap);
+								$maxLimit = $enabled ? (int)$heroOptionMap[$oid] : 1;
+								?>
 								<tr>
-									<th>オプション</th>
-									<th>編成可</th>
-									<th>上限 (0=無制限)</th>
+									<td><?= $this->h($opt['option_name']); ?></td>
+									<td class="cell-center">
+										<input type="checkbox" name="hero_regiment_options[<?= $oid; ?>][enabled]" value="1"
+											<?= $enabled ? 'checked' : ''; ?>>
+									</td>
+									<td>
+										<input type="number" min="0" class="cell-narrow"
+											name="hero_regiment_options[<?= $oid; ?>][max_limit]"
+											value="<?= $this->h($maxLimit); ?>">
+									</td>
 								</tr>
-							</thead>
-							<tbody>
-								<?php foreach ($regimentOptions as $opt): ?>
-									<?php
-									$oid = (int)$opt['id'];
-									$enabled = array_key_exists($oid, $heroOptionMap);
-									$maxLimit = $enabled ? (int)$heroOptionMap[$oid] : 1;
-									?>
-									<tr>
-										<td><?= $this->h($opt['option_name']); ?></td>
-										<td class="cell-center">
-											<input type="checkbox" name="hero_regiment_options[<?= $oid; ?>][enabled]" value="1"
-												<?= $enabled ? 'checked' : ''; ?>>
-										</td>
-										<td>
-											<input type="number" min="0" class="cell-narrow"
-												name="hero_regiment_options[<?= $oid; ?>][max_limit]"
-												value="<?= $this->h($maxLimit); ?>">
-										</td>
-									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
-					</div>
-				<?php else: ?>
-					<p class="unit-image-hint">※ このユニットは HERO ではないため、連隊長としての編成枠はありません（HERO に設定すると編集できます）。</p>
-				<?php endif; ?>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+				<p class="unit-image-hint" id="heroRegimentHint" <?= $isHeroUnit ? ' style="display:none"' : ''; ?>>※ ユニットキーワードで HERO（英雄）を選ぶと、連隊長としての編成枠を設定できます。</p>
 
 			<?php endif; ?>
 		</section>

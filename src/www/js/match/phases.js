@@ -47,7 +47,7 @@ const MatchPhases = {
 		trait: "英雄特性",
 		artefact: "神器",
 		spell: "呪文",
-		prayer: "祈祷",
+		prayer: "奇蹟",
 		manifestation: "顕現",
 		unit: "ユニット能力",
 	},
@@ -123,7 +123,8 @@ const MatchPhases = {
 			.toUpperCase();
 		if (!raw) return "any";
 		if (raw.includes("DEPLOY")) return "deployment";
-		if (raw.includes("ROUND") && raw.includes("START")) return "round_start";
+		if (raw.includes("ROUND") && raw.includes("START"))
+			return "round_start";
 		if (raw.includes("START") && raw.includes("TURN")) return "hero";
 		if (raw.includes("HERO")) return "hero";
 		if (raw.includes("MOVEMENT") || raw === "MOVE") return "movement";
@@ -156,7 +157,8 @@ const MatchPhases = {
 			.trim()
 			.toLowerCase();
 		if (!raw) return "your";
-		if (raw.includes("opponent") || raw.includes("enemy")) return "opponent";
+		if (raw.includes("opponent") || raw.includes("enemy"))
+			return "opponent";
 		if (raw.includes("any") || raw.includes("both")) return "any";
 		if (raw.includes("battle") || raw.includes("game")) return "battle";
 		if (raw.includes("your")) return "your";
@@ -189,7 +191,9 @@ const MatchPhases = {
 		if (phaseNorm && phaseNorm !== "any") {
 			return this.labelPhaseJa(phaseNorm);
 		}
-		const upper = String(raw || "").trim().toUpperCase();
+		const upper = String(raw || "")
+			.trim()
+			.toUpperCase();
 		if (!upper) return "";
 		if (upper.includes("ANY")) return this.labelPhaseJa("any");
 		return this.labelPhaseJa(this.normalizePhase(raw));
@@ -279,7 +283,8 @@ const MatchPhases = {
 	 */
 	isUsageTracked(ability) {
 		const ab = ability || {};
-		if (String(ab.activation || "").toLowerCase() === "passive") return false;
+		if (String(ab.activation || "").toLowerCase() === "passive")
+			return false;
 		const scope = String(ab.usageScope || "unlimited").toLowerCase();
 		return (
 			scope === "once_per_turn" ||
@@ -299,7 +304,8 @@ const MatchPhases = {
 		const scope = String(ab.usageScope || "unlimited").toLowerCase();
 		const army = this.isArmy(ab) ? "（アーミー）" : "";
 
-		if (activation === "passive") return { kind: "passive", label: "パッシブ" };
+		if (activation === "passive")
+			return { kind: "passive", label: "パッシブ" };
 		if (scope === "once_per_battle")
 			return { kind: "battle", label: "バトルに1回" + army };
 		if (scope === "once_per_round")

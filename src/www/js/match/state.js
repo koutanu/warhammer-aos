@@ -71,11 +71,16 @@ const MatchStateManager = {
 			};
 		}
 		const localPhase = this.state.game.phase;
-		this.state.game.battleRound = game.battleRound ?? this.state.game.battleRound;
-		this.state.game.activePlayer = game.activePlayer ?? this.state.game.activePlayer;
+		this.state.game.battleRound =
+			game.battleRound ?? this.state.game.battleRound;
+		this.state.game.activePlayer =
+			game.activePlayer ?? this.state.game.activePlayer;
 		this.state.game.firstPlayer =
-			game.firstPlayer !== undefined ? game.firstPlayer : this.state.game.firstPlayer;
-		this.state.game.turnCounter = game.turnCounter ?? this.state.game.turnCounter;
+			game.firstPlayer !== undefined
+				? game.firstPlayer
+				: this.state.game.firstPlayer;
+		this.state.game.turnCounter =
+			game.turnCounter ?? this.state.game.turnCounter;
 		this.state.game.usedAbilities = game.usedAbilities || {};
 		this.state.game.phase = localPhase;
 		if (updatedAt) {

@@ -419,6 +419,7 @@ $freqJa = function (array $row) {
 	     タブパネルの display:none の影響を受けないよう、タブの外側に配置する。 -->
 	<div id="unitDetailModal" class="modal" style="display: none;">
 		<div class="modal-content detail-modal-content detail-modal-content--datasheet">
+			<button type="button" class="detail-modal-close-top" aria-label="閉じる">×</button>
 			<h3 id="detailUnitName">ユニット名</h3>
 
 			<!-- 1段目: 画像 / 連隊編成 / キーワード -->
@@ -461,7 +462,7 @@ $freqJa = function (array $row) {
 							<div class="status-value" id="detailUnitWounds">-</div>
 						</div>
 						<div class="status-box">
-							<div class="status-label">防御力</div>
+							<div class="status-label" id="detailSaveLabel">防御力</div>
 							<div class="status-value" id="detailUnitSave">-</div>
 						</div>
 						<div class="status-box">

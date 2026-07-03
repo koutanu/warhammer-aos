@@ -1,3 +1,4 @@
+<?php require __DIR__ . '/../match/_active_match_banner.php'; ?>
 <div class="home">
 	<a href="<?= URL; ?>match/setup" class="grid-item grid-item1">
 		<img src="<?= URL; ?>assets/images/matchplay_btn.webp" alt="マッチプレイ" class="grid-bg-img">

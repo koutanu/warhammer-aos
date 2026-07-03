@@ -210,6 +210,21 @@ class Match_Model extends Model
         }
     }
 
+    public function getActiveMatchesByUser(int $userId): array
+    {
+        $sql = 'SELECT m.id, m.battleplan_id, m.status,
+                       m.player_a_name, m.player_a_vp,
+                       m.player_b_name, m.player_b_vp,
+                       m.game_battle_round, m.updated_at,
+                       bp.name AS battleplan_name
+                FROM t_matches m
+                LEFT JOIN m_battleplans bp ON bp.id = m.battleplan_id
+                WHERE m.user_id = :user_id AND m.status = :status
+                ORDER BY m.updated_at DESC, m.id DESC;';
+
+        return $this->db->select($sql, ['user_id' => $userId, 'status' => 'active']);
+    }
+
     public function getMatchHistoryByUser(int $userId): array
     {
         $sql = 'SELECT m.id, m.battleplan_id, m.status, m.winner,

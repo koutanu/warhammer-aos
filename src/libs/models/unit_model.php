@@ -43,8 +43,9 @@ class Unit_Model extends Model
 	 */
 	public function getUnitsByFaction($factionId)
 	{
+		$keywordsExpr = KeywordSql::displayExpr('u', 'f');
 		$sql = "SELECT u.id, u.name, u.points,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords,
+                       {$keywordsExpr} AS keywords,
                        u.unit_size, u.is_hidden, u.is_hero, u.can_reinforce, u.image
                 FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
@@ -84,8 +85,9 @@ class Unit_Model extends Model
 			return [];
 		}
 
+		$keywordsExpr = KeywordSql::displayExpr('u', 'f');
 		$sql = "SELECT u.*,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords
+                       {$keywordsExpr} AS keywords
                 FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.faction_id = :id AND u.{$flagColumn} = 1
@@ -103,8 +105,9 @@ class Unit_Model extends Model
 
 	public function getUnitById($unitId)
 	{
+		$keywordsExpr = KeywordSql::displayExpr('u', 'f');
 		$sql = "SELECT u.*,
-                       CONCAT_WS(', ', NULLIF(u.unit_keywords, ''), NULLIF(u.faction_keywords, ''), NULLIF(UPPER(f.grand_alliance), ''), NULLIF(UPPER(f.name_en), '')) AS keywords
+                       {$keywordsExpr} AS keywords
                 FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.id = :id LIMIT 1;";
@@ -129,6 +132,74 @@ class Unit_Model extends Model
                 WHERE ua.unit_id = :unit_id
                 ORDER BY m.id ASC;";
 		return $this->db->select($sql, ['unit_id' => (int)$unitId]);
+	}
+
+	/**
+	 * ユニットに紐づくキーワード（m_keywords_master を JOIN）
+	 */
+	public function getUnitKeywords($unitId, ?string $type = null)
+	{
+		$params = ['unit_id' => (int)$unitId];
+		$typeSql = '';
+		if ($type === 'unit' || $type === 'faction') {
+			$typeSql = ' AND km.keyword_type = :keyword_type';
+			$params['keyword_type'] = $type;
+		}
+		$sql = "SELECT km.id, km.name, km.keyword_type, km.effect, km.sort_order, km.accepts_param, uk.param_value
+                FROM m_unit_keywords AS uk
+                JOIN m_keywords_master AS km ON uk.keyword_id = km.id
+                WHERE uk.unit_id = :unit_id{$typeSql}
+                ORDER BY km.keyword_type ASC, km.sort_order ASC, km.name ASC, km.id ASC;";
+		return $this->db->select($sql, $params);
+	}
+
+	/**
+	 * ユニットに紐づくキーワード ID => param_value（編集画面用）
+	 *
+	 * @return array<int, string|null>
+	 */
+	public function getUnitKeywordLinksByType(int $unitId, string $type): array
+	{
+		$type = ($type === 'faction') ? 'faction' : 'unit';
+		$sql = "SELECT km.id, uk.param_value
+                FROM m_unit_keywords uk
+                JOIN m_keywords_master km ON km.id = uk.keyword_id AND km.keyword_type = :keyword_type
+                WHERE uk.unit_id = :unit_id
+                ORDER BY km.sort_order ASC, km.name ASC, km.id ASC;";
+		$rows = $this->db->select($sql, ['unit_id' => $unitId, 'keyword_type' => $type]);
+		$map = [];
+		foreach ($rows as $row) {
+			$map[(int)$row['id']] = $row['param_value'] !== null && $row['param_value'] !== ''
+				? (string)$row['param_value']
+				: null;
+		}
+		return $map;
+	}
+
+	/**
+	 * @deprecated 編集画面は getUnitKeywordLinksByType を使用
+	 */
+	public function getUnitKeywordIdsByType(int $unitId, string $type): array
+	{
+		return array_keys($this->getUnitKeywordLinksByType($unitId, $type));
+	}
+
+	/**
+	 * キーワードマスタ候補一覧（編集画面用）
+	 */
+	public function getAllKeywords(?string $type = null)
+	{
+		if ($type === 'unit' || $type === 'faction') {
+			$sql = "SELECT id, name, keyword_type, effect, sort_order, accepts_param
+                    FROM m_keywords_master
+                    WHERE keyword_type = :keyword_type
+                    ORDER BY sort_order ASC, name ASC, id ASC;";
+			return $this->db->select($sql, ['keyword_type' => $type]);
+		}
+		$sql = "SELECT id, name, keyword_type, effect, sort_order, accepts_param
+                FROM m_keywords_master
+                ORDER BY keyword_type ASC, sort_order ASC, name ASC, id ASC;";
+		return $this->db->select($sql);
 	}
 
 	/**
@@ -257,6 +328,12 @@ class Unit_Model extends Model
 			return [false, 'ファクションが不正です。'];
 		}
 
+		$keywordFlags = $this->deriveUnitFlagsFromKeywordIds($data['unit_keyword_ids'] ?? []);
+		$isSpecial = !empty($data['is_terrain']) || !empty($data['is_manifestation']);
+		if ($isSpecial) {
+			$keywordFlags['is_hero'] = 0;
+		}
+
 		$core = [
 			'faction_id' => $factionId,
 			'name'       => mb_substr($name, 0, 255),
@@ -267,15 +344,12 @@ class Unit_Model extends Model
 			'points'     => $this->nullableInt($data['points'] ?? null),
 			'unit_size'  => $this->nullableInt($data['unit_size'] ?? null),
 			'base_size'  => $this->nullableStr($data['base_size'] ?? null),
-			'unit_keywords'    => $this->nullableStr($data['unit_keywords'] ?? null),
-			'faction_keywords' => $this->nullableStr($data['faction_keywords'] ?? null),
-			'flavor_text' => $this->nullableStr($data['flavor_text'] ?? null),
 			'image'      => $this->nullableStr($data['image'] ?? null),
 			'is_hidden'  => !empty($data['is_hidden']) ? 1 : 0,
-			'is_hero'       => !empty($data['is_hero']) ? 1 : 0,
+			'is_hero'       => $keywordFlags['is_hero'],
 			'can_reinforce' => !empty($data['can_reinforce']) ? 1 : 0,
-			'is_general'    => !empty($data['is_general']) ? 1 : 0,
-			'is_unique'     => !empty($data['is_unique']) ? 1 : 0,
+			'is_general'    => $keywordFlags['is_general'],
+			'is_unique'     => $keywordFlags['is_unique'],
 			'is_terrain'    => !empty($data['is_terrain']) ? 1 : 0,
 			'is_manifestation' => !empty($data['is_manifestation']) ? 1 : 0,
 		];
@@ -313,6 +387,13 @@ class Unit_Model extends Model
 
 			$this->replaceUnitWeapons((int)$unitId, $data['weapons'] ?? []);
 			$this->syncUnitAbilities((int)$unitId, $data['abilities'] ?? []);
+			$this->syncUnitKeywords(
+				(int)$unitId,
+				$data['unit_keyword_ids'] ?? [],
+				$data['faction_keyword_ids'] ?? [],
+				$data['unit_keyword_params'] ?? [],
+				$data['faction_keyword_params'] ?? []
+			);
 			$this->syncUnitRegimentEligibility((int)$unitId, $factionId, $data['regiment_eligibility'] ?? []);
 			$this->syncHeroRegimentOptions(
 				(int)$unitId,
@@ -445,6 +526,121 @@ class Unit_Model extends Model
 				$attached[$abilityId] = true;
 			}
 		}
+	}
+
+	/**
+	 * ユニットのキーワードリンクを同期する（m_unit_keywords）。
+	 */
+	private function syncUnitKeywords(
+		int $unitId,
+		array $unitKeywordIds,
+		array $factionKeywordIds,
+		array $unitKeywordParams = [],
+		array $factionKeywordParams = []
+	): void {
+		$this->db->prepare('DELETE FROM m_unit_keywords WHERE unit_id = :unit_id;')
+			->execute([':unit_id' => $unitId]);
+
+		$unitIds = $this->filterKeywordIdsByType($unitKeywordIds, 'unit');
+		$factionIds = $this->filterKeywordIdsByType($factionKeywordIds, 'faction');
+		if (empty($unitIds) && empty($factionIds)) {
+			return;
+		}
+
+		$acceptsParam = $this->getKeywordAcceptsParamMap(array_merge($unitIds, $factionIds));
+		$insert = $this->db->prepare(
+			'INSERT IGNORE INTO m_unit_keywords (unit_id, keyword_id, param_value) VALUES (:unit_id, :keyword_id, :param_value);'
+		);
+
+		foreach ($unitIds as $keywordId) {
+			$param = $this->resolveKeywordParam($keywordId, $unitKeywordParams, $acceptsParam);
+			$insert->execute([
+				':unit_id'    => $unitId,
+				':keyword_id' => $keywordId,
+				':param_value' => $param,
+			]);
+		}
+		foreach ($factionIds as $keywordId) {
+			$param = $this->resolveKeywordParam($keywordId, $factionKeywordParams, $acceptsParam);
+			$insert->execute([
+				':unit_id'    => $unitId,
+				':keyword_id' => $keywordId,
+				':param_value' => $param,
+			]);
+		}
+	}
+
+	/**
+	 * @param array<int, mixed> $paramsMap
+	 * @param array<int, bool>  $acceptsParam
+	 */
+	private function resolveKeywordParam(int $keywordId, array $paramsMap, array $acceptsParam): ?string
+	{
+		if (empty($acceptsParam[$keywordId])) {
+			return null;
+		}
+		$raw = $paramsMap[$keywordId] ?? $paramsMap[(string)$keywordId] ?? null;
+		return KeywordDisplay::normalizeParam($raw !== null ? (string)$raw : null);
+	}
+
+	/**
+	 * @param int[] $keywordIds
+	 * @return array<int, bool>
+	 */
+	private function getKeywordAcceptsParamMap(array $keywordIds): array
+	{
+		$ids = array_values(array_unique(array_filter(array_map('intval', $keywordIds), static fn($v) => $v > 0)));
+		if (empty($ids)) {
+			return [];
+		}
+		$placeholders = implode(',', array_fill(0, count($ids), '?'));
+		$sql = "SELECT id, accepts_param FROM m_keywords_master WHERE id IN ({$placeholders});";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute($ids);
+		$map = [];
+		foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+			$map[(int)$row['id']] = (int)$row['accepts_param'] === 1;
+		}
+		return $map;
+	}
+
+	/**
+	 * 選択されたユニットキーワード ID から is_hero / is_general / is_unique を導出する。
+	 *
+	 * @return array{is_hero:int, is_general:int, is_unique:int}
+	 */
+	private function deriveUnitFlagsFromKeywordIds(array $unitKeywordIds): array
+	{
+		$ids = $this->filterKeywordIdsByType($unitKeywordIds, 'unit');
+		if (empty($ids)) {
+			return ['is_hero' => 0, 'is_general' => 0, 'is_unique' => 0];
+		}
+
+		$placeholders = implode(',', array_fill(0, count($ids), '?'));
+		$sql = "SELECT name FROM m_keywords_master WHERE keyword_type = 'unit' AND id IN ({$placeholders});";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute($ids);
+		$names = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
+
+		return UnitKeywordFlags::deriveFlagsFromNames($names);
+	}
+
+	/**
+	 * 指定タイプに属するキーワード ID のみを返す（不正 ID を除外）。
+	 */
+	private function filterKeywordIdsByType(array $keywordIds, string $type): array
+	{
+		$type = ($type === 'faction') ? 'faction' : 'unit';
+		$ids = array_values(array_unique(array_filter(array_map('intval', $keywordIds), static fn($v) => $v > 0)));
+		if (empty($ids)) {
+			return [];
+		}
+
+		$placeholders = implode(',', array_fill(0, count($ids), '?'));
+		$sql = "SELECT id FROM m_keywords_master WHERE keyword_type = ? AND id IN ({$placeholders});";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute(array_merge([$type], $ids));
+		return array_map(static fn($r) => (int)$r['id'], $stmt->fetchAll(PDO::FETCH_ASSOC));
 	}
 
 	/**
