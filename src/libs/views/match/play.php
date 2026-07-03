@@ -69,6 +69,12 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					<code id="p2ShareUrl"><?= $this->h($p2ShareUrl); ?></code>
 					<button type="button" id="btnCopyP2Url" class="btn-copy-p2-url">コピー</button>
 				</div>
+				<div>
+					<span>期待値</span>
+					<p>ダイス2個の合計は7</p>
+					<p>3+3+で残るダイスの確率44.4%</p>
+					<p>3+3+かつ相手の6+防御を回避する確率37.04%</p>
+				</div>
 			<?php endif; ?>
 		</aside>
 
