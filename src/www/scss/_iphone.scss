@@ -1,0 +1,47 @@
+// 変数でブレークポイントを管理
+$breakpoint-iphone: 375px;
+
+// ミックスインの定義
+@mixin mq($breakpoint) {
+	@media (min-width: $breakpoint) {
+		@content;
+	}
+}
+
+// 実際の使用例
+
+@include mq($breakpoint-iphone) {
+	.side-nav {
+		.nav-sticky-container {
+			flex-direction: column;
+		}
+
+		.nav-menu,
+		.nav-footer {
+			display: none;
+		}
+	}
+
+	.home {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-template-rows: 1fr 1fr 1fr;
+
+		.grid-item1 {
+			grid-column: 1 / 1;
+		}
+		.grid-item2 {
+			grid-column: auto;
+			grid-row: auto;
+			aspect-ratio: 1/1;
+		}
+	}
+
+	.unit.index {
+		display: block;
+	}
+
+	.match.scoreboard .scoreboard-sidebar {
+		max-height: 20vh;
+	}
+}

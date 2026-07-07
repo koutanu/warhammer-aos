@@ -5416,4 +5416,32 @@ button {
   .rule .rule-section-title {
     font-size: 1.3rem;
   }
+}
+@media (min-width: 375px) {
+  .side-nav .nav-sticky-container {
+    flex-direction: column;
+  }
+  .side-nav .nav-menu,
+  .side-nav .nav-footer {
+    display: none;
+  }
+  .home {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+  }
+  .home .grid-item1 {
+    grid-column: 1/1;
+  }
+  .home .grid-item2 {
+    grid-column: auto;
+    grid-row: auto;
+    aspect-ratio: 1/1;
+  }
+  .unit.index {
+    display: block;
+  }
+  .match.scoreboard .scoreboard-sidebar {
+    max-height: 20vh;
+  }
 }/*# sourceMappingURL=style.css.map */
