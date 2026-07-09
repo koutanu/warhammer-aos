@@ -5417,7 +5417,7 @@ button {
     font-size: 1.3rem;
   }
 }
-@media (min-width: 375px) {
+@media (max-width: 768px) {
   .side-nav .nav-sticky-container {
     flex-direction: column;
   }

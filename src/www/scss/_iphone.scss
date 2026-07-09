@@ -1,9 +1,9 @@
 // 変数でブレークポイントを管理
-$breakpoint-iphone: 375px;
+$breakpoint-iphone: 768px;
 
 // ミックスインの定義
 @mixin mq($breakpoint) {
-	@media (min-width: $breakpoint) {
+	@media (max-width: $breakpoint) {
 		@content;
 	}
 }
