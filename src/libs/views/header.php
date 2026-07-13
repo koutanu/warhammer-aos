@@ -4,12 +4,15 @@
 <input type="hidden" id="class" value="<?= $class; ?>">
 
 <div class="wrapper">
-	<!-- 左側常時表示のサイドナビ -->
+	<!-- 左側常時表示のサイドナビ（スマホでは上部タイトル＋下部ボトムナビ） -->
 	<nav class="side-nav">
 		<div class="nav-sticky-container">
 			<!-- アプリロゴ・タイトル -->
 			<h1 class="app-title">
-				<a href="<?= $this->h(URL); ?>home">AoS Match<br>Assistant</a>
+				<a href="<?= $this->h(URL); ?>home">
+					<span class="app-title-full">AoS Match<br>Assistant</span>
+					<span class="app-title-short">AoS Match</span>
+				</a>
 			</h1>
 
 			<!-- メニューリンク -->
@@ -28,7 +31,10 @@
 				</li>
 				<li>
 					<a href="<?= $this->h(URL); ?>match/history"
-						class="nav-item <?= $class === 'match' && $method === 'history' ? 'active' : ''; ?>">Match History</a>
+						class="nav-item <?= $class === 'match' && $method === 'history' ? 'active' : ''; ?>">
+						<span class="nav-label-full">Match History</span>
+						<span class="nav-label-short">History</span>
+					</a>
 				</li>
 				<li>
 					<a href="<?= $this->h(URL); ?>unit"
@@ -40,7 +46,7 @@
 				</li>
 			</ul>
 
-			<!-- 下部に配置したいメニュー（ログアウトなど） -->
+			<!-- 下部に配置したいメニュー（ログアウトなど）／スマホでは上部タイトル横 -->
 			<div class="nav-footer">
 				<a href="<?= $this->h(URL); ?>admin/logout" class="nav-item logout">Logout</a>
 			</div>

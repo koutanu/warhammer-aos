@@ -9,6 +9,7 @@
 
 	.logo-img {
 		width: 350px;
+		max-width: min(350px, 85vw);
 		height: auto; /* 画像の比率崩れ防止の保険 */
 	}
 
@@ -25,5 +26,18 @@
 		left: -5000px; /* 画面外に飛ばす */
 		opacity: 0;
 		z-index: -1;
+	}
+
+	@media (max-width: 768px) {
+		padding: 1rem;
+		box-sizing: border-box;
+
+		input,
+		.login-btn,
+		.btn {
+			width: 100%;
+			max-width: 320px;
+			box-sizing: border-box;
+		}
 	}
 }

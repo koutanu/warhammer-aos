@@ -34,6 +34,10 @@
 			color: $color-accent;
 			text-decoration: none;
 		}
+
+		.app-title-short {
+			display: none;
+		}
 	}
 
 	.nav-menu {
@@ -43,6 +47,14 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
+
+		li {
+			padding-left: 0;
+		}
+
+		.nav-label-short {
+			display: none;
+		}
 	}
 
 	.nav-footer {
@@ -79,58 +91,137 @@
 	}
 }
 
-// --- 右側メインコンテンツのスタイル ---
+// flex-grow のみ（padding / max-height は _fundamental.scss）
 .main-content {
 	flex-grow: 1;
-	padding: 2rem;
-	box-sizing: border-box;
-
-	// ★追記: 左のサイドバーが常に画面高さで固定されるため、
-	// 右側コンテンツの高さが100vhを超えた場合、右側だけが独立してスクロールするようにします
-	max-height: 100vh;
-	overflow-y: auto;
 }
 
-// --- 📱 スマホ（縦画面）時のレスポンシブ対応 ---
+// --- 📱 スマホ: 上部スリムバー + 固定ボトムナビ ---
+$mobile-top-bar-height: 3rem;
+$mobile-bottom-nav-height: 3.5rem;
+
 @media (max-width: 768px) {
+	// ボトムナビ分の下余白（navigation が fundamental より後に読み込まれるためここで指定）
+	.main-content {
+		max-height: none;
+		overflow-y: visible;
+		padding: 1rem calc(1rem + env(safe-area-inset-right))
+			calc(1rem + #{$mobile-bottom-nav-height} + env(safe-area-inset-bottom))
+			calc(1rem + env(safe-area-inset-left));
+	}
+
 	.side-nav {
 		width: 100%;
-		height: auto; // スマホでは高さ固定を解除
+		height: auto;
 		border-right: none;
-		border-bottom: 2px solid $color-main;
+		box-shadow: none;
+		background: transparent;
+		flex-shrink: 0;
 
 		.nav-sticky-container {
-			position: relative; // stickyを解除
+			position: relative;
 			height: auto;
-			flex-direction: row; // 横並びに変更
+			display: flex;
+			flex-direction: row;
 			justify-content: space-between;
 			align-items: center;
-			padding: 0.5rem 1rem;
+			padding: calc(0.5rem + env(safe-area-inset-top))
+				calc(0.75rem + env(safe-area-inset-right)) 0.5rem
+				calc(0.75rem + env(safe-area-inset-left));
+			background-color: $color-base;
+			border-bottom: 2px solid $color-main;
+			box-sizing: border-box;
+			min-height: calc(#{$mobile-top-bar-height} + env(safe-area-inset-top));
 		}
 
 		.app-title {
 			margin: 0;
 			font-size: 1rem;
+			text-align: left;
+			line-height: 1.2;
+
+			.app-title-full {
+				display: none;
+			}
+
+			.app-title-short {
+				display: inline;
+			}
 		}
 
 		.nav-menu {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			z-index: 200;
 			flex-direction: row;
-			gap: 0.5rem;
+			align-items: stretch;
+			justify-content: space-around;
+			gap: 0;
+			margin: 0;
+			padding: 0.2rem 0.15rem calc(0.2rem + env(safe-area-inset-bottom));
+			background-color: $color-base;
+			border-top: 2px solid $color-main;
+			box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.35);
+			box-sizing: border-box;
+			min-height: calc(#{$mobile-bottom-nav-height} + env(safe-area-inset-bottom));
+
+			li {
+				flex: 1 1 0;
+				min-width: 0;
+				padding-left: 0;
+				list-style: none;
+			}
+
+			.nav-label-full {
+				display: none;
+			}
+
+			.nav-label-short {
+				display: inline;
+			}
 		}
 
 		.nav-item {
-			padding: 8px 12px;
-			font-size: 0.9rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			padding: 0.55rem 0.15rem;
+			font-size: 0.68rem;
+			line-height: 1.15;
+			border-radius: 0;
+			min-height: 48px;
+			box-sizing: border-box;
 
 			&.active {
 				border-left: none;
-				border-bottom: 2px solid $color-accent;
+				border-bottom: none;
+				border-top: 3px solid $color-accent;
+				background-color: rgba($color-main, 0.35);
 				border-radius: 0;
 			}
 		}
 
 		.nav-footer {
 			margin-top: 0;
+			flex-shrink: 0;
+
+			.nav-item {
+				min-height: auto;
+				padding: 0.4rem 0.65rem;
+				font-size: 0.8rem;
+				border-radius: 6px;
+
+				&.active {
+					border-top: none;
+				}
+
+				&.logout {
+					color: lighten($color-blood, 35%);
+				}
+			}
 		}
 	}
 }

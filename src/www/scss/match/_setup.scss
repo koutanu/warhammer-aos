@@ -11,6 +11,11 @@
 	max-height: 100vh;
 	overflow: hidden;
 	padding: 0;
+
+	// 対戦中はボトムナビ無しのため、ナビ用の下余白を打ち消す
+	@media (max-width: 768px) {
+		padding: 0;
+	}
 }
 
 .match.setup {
@@ -93,6 +98,8 @@
 		justify-content: space-between;
 		align-items: center;
 		margin-top: 2rem;
+		gap: 1rem;
+		flex-wrap: wrap;
 	}
 
 	.btn-submit {
@@ -119,5 +126,24 @@
 		color: rgba($color-text, 0.5);
 		text-decoration: none;
 		padding: 0.5rem 1rem;
+	}
+
+	@media (max-width: 768px) {
+		margin: 0.5rem 0;
+		padding: 1.25rem 1rem;
+
+		.form-actions {
+			flex-direction: column-reverse;
+			align-items: stretch;
+
+			.btn-submit {
+				width: 100%;
+				text-align: center;
+			}
+
+			.btn-secondary {
+				text-align: center;
+			}
+		}
 	}
 }

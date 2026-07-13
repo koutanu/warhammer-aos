@@ -33,8 +33,7 @@ a {
 
 html {
   -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-       text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -101,8 +100,7 @@ button {
   border: none;
   cursor: pointer;
   outline: none;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none;
 }
 
@@ -152,11 +150,6 @@ button {
   .wrapper {
     flex-direction: column;
   }
-  .main-content {
-    max-height: none;
-    overflow-y: visible;
-    padding: 1rem calc(1rem + env(safe-area-inset-right)) calc(1rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
-  }
 }
 .side-nav {
   width: 220px;
@@ -187,6 +180,9 @@ button {
   color: #d4af37;
   text-decoration: none;
 }
+.side-nav .app-title .app-title-short {
+  display: none;
+}
 .side-nav .nav-menu {
   list-style: none;
   padding: 0;
@@ -194,6 +190,12 @@ button {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+.side-nav .nav-menu li {
+  padding-left: 0;
+}
+.side-nav .nav-menu .nav-label-short {
+  display: none;
 }
 .side-nav .nav-footer {
   margin-top: auto;
@@ -225,46 +227,111 @@ button {
 
 .main-content {
   flex-grow: 1;
-  padding: 2rem;
-  box-sizing: border-box;
-  max-height: 100vh;
-  overflow-y: auto;
 }
 
 @media (max-width: 768px) {
+  .main-content {
+    max-height: none;
+    overflow-y: visible;
+    padding: 1rem calc(1rem + env(safe-area-inset-right)) calc(1rem + 3.5rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
+  }
   .side-nav {
     width: 100%;
     height: auto;
     border-right: none;
-    border-bottom: 2px solid #2f4f4f;
+    box-shadow: none;
+    background: transparent;
+    flex-shrink: 0;
   }
   .side-nav .nav-sticky-container {
     position: relative;
     height: auto;
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 1rem;
+    padding: calc(0.5rem + env(safe-area-inset-top)) calc(0.75rem + env(safe-area-inset-right)) 0.5rem calc(0.75rem + env(safe-area-inset-left));
+    background-color: #1a2626;
+    border-bottom: 2px solid #2f4f4f;
+    box-sizing: border-box;
+    min-height: calc(3rem + env(safe-area-inset-top));
   }
   .side-nav .app-title {
     margin: 0;
     font-size: 1rem;
+    text-align: left;
+    line-height: 1.2;
+  }
+  .side-nav .app-title .app-title-full {
+    display: none;
+  }
+  .side-nav .app-title .app-title-short {
+    display: inline;
   }
   .side-nav .nav-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
     flex-direction: row;
-    gap: 0.5rem;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 0;
+    margin: 0;
+    padding: 0.2rem 0.15rem calc(0.2rem + env(safe-area-inset-bottom));
+    background-color: #1a2626;
+    border-top: 2px solid #2f4f4f;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+    min-height: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+  .side-nav .nav-menu li {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 0;
+    list-style: none;
+  }
+  .side-nav .nav-menu .nav-label-full {
+    display: none;
+  }
+  .side-nav .nav-menu .nav-label-short {
+    display: inline;
   }
   .side-nav .nav-item {
-    padding: 8px 12px;
-    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.55rem 0.15rem;
+    font-size: 0.68rem;
+    line-height: 1.15;
+    border-radius: 0;
+    min-height: 48px;
+    box-sizing: border-box;
   }
   .side-nav .nav-item.active {
     border-left: none;
-    border-bottom: 2px solid #d4af37;
+    border-bottom: none;
+    border-top: 3px solid #d4af37;
+    background-color: rgba(47, 79, 79, 0.35);
     border-radius: 0;
   }
   .side-nav .nav-footer {
     margin-top: 0;
+    flex-shrink: 0;
+  }
+  .side-nav .nav-footer .nav-item {
+    min-height: auto;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+  .side-nav .nav-footer .nav-item.active {
+    border-top: none;
+  }
+  .side-nav .nav-footer .nav-item.logout {
+    color: #ff3f3f;
   }
 }
 .login {
@@ -277,6 +344,7 @@ button {
 }
 .login .logo-img {
   width: 350px;
+  max-width: min(350px, 85vw);
   height: auto; /* 画像の比率崩れ防止の保険 */
 }
 .login input {
@@ -290,6 +358,19 @@ button {
   left: -5000px; /* 画面外に飛ばす */
   opacity: 0;
   z-index: -1;
+}
+@media (max-width: 768px) {
+  .login {
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  .login input,
+  .login .login-btn,
+  .login .btn {
+    width: 100%;
+    max-width: 320px;
+    box-sizing: border-box;
+  }
 }
 
 .home {
@@ -333,6 +414,7 @@ button {
   align-items: flex-start;
   padding: 1.2rem;
   box-sizing: border-box;
+  transition: transform 0.1s ease, filter 0.1s ease;
 }
 .home .grid-item1 .grid-bg-img {
   position: absolute;
@@ -340,8 +422,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   border-radius: 12px;
   z-index: 1;
   transform-origin: center;
@@ -361,9 +442,6 @@ button {
   position: relative;
   z-index: 3;
   font-weight: bold;
-}
-.home .grid-item1 {
-  transition: transform 0.1s ease, filter 0.1s ease;
 }
 .home .grid-item1:active {
   transform: scale(0.97);
@@ -404,6 +482,12 @@ button {
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
   padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px;
+  /* ----------------------------------------------------------
+     3段構成のデータシート風レイアウト（図鑑モーダル専用）
+     1段目: 画像 / 連隊編成 / キーワード
+     2段目: 基本情報ステータス / 武器テーブル
+     3段目: アビリティ
+     ---------------------------------------------------------- */
 }
 #unitDetailModal[style*="display: block"], #unitDetailModal[style*="display: flex"] {
   display: flex !important;
@@ -481,8 +565,7 @@ button {
 #unitDetailModal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -595,14 +678,6 @@ button {
   cursor: pointer;
   border: 1px solid #444;
 }
-#unitDetailModal {
-  /* ----------------------------------------------------------
-     3段構成のデータシート風レイアウト（図鑑モーダル専用）
-     1段目: 画像 / 連隊編成 / キーワード
-     2段目: 基本情報ステータス / 武器テーブル
-     3段目: アビリティ
-     ---------------------------------------------------------- */
-}
 #unitDetailModal .detail-modal-content--datasheet .detail-top-row,
 #unitDetailModal .detail-modal-content--datasheet .detail-stats-row {
   display: flex;
@@ -692,17 +767,13 @@ button {
   text-transform: capitalize; /* 単語の頭文字を大文字に（stormcast → Stormcast） */
   font-weight: bold;
   box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
 }
 .unit.index div p:last-child,
 .unit.index div a:last-child,
 .unit.index div .faction-item:last-child {
   margin-bottom: 0;
-}
-.unit.index div p,
-.unit.index div a,
-.unit.index div .faction-item {
-  cursor: pointer;
-  transition: transform 0.1s ease, background-color 0.1s ease;
 }
 .unit.index div p:active,
 .unit.index div a:active,
@@ -741,6 +812,10 @@ button {
   color: #f0ead6;
 }
 
+.unit.faction-units {
+  /* --- タブ --- */
+  /* --- 軍勢オプション --- */
+}
 .unit.faction-units .unit-list-header {
   display: flex;
   justify-content: space-between;
@@ -802,8 +877,7 @@ button {
 .unit.faction-units .unit-card-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .unit.faction-units .unit-card-name {
@@ -905,9 +979,6 @@ button {
   margin: 0;
   width: auto;
 }
-.unit.faction-units {
-  /* --- タブ --- */
-}
 .unit.faction-units .unit-tabs {
   display: flex;
   gap: 0.4rem;
@@ -942,9 +1013,6 @@ button {
 }
 .unit.faction-units .unit-tab-panel.is-active {
   display: block;
-}
-.unit.faction-units {
-  /* --- 軍勢オプション --- */
 }
 .unit.faction-units .option-section {
   margin-bottom: 0.75rem;
@@ -1380,9 +1448,6 @@ button {
   background: rgba(19, 28, 28, 0.9);
   color: #f0ead6;
 }
-.unit.unit-edit .keyword-param-input:-moz-read-only {
-  opacity: 0.45;
-}
 .unit.unit-edit .keyword-param-input:read-only {
   opacity: 0.45;
 }
@@ -1424,6 +1489,8 @@ button {
   border-radius: 12px; /* 既存デザインと統一した角丸 */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   box-sizing: border-box;
+  /* 作成ボタン（共通の .btn クラスをロスター専用に拡張） */
+  /* スマホ縦画面での表示調整（入れ子のなかにメディアクエリを配置） */
 }
 .roster.index h2 {
   color: #d4af37; /* 聖なるゴールド */
@@ -1443,10 +1510,13 @@ button {
   line-height: 1.5;
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .roster.index .form-group {
   margin-bottom: 1.75rem;
+  /* フォーム要素のオーバーライド（共通リセットの #fff 背景を上書き） */
+  /* プレースホルダーの色調整 */
+  /* セレクトボックスにカスタムの矢印（ゴールド）を配置 */
 }
 .roster.index .form-group label {
   display: block;
@@ -1454,9 +1524,6 @@ button {
   font-weight: bold;
   font-size: 1.05rem;
   margin-bottom: 0.6rem;
-}
-.roster.index .form-group {
-  /* フォーム要素のオーバーライド（共通リセットの #fff 背景を上書き） */
 }
 .roster.index .form-group input[type=text],
 .roster.index .form-group select {
@@ -1469,8 +1536,7 @@ button {
   border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none; /* iOS/Safariのデフォルト形状をリセット */
 }
 .roster.index .form-group input[type=text]:focus,
@@ -1479,17 +1545,8 @@ button {
   border-color: #d4af37;
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
 }
-.roster.index .form-group {
-  /* プレースホルダーの色調整 */
-}
-.roster.index .form-group input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
-}
 .roster.index .form-group input::placeholder {
   color: rgba(240, 234, 214, 0.4);
-}
-.roster.index .form-group {
-  /* セレクトボックスにカスタムの矢印（ゴールド）を配置 */
 }
 .roster.index .form-group select {
   cursor: pointer;
@@ -1498,9 +1555,6 @@ button {
   background-position: right 14px center;
   background-size: 16px;
   padding-right: 40px;
-}
-.roster.index {
-  /* 作成ボタン（共通の .btn クラスをロスター専用に拡張） */
 }
 .roster.index .btn-submit {
   background: #d4af37;
@@ -1520,13 +1574,18 @@ button {
   transform: scale(0.98); /* 既存のグリッド等と統一したタップ時のフィードバック */
   background-color: #bfa032; /* 少し沈んだゴールドに */
 }
-.roster.index {
-  /* スマホ縦画面での表示調整（入れ子のなかにメディアクエリを配置） */
-}
 @media (max-width: 768px) {
   .roster.index {
-    margin: 0.5rem;
-    padding: 1.5rem;
+    margin: 0.5rem 0;
+    padding: 1.25rem 1rem;
+  }
+  .roster.index .alliance-selector {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .roster.index .btn-submit {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 .roster.index .alliance-selector {
@@ -1629,12 +1688,12 @@ button {
 .roster.list .roster-flash-success {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
 }
 .roster.list .roster-flash-error {
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .roster.list .roster-list-table {
   width: 100%;
@@ -1672,7 +1731,7 @@ button {
   border: none;
   padding: 0;
   cursor: pointer;
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
   font-weight: bold;
   font-size: inherit;
   font-family: inherit;
@@ -1684,6 +1743,36 @@ button {
   color: rgba(240, 234, 214, 0.6);
   text-align: center;
   padding: 2rem 0;
+}
+@media (max-width: 768px) {
+  .roster.list {
+    margin: 0.5rem 0;
+    padding: 1.25rem 1rem;
+  }
+  .roster.list .list-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .roster.list .list-header .btn-submit {
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .roster.list .roster-list-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 0.85rem;
+  }
+  .roster.list .roster-list-table th,
+  .roster.list .roster-list-table td {
+    padding: 0.65rem 0.75rem;
+    white-space: nowrap;
+  }
+  .roster.list .roster-list-table .list-actions {
+    gap: 0.75rem;
+  }
 }
 
 /* ==========================================
@@ -1698,6 +1787,33 @@ button {
   color: #f0ead6;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
+  /* ==========================================
+         roster_meta カードデザイン
+        ========================================== */
+  /* ==========================================
+         アーミーオプションセクション & グリッドレイアウト
+        ========================================== */
+  /* ==========================================
+         フォーム・共通要素
+        ========================================== */
+  /* ==========================================
+         連隊の編成セクション / REGIMENTS
+        ========================================== */
+  /* ==========================================
+         下部固定 ポイントカウンター (Sticky Footer)
+        ========================================== */
+  /* ==========================================
+         ボタン周りのレイアウト
+        ========================================== */
+  /* ==========================================
+       5. 削除ボタン・随伴部隊レイアウト設定
+      ========================================== */
+  /* ==========================================================
+    詳細モーダル（#unitDetailModal）は図鑑と共通化したため、
+    scss/unit/_detail_modal.scss のグローバル定義に一本化。
+    ※ここでローカル上書きすると詳細度の関係で図鑑と表示がズレ、
+      モーダル枠からのはみ出し（オーバーレイ非スクロール）も発生する。
+    ========================================================== */
 }
 .roster.create_roster h2 {
   font-size: 1.5rem;
@@ -1717,12 +1833,12 @@ button {
 .roster.create_roster .roster-flash-error {
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .roster.create_roster .roster-flash-success {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
 }
 .roster.create_roster .lore-divider {
   border: none;
@@ -1740,11 +1856,6 @@ button {
   color: rgba(240, 234, 214, 0.45);
   border-top: 1px dashed rgba(47, 79, 79, 0.3);
   padding-top: 0.6rem;
-}
-.roster.create_roster {
-  /* ==========================================
-         roster_meta カードデザイン
-        ========================================== */
 }
 .roster.create_roster .roster-meta-card {
   background: #131c1c;
@@ -1803,11 +1914,6 @@ button {
   font-size: 1rem;
   font-weight: bold;
 }
-.roster.create_roster {
-  /* ==========================================
-         アーミーオプションセクション & グリッドレイアウト
-        ========================================== */
-}
 .roster.create_roster .army-options-section {
   margin-top: 2rem;
   padding-top: 1.5rem;
@@ -1830,11 +1936,6 @@ button {
   height: 14px;
   background: #d4af37;
   border-radius: 2px;
-}
-.roster.create_roster {
-  /* ==========================================
-         フォーム・共通要素
-        ========================================== */
 }
 .roster.create_roster .form-group {
   margin-bottom: 1.5rem;
@@ -1861,9 +1962,7 @@ button {
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .form-group select:focus,
 .roster.create_roster .form-group input[type=text]:focus {
@@ -1876,7 +1975,7 @@ button {
   background: rgba(47, 79, 79, 0.2);
   border: 1px solid #2f4f4f;
   border-radius: 4px;
-  color: rgb(216.512345679, 183.3950617284, 75.987654321);
+  color: #d9b74c;
   font-size: 0.85rem;
   font-weight: bold;
   cursor: pointer;
@@ -1940,7 +2039,7 @@ button {
   font-weight: bold;
   text-transform: uppercase;
   background: rgba(47, 79, 79, 0.25);
-  color: rgb(222.8296296296, 195.1481481481, 105.3703703704);
+  color: #dfc369;
   border: 1px solid rgba(47, 79, 79, 0.5);
   border-radius: 4px;
   margin-bottom: 0.75rem;
@@ -1952,11 +2051,6 @@ button {
   line-height: 1.6;
   color: rgba(240, 234, 214, 0.95);
   white-space: pre-wrap;
-}
-.roster.create_roster {
-  /* ==========================================
-         連隊の編成セクション / REGIMENTS
-        ========================================== */
 }
 .roster.create_roster .regiments-section {
   margin-top: 2.5rem;
@@ -2156,17 +2250,12 @@ button {
   font-size: 1.05rem;
   margin-left: 0.25rem;
 }
-.roster.create_roster {
-  /* ==========================================
-         下部固定 ポイントカウンター (Sticky Footer)
-        ========================================== */
-}
 .roster.create_roster .roster-sticky-counter {
   position: sticky;
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgba(19.784375, 28.915625, 28.915625, 0.95);
+  background: rgba(20, 29, 29, 0.95);
   backdrop-filter: blur(8px);
   border-top: 2px solid #2f4f4f;
   padding: 1rem 1.5rem;
@@ -2191,11 +2280,6 @@ button {
   color: #d4af37;
   text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }
-.roster.create_roster {
-  /* ==========================================
-         ボタン周りのレイアウト
-        ========================================== */
-}
 .roster.create_roster .form-actions {
   display: flex;
   justify-content: space-between;
@@ -2204,7 +2288,7 @@ button {
 }
 .roster.create_roster .btn-submit {
   padding: 0.85rem 2rem;
-  background: linear-gradient(135deg, #d4af37, rgb(177.7777777778, 144.8888888889, 38.2222222222));
+  background: linear-gradient(135deg, #d4af37, #b29126);
   color: #131c1c;
   border: none;
   border-radius: 4px;
@@ -2215,7 +2299,7 @@ button {
   transition: all 0.2s;
 }
 .roster.create_roster .btn-submit:hover {
-  background: linear-gradient(135deg, rgb(216.512345679, 183.3950617284, 75.987654321), #d4af37);
+  background: linear-gradient(135deg, #d9b74c, #d4af37);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
@@ -2245,18 +2329,13 @@ button {
     transform: translateY(0);
   }
 }
-.roster.create_roster {
-  /* ==========================================
-       5. 削除ボタン・随伴部隊レイアウト設定
-      ========================================== */
-}
 .roster.create_roster .unit-slot-row .btn-delete-unit, .roster.create_roster .btn-delete-regiment {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background-color: rgba(139, 0, 0, 0.15);
   border: 1px solid #be0000;
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
@@ -2265,7 +2344,7 @@ button {
 }
 .roster.create_roster .unit-slot-row .btn-delete-unit:hover, .roster.create_roster .btn-delete-regiment:hover {
   background-color: rgba(139, 0, 0, 0.3);
-  border-color: rgb(255, 11.5, 11.5);
+  border-color: #ff0c0c;
   color: #f0ead6;
 }
 .roster.create_roster .unit-slot-row .btn-delete-unit:active, .roster.create_roster .btn-delete-regiment:active {
@@ -2294,9 +2373,7 @@ button {
   font-size: 0.95rem;
   outline: none;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .unit-slot-row .select-wrapper .unit-select:focus {
   border-color: #d4af37;
@@ -2455,9 +2532,6 @@ button {
 .roster.create_roster .modal-content .modal-search-input:focus {
   border-color: var(--color-accent, #ffcc00);
 }
-.roster.create_roster .modal-content .modal-search-input::-moz-placeholder {
-  color: #aaa;
-}
 .roster.create_roster .modal-content .modal-search-input::placeholder {
   color: #aaa;
 }
@@ -2584,14 +2658,6 @@ button {
   border-radius: 3px;
   cursor: pointer;
 }
-.roster.create_roster {
-  /* ==========================================================
-    詳細モーダル（#unitDetailModal）は図鑑と共通化したため、
-    scss/unit/_detail_modal.scss のグローバル定義に一本化。
-    ※ここでローカル上書きすると詳細度の関係で図鑑と表示がズレ、
-      モーダル枠からのはみ出し（オーバーレイ非スクロール）も発生する。
-    ========================================================== */
-}
 @keyframes detailModalBoxFadeIn {
   from {
     opacity: 0;
@@ -2676,7 +2742,7 @@ button {
   font-weight: bold;
   text-transform: uppercase;
   background: rgba(47, 79, 79, 0.25);
-  color: rgb(222.8296296296, 195.1481481481, 105.3703703704);
+  color: #dfc369;
   border: 1px solid rgba(47, 79, 79, 0.5);
   border-radius: 4px;
   margin-bottom: 0.5rem;
@@ -2714,6 +2780,11 @@ button {
   max-height: 100vh;
   overflow: hidden;
   padding: 0;
+}
+@media (max-width: 768px) {
+  .match-fullscreen-content {
+    padding: 0;
+  }
 }
 
 .match.setup {
@@ -2787,10 +2858,12 @@ button {
   justify-content: space-between;
   align-items: center;
   margin-top: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 .match.setup .btn-submit {
   padding: 0.85rem 2rem;
-  background: linear-gradient(135deg, #d4af37, rgb(177.7777777778, 144.8888888889, 38.2222222222));
+  background: linear-gradient(135deg, #d4af37, #b29126);
   color: #131c1c;
   border: none;
   border-radius: 4px;
@@ -2806,6 +2879,23 @@ button {
   color: rgba(240, 234, 214, 0.5);
   text-decoration: none;
   padding: 0.5rem 1rem;
+}
+@media (max-width: 768px) {
+  .match.setup {
+    margin: 0.5rem 0;
+    padding: 1.25rem 1rem;
+  }
+  .match.setup .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .match.setup .form-actions .btn-submit {
+    width: 100%;
+    text-align: center;
+  }
+  .match.setup .form-actions .btn-secondary {
+    text-align: center;
+  }
 }
 
 .match.scoreboard {
@@ -3355,7 +3445,7 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.25rem;
-  background: rgba(19.784375, 28.915625, 28.915625, 0.95);
+  background: rgba(20, 29, 29, 0.95);
   backdrop-filter: blur(8px);
   border-top: 2px solid #2f4f4f;
   flex-shrink: 0;
@@ -3600,7 +3690,7 @@ button {
   flex-shrink: 0;
   padding: 0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(47, 79, 79, 0.5);
-  background: rgba(21.85625, 31.94375, 31.94375, 0.98);
+  background: rgba(22, 32, 32, 0.98);
   backdrop-filter: blur(8px);
 }
 .match.scoreboard .modal-overlay .round-start-modal-content .round-start-modal-actions .btn-submit {
@@ -3609,7 +3699,7 @@ button {
   padding: 0.75rem 1.25rem;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #d4af37, rgb(169.3827160494, 138.0469135802, 36.4172839506));
+  background: linear-gradient(135deg, #d4af37, #a98a24);
   color: #131c1c;
   font-size: 1rem;
   font-weight: bold;
@@ -3790,8 +3880,7 @@ button {
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb-placeholder {
@@ -3893,8 +3982,7 @@ button {
 .match.scoreboard .match-unit-detail-modal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -4124,8 +4212,7 @@ button {
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-placeholder {
@@ -4204,8 +4291,7 @@ button {
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-placeholder {
@@ -4274,8 +4360,7 @@ button {
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-placeholder {
@@ -4399,9 +4484,7 @@ button {
   cursor: pointer;
   min-height: 48px;
   -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  user-select: none;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 .match.scoreboard .phase-ability-card.is-expandable:hover {
@@ -4416,9 +4499,7 @@ button {
 }
 .match.scoreboard .phase-ability-card .ability-effect-box,
 .match.scoreboard .phase-ability-card .ability-effect-box * {
-  -webkit-user-select: text;
-     -moz-user-select: text;
-          user-select: text;
+  user-select: text;
 }
 .match.scoreboard .phase-ability-card.is-open {
   border-left-color: #d4af37;
@@ -4650,8 +4731,7 @@ button {
 .match.scoreboard .ability-effect-box .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .ability-effect-box .ability-unit-thumb-placeholder {
@@ -4808,8 +4888,7 @@ button {
 .match.scoreboard .deployment-unit-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .deployment-unit-thumb-placeholder {
@@ -5072,6 +5151,45 @@ button {
   display: inline-flex;
   align-items: center;
 }
+@media (max-width: 768px) {
+  .match.summary {
+    margin: 0.5rem 0;
+    padding: 1.25rem 1rem;
+  }
+  .match.summary .summary-header-card {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .match.summary .summary-header-card .summary-winner {
+    text-align: left;
+  }
+  .match.summary .summary-totals {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .match.summary .summary-totals .summary-vs {
+    font-size: 1.1rem;
+  }
+  .match.summary .summary-totals .total-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .match.summary .round-breakdown .round-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .match.summary .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .match.summary .form-actions .btn-submit,
+  .match.summary .form-actions .btn-secondary {
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
 
 /* ==========================================
 戦績一覧画面 (.match.history)
@@ -5119,7 +5237,7 @@ button {
 }
 .match.history .list-header .btn-submit:active {
   transform: scale(0.98);
-  background-color: rgb(186.1728395062, 151.7308641975, 40.0271604938);
+  background-color: #ba9828;
 }
 .match.history .roster-flash {
   padding: 0.75rem 1rem;
@@ -5131,12 +5249,12 @@ button {
 .match.history .roster-flash-success {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
 }
 .match.history .roster-flash-error {
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .match.history .roster-list-table-wrap {
   overflow-x: auto;
@@ -5257,7 +5375,7 @@ button {
 .match.history .list-actions .btn-delete {
   display: inline-block;
   padding: 0.4rem 0.9rem;
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
   background: none;
   border: 1px solid rgba(139, 0, 0, 0.5);
   border-radius: 6px;
@@ -5305,7 +5423,7 @@ button {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
   border-radius: 8px;
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
   box-sizing: border-box;
 }
 .active-match-banner .active-match-banner-lead {
@@ -5352,7 +5470,7 @@ button {
 }
 .active-match-banner .active-match-banner-link:active {
   transform: scale(0.97);
-  background-color: rgb(186.1728395062, 151.7308641975, 40.0271604938);
+  background-color: #ba9828;
 }
 
 .match.setup .active-match-banner {
@@ -5411,37 +5529,38 @@ button {
 
 @media (max-width: 768px) {
   .rule {
-    padding: 1rem 0.5rem;
+    padding: 0.5rem 0;
   }
   .rule .rule-section-title {
     font-size: 1.3rem;
   }
+  .rule .rule-card {
+    padding: 1rem;
+  }
 }
 @media (max-width: 768px) {
-  .side-nav .nav-sticky-container {
-    flex-direction: column;
-  }
-  .side-nav .nav-menu,
-  .side-nav .nav-footer {
-    display: none;
-  }
   .home {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-rows: auto;
+    grid-auto-rows: auto;
+    padding: 0.5rem 0 0;
   }
   .home .grid-item1 {
-    grid-column: 1/1;
-  }
-  .home .grid-item2 {
-    grid-column: auto;
+    grid-column: 1/2;
     grid-row: auto;
     aspect-ratio: 1/1;
+    min-height: 0;
+    font-size: 1.35rem;
+  }
+  .home .grid-item2 {
+    grid-column: 2/3;
+    grid-row: auto;
+    aspect-ratio: 1/1;
+    min-height: 0;
   }
   .unit.index {
     display: block;
+    padding: 0.5rem 0;
   }
-  .match.scoreboard .scoreboard-sidebar {
-    max-height: 20vh;
-  }
-}/*# sourceMappingURL=style.css.map */
+}

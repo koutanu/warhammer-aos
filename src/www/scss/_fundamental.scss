@@ -167,16 +167,9 @@ button {
 	max-height: 100vh;
 	overflow-y: auto;
 }
-// --- 📱 スマホ（縦画面）で見るとき用のレスポンス対応 ---
+// --- 📱 スマホ（縦画面）レイアウト ---
 @media (max-width: 768px) {
 	.wrapper {
 		flex-direction: column; // 縦並びに変更
-	}
-
-	.main-content {
-		max-height: none; // スマホではスクロール制限を解除
-		overflow-y: visible;
-		padding: 1rem calc(1rem + env(safe-area-inset-right))
-			calc(1rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
 	}
 }

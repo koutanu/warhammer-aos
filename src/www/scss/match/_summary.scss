@@ -179,4 +179,50 @@
 			align-items: center;
 		}
 	}
+
+	@media (max-width: 768px) {
+		margin: 0.5rem 0;
+		padding: 1.25rem 1rem;
+
+		.summary-header-card {
+			flex-direction: column;
+			gap: 1rem;
+
+			.summary-winner {
+				text-align: left;
+			}
+		}
+
+		.summary-totals {
+			flex-direction: column;
+			gap: 0.75rem;
+
+			.summary-vs {
+				font-size: 1.1rem;
+			}
+
+			.total-card {
+				width: 100%;
+				box-sizing: border-box;
+			}
+		}
+
+		.round-breakdown .round-table {
+			display: block;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.form-actions {
+			flex-direction: column;
+			align-items: stretch;
+
+			.btn-submit,
+			.btn-secondary {
+				justify-content: center;
+				width: 100%;
+				box-sizing: border-box;
+			}
+		}
+	}
 }

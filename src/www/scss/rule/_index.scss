@@ -60,10 +60,14 @@
 
 @media (max-width: 768px) {
 	.rule {
-		padding: 1rem 0.5rem;
+		padding: 0.5rem 0;
 
 		.rule-section-title {
 			font-size: 1.3rem;
+		}
+
+		.rule-card {
+			padding: 1rem;
 		}
 	}
 }
