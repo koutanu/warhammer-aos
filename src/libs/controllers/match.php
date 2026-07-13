@@ -161,6 +161,7 @@ class Matchplay extends Controller
             'js'            => [
                 $this->class_name . '/phases.js',
                 $this->class_name . '/state.js',
+                $this->class_name . '/battle_tactics.js',
                 $this->class_name . '/scoreboard.js',
                 $this->class_name . '/ability_panel.js',
                 $this->class_name . '/round_start.js',
@@ -432,6 +433,36 @@ class Matchplay extends Controller
             }
 
             return ['success' => true, 'state' => $this->model->buildMatchState($matchId)];
+        });
+    }
+
+    public function completeBattleTactics()
+    {
+        $this->jsonResponse(function () {
+            $body = $this->getJsonBody();
+            $this->requireTokenFromBody($body);
+
+            $matchId = (int)($body['matchId'] ?? 0);
+            $playerSlot = (int)($body['playerSlot'] ?? 0);
+            $completions = $body['completions'] ?? [];
+
+            if ($matchId <= 0 || !in_array($playerSlot, [1, 2], true)) {
+                $this->jsonError('無効なパラメータです。', 400);
+            }
+            if (!is_array($completions)) {
+                $this->jsonError('達成内容が不正です。', 400);
+            }
+
+            $result = $this->model->completeBattleTactics($matchId, $playerSlot, $completions);
+            if (empty($result['ok'])) {
+                $this->jsonError($result['message'] ?? 'バトルタクティクスの更新に失敗しました。', 400);
+            }
+
+            return [
+                'success' => true,
+                'vpAdded' => (int)($result['vpAdded'] ?? 0),
+                'state'   => $this->model->buildMatchState($matchId),
+            ];
         });
     }
 

@@ -1,6 +1,7 @@
 /**
  * スコアボード UI コントローラー
  * - VP は ± ボタンで手動増減（ラウンド自動計算は廃止）
+ * - ターン切替前 / 次ラウンド / 試合終了前に BT 達成モーダル
  * - ロスター表示をメインに、フェーズ参照はタブ切替
  */
 document.addEventListener("DOMContentLoaded", function () {
@@ -9,6 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 	const matchId = parseInt(app.dataset.matchId, 10);
 	const token = app.dataset.token;
+	const viewerSlot = parseInt(app.dataset.viewerSlot, 10) || 1;
 	const baseUrl = getBaseURL();
 
 	const initialState = JSON.parse(
@@ -28,6 +30,9 @@ document.addEventListener("DOMContentLoaded", function () {
 		player1TotalVp: document.getElementById("player1TotalVp"),
 		player2TotalVp: document.getElementById("player2TotalVp"),
 		vpBar: document.getElementById("vpBar"),
+		btnSwitchTurn: document.getElementById("btnSwitchTurn"),
+		activeTurnLabel: document.getElementById("activeTurnLabel"),
+		sidebarTurn: document.getElementById("sidebarTurn"),
 		btnNextRound: document.getElementById("btnNextRound"),
 		currentRoundValue: document.getElementById("currentRoundValue"),
 		maxRoundValue: document.getElementById("maxRoundValue"),
@@ -39,6 +44,8 @@ document.addEventListener("DOMContentLoaded", function () {
 		confirmModalCancel: document.getElementById("confirmModalCancel"),
 		player1Priority: document.getElementById("player1Priority"),
 		player2Priority: document.getElementById("player2Priority"),
+		player1Initiative: document.getElementById("player1Initiative"),
+		player2Initiative: document.getElementById("player2Initiative"),
 		firstPlayerModal: document.getElementById("firstPlayerModal"),
 		firstPlayerModalTitle: document.getElementById("firstPlayerModalTitle"),
 		firstPlayerModalMessage: document.getElementById("firstPlayerModalMessage"),
@@ -47,8 +54,29 @@ document.addEventListener("DOMContentLoaded", function () {
 		firstPlayerModalCancel: document.getElementById("firstPlayerModalCancel"),
 	};
 
+	async function apiPost(endpoint, body) {
+		const res = await fetch(baseUrl + endpoint, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(body),
+		});
+		const data = await res.json();
+		if (!res.ok || !data.success) {
+			throw new Error(data.message || "API error");
+		}
+		return data;
+	}
+
+	MatchBattleTactics.init({ apiPost, viewerSlot });
+
 	render();
 	bindEvents();
+
+	document
+		.getElementById("btnViewBattleTactics")
+		?.addEventListener("click", function () {
+			MatchBattleTactics.openViewList();
+		});
 
 	window.addEventListener("matchStateUpdated", function () {
 		render();
@@ -73,19 +101,42 @@ document.addEventListener("DOMContentLoaded", function () {
 			});
 		});
 
+		els.btnSwitchTurn?.addEventListener("click", function () {
+			if (els.btnSwitchTurn.disabled) return;
+			const state = MatchStateManager.getState();
+			if (state.game?.phase === "deployment") return;
+
+			const firstPlayer = state.game?.firstPlayer;
+			if (firstPlayer !== 1 && firstPlayer !== 2) return;
+
+			const active = state.game?.activePlayer || 1;
+			if (active !== firstPlayer) return;
+
+			const secondPlayer = firstPlayer === 1 ? 2 : 1;
+
+			MatchBattleTactics.openForPlayer(active, function () {
+				return setActivePlayer(secondPlayer);
+			});
+		});
+
 		els.btnNextRound?.addEventListener("click", function () {
 			if (els.btnNextRound.disabled) return;
+			const state = MatchStateManager.getState();
+			const active = state.game?.activePlayer || 1;
 			const p1 = MatchStateManager.getPlayer(1) || {};
 			const p2 = MatchStateManager.getPlayer(2) || {};
-			openFirstPlayerModal(
-				"次のラウンド: 先攻はどちら？",
-				"次のラウンドで先に手番を行うプレイヤーを選んでください。使用済みアビリティはリセットされます。",
-				p1.name || "Player 1",
-				p2.name || "Player 2",
-				function (slot) {
-					advanceRound(slot);
-				},
-			);
+
+			MatchBattleTactics.openForPlayer(active, function () {
+				openFirstPlayerModal(
+					"次のラウンド: 先攻はどちら？",
+					"次のラウンドで先に手番を行うプレイヤーを選んでください。使用済みアビリティはリセットされます。",
+					p1.name || "Player 1",
+					p2.name || "Player 2",
+					function (slot) {
+						advanceRound(slot);
+					},
+				);
+			});
 		});
 
 		els.btnCompleteMatch.addEventListener("click", function () {
@@ -93,7 +144,11 @@ document.addEventListener("DOMContentLoaded", function () {
 				"試合終了",
 				"試合を終了して結果画面へ移動しますか？",
 				function () {
-					syncComplete();
+					const state = MatchStateManager.getState();
+					const active = state.game?.activePlayer || 1;
+					MatchBattleTactics.openForPlayer(active, function () {
+						return syncComplete();
+					});
 				},
 			);
 		});
@@ -125,6 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		els.player2TotalVp.textContent = p2.totalVp ?? 0;
 
 		renderRound(state);
+		renderTurn(state);
 		renderPriority(state);
 
 		updateAllianceClasses(p1, p2);
@@ -134,24 +190,92 @@ document.addEventListener("DOMContentLoaded", function () {
 		}
 	}
 
-	function renderRound(state) {
+	function getRoundActionPhase(state) {
+		const isDeployment = state.game?.phase === "deployment";
+		const active = state.game?.activePlayer || 1;
+		const firstPlayer = state.game?.firstPlayer;
 		const maxRounds = state.maxRounds || 5;
 		const round = state.game?.battleRound ?? state.currentRound ?? 1;
+		const isFinal = round >= maxRounds;
+		const hasPriority = firstPlayer === 1 || firstPlayer === 2;
+		const isFirstPlayerTurn = hasPriority && active === firstPlayer;
+		const isSecondPlayerTurn = hasPriority && !isFirstPlayerTurn;
 
-		if (els.currentRoundValue) els.currentRoundValue.textContent = round;
-		if (els.maxRoundValue) els.maxRoundValue.textContent = maxRounds;
+		return {
+			isDeployment,
+			active,
+			firstPlayer,
+			round,
+			maxRounds,
+			isFinal,
+			hasPriority,
+			isFirstPlayerTurn,
+			isSecondPlayerTurn,
+		};
+	}
 
-		if (els.btnNextRound) {
-			const isFinal = round >= maxRounds;
-			els.btnNextRound.disabled = isFinal;
-			els.btnNextRound.textContent = isFinal ? "最終ラウンド" : "次のラウンドへ";
+	function renderRound(state) {
+		const phase = getRoundActionPhase(state);
+
+		if (els.currentRoundValue) els.currentRoundValue.textContent = phase.round;
+		if (els.maxRoundValue) els.maxRoundValue.textContent = phase.maxRounds;
+
+		if (!els.btnNextRound) return;
+
+		// 後攻のターン中のみ「次のラウンドへ」（ターン切替後）。最終ラウンドは試合終了を使う。
+		const showNextRound =
+			!phase.isDeployment && phase.isSecondPlayerTurn && !phase.isFinal;
+		els.btnNextRound.style.display = showNextRound ? "" : "none";
+		els.btnNextRound.disabled = !showNextRound;
+		els.btnNextRound.textContent = "次のラウンドへ";
+	}
+
+	function renderTurn(state) {
+		const phase = getRoundActionPhase(state);
+		const activePlayer = MatchStateManager.getPlayer(phase.active) || {};
+		const name = activePlayer.name || `Player ${phase.active}`;
+
+		if (els.activeTurnLabel) {
+			els.activeTurnLabel.textContent = `${name} のターン`;
+		}
+
+		if (els.sidebarTurn) {
+			els.sidebarTurn.style.display = phase.isDeployment ? "none" : "";
+		}
+
+		if (!els.btnSwitchTurn) return;
+
+		// 先攻のターン中のみターン切替ボタン。文言は viewer と先攻/後攻から決定。
+		const showSwitch = !phase.isDeployment && phase.isFirstPlayerTurn;
+		els.btnSwitchTurn.style.display = showSwitch ? "" : "none";
+		els.btnSwitchTurn.disabled = !showSwitch;
+
+		if (showSwitch) {
+			// 先攻ターン終了 → 後攻へ。viewer が先攻なら「相手のターンへ」、後攻なら「自分のターンへ」
+			els.btnSwitchTurn.textContent =
+				phase.active === viewerSlot ? "相手のターンへ" : "自分のターンへ";
 		}
 	}
 
 	function renderPriority(state) {
 		const firstPlayer = state.game?.firstPlayer ?? null;
+		const p1 = MatchStateManager.getPlayer(1) || {};
+		const p2 = MatchStateManager.getPlayer(2) || {};
 		applyPriorityBadge(els.player1Priority, 1, firstPlayer);
 		applyPriorityBadge(els.player2Priority, 2, firstPlayer);
+		applyInitiativeBadge(els.player1Initiative, !!p1.seizedInitiative);
+		applyInitiativeBadge(els.player2Initiative, !!p2.seizedInitiative);
+	}
+
+	function applyInitiativeBadge(el, seized) {
+		if (!el) return;
+		if (!seized) {
+			el.style.display = "none";
+			el.textContent = "";
+			return;
+		}
+		el.style.display = "";
+		el.textContent = "イニシアチブ奪取";
 	}
 
 	function applyPriorityBadge(el, slot, firstPlayer) {
@@ -200,6 +324,22 @@ document.addEventListener("DOMContentLoaded", function () {
 		}
 	}
 
+	async function setActivePlayer(playerSlot) {
+		try {
+			const res = await apiPost("match/setActivePlayer", {
+				token,
+				matchId,
+				playerSlot,
+			});
+			if (res.success) {
+				MatchStateManager.applyServerState(res.state);
+			}
+		} catch (e) {
+			console.error("Set active player failed", e);
+			alert("ターンを切り替えできませんでした。時間をおいて再度お試しください。");
+		}
+	}
+
 	async function advanceRound(firstPlayerSlot) {
 		try {
 			const res = await apiPost("match/advanceRound", {
@@ -227,19 +367,6 @@ document.addEventListener("DOMContentLoaded", function () {
 			console.error("Match completion failed", e);
 			alert("試合を終了できませんでした。時間をおいて再度お試しください。");
 		}
-	}
-
-	async function apiPost(endpoint, body) {
-		const res = await fetch(baseUrl + endpoint, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(body),
-		});
-		const data = await res.json();
-		if (!res.ok || !data.success) {
-			throw new Error(data.message || "API error");
-		}
-		return data;
 	}
 
 	let confirmCallback = null;

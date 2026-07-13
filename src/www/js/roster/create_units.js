@@ -640,6 +640,24 @@ document.addEventListener("DOMContentLoaded", () => {
 				alert(
 					`合計ポイント (${total} pt) が上限 (${maxPointsLimit} pt) を超えています。`,
 				);
+				return;
+			}
+
+			const tacticsSection = document.getElementById("battleTacticsSection");
+			if (tacticsSection) {
+				const maxCards = parseInt(
+					tacticsSection.dataset.maxCards || "2",
+					10,
+				);
+				const selected = tacticsSection.querySelectorAll(
+					".battle-tactic-checkbox:checked",
+				).length;
+				if (selected > maxCards) {
+					e.preventDefault();
+					alert(
+						`バトルタクティクスカードは最大${maxCards}枚まで選択できます。`,
+					);
+				}
 			}
 		});
 	}

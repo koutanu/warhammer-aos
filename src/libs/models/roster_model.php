@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../types/battle_tactics.php';
+
 class Roster_Model extends Model
 {
 	public function __construct()
@@ -614,9 +616,209 @@ class Roster_Model extends Model
 		}
 
 		return [
-			'roster'    => $roster,
-			'regiments' => $regiments,
+			'roster'                 => $roster,
+			'regiments'              => $regiments,
+			'selected_tactics_cards' => $this->getSelectedBattleTacticIds($rosterId),
 		];
+	}
+
+	/**
+	 * ロスターに紐づくバトルタクティクスカード ID（sort_order 昇順）。
+	 *
+	 * @return list<int>
+	 */
+	public function getSelectedBattleTacticIds(int $rosterId): array
+	{
+		$sql = 'SELECT battle_tactic_id
+                FROM t_roster_battle_tactics
+                WHERE roster_id = :roster_id
+                ORDER BY sort_order ASC;';
+		$rows = $this->db->select($sql, ['roster_id' => $rosterId]);
+		return array_map('intval', array_column($rows, 'battle_tactic_id'));
+	}
+
+	/**
+	 * GHB 2026-27 カードを段階付きで取得する。
+	 *
+	 * @return list<BattleTacticCard>
+	 */
+	public function getBattleTacticCardsForSeason(string $season = BattleTactics::SEASON_2026_27): array
+	{
+		$sql = 'SELECT id, name, season, grand_alliance, sort_order
+                FROM m_battle_tactics
+                WHERE season = :season
+                ORDER BY sort_order ASC, id ASC;';
+		$cards = $this->db->select($sql, ['season' => $season]);
+		if (empty($cards)) {
+			return [];
+		}
+
+		$cardIds = array_map('intval', array_column($cards, 'id'));
+		$bind = [];
+		$placeholders = [];
+		foreach ($cardIds as $i => $id) {
+			$key = 'cid' . $i;
+			$placeholders[] = ':' . $key;
+			$bind[$key] = $id;
+		}
+
+		$stageSql = 'SELECT id, battle_tactic_id, stage, stage_order, name, effect, victory_points
+                     FROM m_battle_tactic_stages
+                     WHERE battle_tactic_id IN (' . implode(',', $placeholders) . ')
+                     ORDER BY battle_tactic_id ASC, stage_order ASC;';
+		$stageRows = $this->db->select($stageSql, $bind);
+
+		$stagesByCard = [];
+		foreach ($stageRows as $row) {
+			$cid = (int)$row['battle_tactic_id'];
+			$stagesByCard[$cid][] = [
+				'id'               => (int)$row['id'],
+				'battle_tactic_id' => $cid,
+				'stage'            => $row['stage'],
+				'stage_order'      => (int)$row['stage_order'],
+				'name'             => $row['name'],
+				'effect'           => $row['effect'],
+				'victory_points'   => (int)($row['victory_points'] ?? 2),
+			];
+		}
+
+		$result = [];
+		foreach ($cards as $card) {
+			$cid = (int)$card['id'];
+			$result[] = [
+				'id'              => $cid,
+				'name'            => $card['name'],
+				'season'          => $card['season'],
+				'grand_alliance'  => $card['grand_alliance'],
+				'sort_order'      => (int)$card['sort_order'],
+				'stages'          => $stagesByCard[$cid] ?? [],
+			];
+		}
+		return $result;
+	}
+
+	/**
+	 * 選択カード ID を正規化（int 化・空除去）。枚数上限は検証側で見る。
+	 *
+	 * @param mixed $raw
+	 * @return list<int>
+	 */
+	private function normalizeSelectedTacticsCards($raw): array
+	{
+		if ($raw === null || $raw === '') {
+			return [];
+		}
+		if (!is_array($raw)) {
+			$raw = [$raw];
+		}
+		$ids = [];
+		foreach ($raw as $value) {
+			$id = (int)$value;
+			if ($id > 0) {
+				$ids[] = $id;
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * ロスター保存時のバトルタクティクス選択検証（0〜2枚）。
+	 *
+	 * @param list<int> $selectedCardIds
+	 * @return string|null エラーメッセージ。問題なければ null。
+	 */
+	public function validateBattleTacticsSelection(array $selectedCardIds): ?string
+	{
+		$selectedCardIds = $this->normalizeSelectedTacticsCards($selectedCardIds);
+
+		if (count($selectedCardIds) > BattleTactics::MAX_CARDS_PER_ROSTER) {
+			return 'バトルタクティクスカードは最大'
+				. BattleTactics::MAX_CARDS_PER_ROSTER
+				. '枚まで選択できます。';
+		}
+
+		if (count($selectedCardIds) !== count(array_unique($selectedCardIds))) {
+			return '同じバトルタクティクスカードを重複して選択できません。';
+		}
+
+		if (empty($selectedCardIds)) {
+			return null;
+		}
+
+		$bind = [];
+		$placeholders = [];
+		foreach ($selectedCardIds as $i => $id) {
+			$key = 'tid' . $i;
+			$placeholders[] = ':' . $key;
+			$bind[$key] = $id;
+		}
+
+		$sql = 'SELECT id, season
+                FROM m_battle_tactics
+                WHERE id IN (' . implode(',', $placeholders) . ');';
+		$rows = $this->db->select($sql, $bind);
+		$found = [];
+		foreach ($rows as $row) {
+			$found[(int)$row['id']] = $row['season'];
+		}
+
+		foreach ($selectedCardIds as $id) {
+			if (!isset($found[$id])) {
+				return '選択されたバトルタクティクスカードが不正です。';
+			}
+			if ($found[$id] !== BattleTactics::SEASON_2026_27) {
+				return 'GHB 2026-27 のバトルタクティクスカードのみ選択できます。';
+			}
+		}
+
+		$stageSql = 'SELECT battle_tactic_id, stage, stage_order
+                     FROM m_battle_tactic_stages
+                     WHERE battle_tactic_id IN (' . implode(',', $placeholders) . ')
+                     ORDER BY battle_tactic_id ASC, stage_order ASC;';
+		$stageRows = $this->db->select($stageSql, $bind);
+		$stagesByCard = [];
+		foreach ($stageRows as $row) {
+			$cid = (int)$row['battle_tactic_id'];
+			$stagesByCard[$cid][] = [
+				'stage'       => $row['stage'],
+				'stage_order' => (int)$row['stage_order'],
+			];
+		}
+
+		foreach ($selectedCardIds as $id) {
+			if (!BattleTactics::hasValidStageSequence($stagesByCard[$id] ?? [])) {
+				return 'バトルタクティクスカードの段階データが不正です（Affray → Strike → Domination が必要です）。';
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * ロスターのバトルタクティクス選択を置き換える。
+	 *
+	 * @param list<int> $selectedCardIds
+	 * @return array{0: bool, 1?: string}
+	 */
+	private function replaceRosterBattleTactics(int $rosterId, array $selectedCardIds): array
+	{
+		$selectedCardIds = $this->normalizeSelectedTacticsCards($selectedCardIds);
+
+		$sqls = ['DELETE FROM t_roster_battle_tactics WHERE roster_id = :roster_id;'];
+		$binds = [['roster_id' => $rosterId]];
+
+		foreach ($selectedCardIds as $sortOrder => $tacticId) {
+			$sqls[] = 'INSERT INTO t_roster_battle_tactics
+				(roster_id, battle_tactic_id, sort_order)
+				VALUES (:roster_id, :battle_tactic_id, :sort_order);';
+			$binds[] = [
+				'roster_id'        => $rosterId,
+				'battle_tactic_id' => $tacticId,
+				'sort_order'       => (int)$sortOrder,
+			];
+		}
+
+		return $this->db->transact($sqls, $binds);
 	}
 
 	public function getRosterSummaryForMatch(int $rosterId): ?array
@@ -636,6 +838,7 @@ class Roster_Model extends Model
 			'artefact'     => $this->resolveEnhancementName($data['roster']['artefact_id'] ?? null, 'artefact'),
 			'manifestations' => $this->getManifestationUnitsForLore((int)($data['roster']['manifestation_lore_id'] ?? 0)),
 			'terrain'      => $this->getTerrainUnitForMatch((int)($data['roster']['terrain_id'] ?? 0)),
+			'battleTactics' => $this->getSelectedBattleTacticCardsForMatch($rosterId),
 			'regiments'    => array_map(function ($reg) {
 				return [
 					'sortOrder'  => $reg['sort_order'],
@@ -645,6 +848,51 @@ class Roster_Model extends Model
 				];
 			}, $data['regiments']),
 		];
+	}
+
+	/**
+	 * マッチ用: ロスター選択済み BT カードを段階付きで返す。
+	 *
+	 * @return list<array{id:int,name:string,sortOrder:int,stages:list<array{id:int,stage:string,stageOrder:int,name:string,effect:string,victoryPoints:int}>}>
+	 */
+	public function getSelectedBattleTacticCardsForMatch(int $rosterId): array
+	{
+		$selectedIds = $this->getSelectedBattleTacticIds($rosterId);
+		if (empty($selectedIds)) {
+			return [];
+		}
+
+		$allCards = $this->getBattleTacticCardsForSeason(BattleTactics::SEASON_2026_27);
+		$byId = [];
+		foreach ($allCards as $card) {
+			$byId[(int)$card['id']] = $card;
+		}
+
+		$result = [];
+		foreach ($selectedIds as $sortOrder => $cardId) {
+			$card = $byId[$cardId] ?? null;
+			if (!$card) {
+				continue;
+			}
+			$stages = [];
+			foreach ($card['stages'] as $stage) {
+				$stages[] = [
+					'id'             => (int)$stage['id'],
+					'stage'          => $stage['stage'],
+					'stageOrder'     => (int)$stage['stage_order'],
+					'name'           => $stage['name'],
+					'effect'         => $stage['effect'],
+					'victoryPoints'  => (int)($stage['victory_points'] ?? 2),
+				];
+			}
+			$result[] = [
+				'id'        => (int)$card['id'],
+				'name'      => $card['name'],
+				'sortOrder' => (int)$sortOrder,
+				'stages'    => $stages,
+			];
+		}
+		return $result;
 	}
 
 	/**
@@ -1552,6 +1800,12 @@ class Roster_Model extends Model
 			return [false, $enhanceErr];
 		}
 
+		$selectedTactics = $this->normalizeSelectedTacticsCards($data['selected_tactics_cards'] ?? []);
+		$tacticsErr = $this->validateBattleTacticsSelection($selectedTactics);
+		if ($tacticsErr) {
+			return [false, $tacticsErr];
+		}
+
 		$sqls = [];
 		$binds = [];
 
@@ -1700,6 +1954,11 @@ class Roster_Model extends Model
 			if (!$unitResult[0]) {
 				return [false, $unitResult[1] ?? '随伴部隊の保存に失敗しました。'];
 			}
+		}
+
+		$tacticsResult = $this->replaceRosterBattleTactics($rosterId, $selectedTactics);
+		if (!$tacticsResult[0]) {
+			return [false, $tacticsResult[1] ?? 'バトルタクティクスの保存に失敗しました。'];
 		}
 
 		return [true, $rosterId];

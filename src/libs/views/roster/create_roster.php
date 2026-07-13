@@ -198,6 +198,58 @@
 			</div>
 		<?php endif; ?>
 
+		<?php
+		$maxTacticCards = class_exists('BattleTactics', false)
+			? (int)BattleTactics::MAX_CARDS_PER_ROSTER
+			: 2;
+		$stageLabels = [
+			'affray' => 'Affray',
+			'strike' => 'Strike',
+			'domination' => 'Domination',
+		];
+		?>
+		<div class="battle-tactics-section" id="battleTacticsSection"
+			data-max-cards="<?= $maxTacticCards; ?>">
+			<h3>バトルタクティクス / BATTLE TACTICS (GHB 2026-27)</h3>
+			<p class="battle-tactics-hint">
+				最大<?= $maxTacticCards; ?>枚まで選択できます。
+				各カードは Affray → Strike → Domination の順でのみ達成できます（任意）。
+			</p>
+			<div class="battle-tactics-count" id="battleTacticsCount" aria-live="polite">
+				選択中: <strong>0</strong> / <?= $maxTacticCards; ?>
+			</div>
+
+			<?php if (!empty($battle_tactics_cards)): ?>
+				<ul class="battle-tactics-list">
+					<?php foreach ($battle_tactics_cards as $card): ?>
+						<?php $cardId = (int)$card['id']; ?>
+						<li class="battle-tactic-card" data-tactic-id="<?= $cardId; ?>">
+							<label class="battle-tactic-select">
+								<input type="checkbox"
+									class="battle-tactic-checkbox"
+									name="selected_tactics_cards[]"
+									value="<?= $cardId; ?>">
+								<span class="battle-tactic-name"><?= $this->h($card['name']); ?></span>
+							</label>
+							<div class="battle-tactic-stages">
+								<?php foreach (($card['stages'] ?? []) as $stage): ?>
+									<div class="battle-tactic-stage stage-<?= $this->h($stage['stage']); ?>">
+										<span class="stage-badge">
+											<?= $this->h($stageLabels[$stage['stage']] ?? $stage['stage']); ?>
+										</span>
+										<strong class="stage-name"><?= $this->h($stage['name']); ?></strong>
+										<p class="stage-effect"><?= $this->h($stage['effect']); ?></p>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php else: ?>
+				<p class="battle-tactics-empty">選択可能なバトルタクティクスカードがありません。</p>
+			<?php endif; ?>
+		</div>
+
 		<hr class="section-divider">
 
 		<div class="regiments-section">

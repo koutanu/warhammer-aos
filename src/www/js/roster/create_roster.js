@@ -189,6 +189,61 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 		syncTerrainBtn();
 	}
+
+	// --------------------------------------------------------
+	//  バトルタクティクス: 最大2枚選択 + 段階表示
+	// --------------------------------------------------------
+	const tacticsSection = document.getElementById("battleTacticsSection");
+	if (tacticsSection) {
+		const maxCards = parseInt(tacticsSection.dataset.maxCards || "2", 10);
+		const checkboxes = Array.from(
+			tacticsSection.querySelectorAll(".battle-tactic-checkbox"),
+		);
+		const countEl = document.getElementById("battleTacticsCount");
+
+		const syncTacticSelection = () => {
+			const checked = checkboxes.filter((cb) => cb.checked);
+			if (countEl) {
+				const strong = countEl.querySelector("strong");
+				if (strong) strong.textContent = String(checked.length);
+			}
+			const atLimit = checked.length >= maxCards;
+			checkboxes.forEach((cb) => {
+				const card = cb.closest(".battle-tactic-card");
+				if (!cb.checked) {
+					cb.disabled = atLimit;
+					card?.classList.toggle("is-disabled", atLimit);
+				} else {
+					cb.disabled = false;
+					card?.classList.remove("is-disabled");
+					card?.classList.add("is-selected");
+				}
+				if (cb.checked) {
+					card?.classList.add("is-selected");
+				} else if (!atLimit) {
+					card?.classList.remove("is-selected");
+				} else {
+					card?.classList.remove("is-selected");
+				}
+			});
+		};
+
+		checkboxes.forEach((cb) => {
+			cb.addEventListener("change", () => {
+				const checked = checkboxes.filter((c) => c.checked);
+				if (checked.length > maxCards) {
+					cb.checked = false;
+					alert(
+						`バトルタクティクスカードは最大${maxCards}枚まで選択できます。`,
+					);
+				}
+				syncTacticSelection();
+			});
+		});
+
+		syncTacticSelection();
+		window.syncBattleTacticSelection = syncTacticSelection;
+	}
 });
 
 // 編集モード: 保存済みアーミーオプションの復元
@@ -220,4 +275,18 @@ document.addEventListener("DOMContentLoaded", () => {
 			select.dispatchEvent(new Event("change"));
 		}
 	});
+
+	const savedTactics = Array.isArray(opts.selected_tactics_cards)
+		? opts.selected_tactics_cards.map(String)
+		: [];
+	if (savedTactics.length) {
+		document
+			.querySelectorAll(".battle-tactic-checkbox")
+			.forEach((cb) => {
+				cb.checked = savedTactics.includes(String(cb.value));
+			});
+		if (typeof window.syncBattleTacticSelection === "function") {
+			window.syncBattleTacticSelection();
+		}
+	}
 });

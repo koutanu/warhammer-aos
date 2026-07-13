@@ -9,6 +9,8 @@ class Match_Model extends Model
     const VP_BATTLE_TACTIC = 4;
     const MAX_ROUNDS = 5;
     const MAX_VP_PER_ROUND = 10;
+    /** Seizing the Initiative 無効となる相手リード（VP差） */
+    const INITIATIVE_VP_LEAD_THRESHOLD = 11;
 
     const GAME_PHASES = ['hero', 'movement', 'shooting', 'charge', 'combat', 'end'];
 
@@ -342,9 +344,22 @@ class Match_Model extends Model
 
         $players = $this->buildPlayersFromMatch($match, $factionMap, $rounds);
         $usedAbilities = $this->buildUsedAbilitiesMap($matchId);
+        $btProgress = $this->getBattleTacticProgressMap($matchId);
 
         $currentGameRound = (int)($match['game_battle_round'] ?? 1);
         $firstPlayer = $rounds[$currentGameRound][1]['first_player_slot'] ?? null;
+
+        foreach ($players as &$player) {
+            $slot = (int)$player['slot'];
+            $seizedInitiative = (int)($rounds[$currentGameRound][$slot]['is_double_turn'] ?? 0) === 1;
+            $player['isDoubleTurn'] = $seizedInitiative;
+            $player['seizedInitiative'] = $seizedInitiative;
+            $player['battleTactics'] = $this->buildPlayerBattleTactics(
+                $player['roster']['battleTactics'] ?? [],
+                $btProgress[$slot] ?? []
+            );
+        }
+        unset($player);
 
         return [
             'matchId'        => (int)$match['id'],
@@ -365,6 +380,179 @@ class Match_Model extends Model
             ],
             'updatedAt'      => $match['updated_at'],
         ];
+    }
+
+    /**
+     * @return array<int, array<int, int>> player_slot => [battle_tactic_id => highest_completed_order]
+     */
+    public function getBattleTacticProgressMap(int $matchId): array
+    {
+        $sql = 'SELECT player_slot, battle_tactic_id, highest_completed_order
+                FROM t_match_battle_tactic_progress
+                WHERE match_id = :match_id;';
+        $rows = $this->db->select($sql, ['match_id' => $matchId]);
+        $map = [];
+        foreach ($rows as $row) {
+            $slot = (int)$row['player_slot'];
+            $tacticId = (int)$row['battle_tactic_id'];
+            $map[$slot][$tacticId] = (int)$row['highest_completed_order'];
+        }
+        return $map;
+    }
+
+    /**
+     * @param list<array{id:int,name:string,sortOrder:int,stages:list}> $rosterCards
+     * @param array<int, int> $progressByTacticId
+     * @return list<array{id:int,name:string,sortOrder:int,highestCompletedOrder:int,stages:list}>
+     */
+    private function buildPlayerBattleTactics(array $rosterCards, array $progressByTacticId): array
+    {
+        $result = [];
+        foreach ($rosterCards as $card) {
+            $id = (int)$card['id'];
+            $result[] = [
+                'id'                     => $id,
+                'name'                   => $card['name'],
+                'sortOrder'              => (int)($card['sortOrder'] ?? 0),
+                'highestCompletedOrder'  => (int)($progressByTacticId[$id] ?? 0),
+                'stages'                 => $card['stages'] ?? [],
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * ターン終了時のバトルタクティクス達成を記録し VP を加算する。
+     *
+     * @param list<array{battleTacticId?:int,stageOrder?:int}> $completions
+     * @return array{ok:bool,message?:string,vpAdded?:int}
+     */
+    public function completeBattleTactics(int $matchId, int $playerSlot, array $completions): array
+    {
+        if (!in_array($playerSlot, [1, 2], true)) {
+            return ['ok' => false, 'message' => '無効なプレイヤーです。'];
+        }
+
+        $match = $this->getMatchById($matchId);
+        if (!$match || $match['status'] === 'completed') {
+            return ['ok' => false, 'message' => '試合を更新できません。'];
+        }
+
+        $currentRound = (int)($match['game_battle_round'] ?? $match['battle_round'] ?? 1);
+        $roundScores = $this->getRoundScores($matchId);
+        $isDoubleTurn = false;
+        foreach ($roundScores as $row) {
+            if ((int)$row['round_number'] === $currentRound && (int)$row['player_slot'] === $playerSlot) {
+                $isDoubleTurn = (int)$row['is_double_turn'] === 1;
+                break;
+            }
+        }
+
+        if ($isDoubleTurn && !empty($completions)) {
+            return ['ok' => false, 'message' => 'イニシアチブ奪取（Seizing the Initiative）中はバトルタクティクスを達成できません。'];
+        }
+
+        $rosterId = $playerSlot === 1
+            ? (int)($match['player_a_roster_id'] ?? 0)
+            : (int)($match['player_b_roster_id'] ?? 0);
+
+        require_once MODELS . 'roster_model.php';
+        $rosterModel = new Roster_Model();
+        $cards = $rosterId > 0 ? $rosterModel->getSelectedBattleTacticCardsForMatch($rosterId) : [];
+        $cardsById = [];
+        foreach ($cards as $card) {
+            $cardsById[(int)$card['id']] = $card;
+        }
+
+        $progressMap = $this->getBattleTacticProgressMap($matchId);
+        $slotProgress = $progressMap[$playerSlot] ?? [];
+
+        $normalized = [];
+        $seenCards = [];
+        foreach ($completions as $item) {
+            $tacticId = (int)($item['battleTacticId'] ?? 0);
+            $stageOrder = (int)($item['stageOrder'] ?? 0);
+            if ($tacticId <= 0 || $stageOrder < 1 || $stageOrder > 3) {
+                return ['ok' => false, 'message' => '達成内容が不正です。'];
+            }
+            if (isset($seenCards[$tacticId])) {
+                return ['ok' => false, 'message' => '1カードにつき1段階のみ達成できます。'];
+            }
+            $seenCards[$tacticId] = true;
+
+            if (!isset($cardsById[$tacticId])) {
+                return ['ok' => false, 'message' => 'ロスターに選択されていないカードです。'];
+            }
+
+            $currentOrder = (int)($slotProgress[$tacticId] ?? 0);
+            if ($stageOrder !== $currentOrder + 1) {
+                return ['ok' => false, 'message' => 'Affray → Strike → Domination の順でのみ達成できます。'];
+            }
+
+            $stage = null;
+            foreach ($cardsById[$tacticId]['stages'] as $s) {
+                if ((int)$s['stageOrder'] === $stageOrder) {
+                    $stage = $s;
+                    break;
+                }
+            }
+            if (!$stage) {
+                return ['ok' => false, 'message' => '段階データが見つかりません。'];
+            }
+
+            $normalized[] = [
+                'battleTacticId' => $tacticId,
+                'stageOrder'     => $stageOrder,
+                'victoryPoints'  => (int)($stage['victoryPoints'] ?? 2),
+            ];
+        }
+
+        $vpAdded = 0;
+        $now = date('Y-m-d H:i:s');
+        foreach ($normalized as $item) {
+            $existing = (int)($slotProgress[$item['battleTacticId']] ?? 0);
+            if ($existing > 0) {
+                $this->db->executesql(
+                    'UPDATE t_match_battle_tactic_progress
+                     SET highest_completed_order = :order, updated_at = :updated_at
+                     WHERE match_id = :match_id
+                       AND player_slot = :player_slot
+                       AND battle_tactic_id = :battle_tactic_id;',
+                    [
+                        'order'            => $item['stageOrder'],
+                        'updated_at'       => $now,
+                        'match_id'         => $matchId,
+                        'player_slot'      => $playerSlot,
+                        'battle_tactic_id' => $item['battleTacticId'],
+                    ]
+                );
+            } else {
+                $this->db->executesql(
+                    'INSERT INTO t_match_battle_tactic_progress
+                        (match_id, player_slot, battle_tactic_id, highest_completed_order, updated_at)
+                     VALUES
+                        (:match_id, :player_slot, :battle_tactic_id, :order, :updated_at);',
+                    [
+                        'match_id'         => $matchId,
+                        'player_slot'      => $playerSlot,
+                        'battle_tactic_id' => $item['battleTacticId'],
+                        'order'            => $item['stageOrder'],
+                        'updated_at'       => $now,
+                    ]
+                );
+            }
+            $slotProgress[$item['battleTacticId']] = $item['stageOrder'];
+            $vpAdded += $item['victoryPoints'];
+        }
+
+        if ($vpAdded > 0) {
+            $currentVp = $playerSlot === 1
+                ? (int)($match['player_a_vp'] ?? 0)
+                : (int)($match['player_b_vp'] ?? 0);
+            $this->setPlayerVp($matchId, $playerSlot, $currentVp + $vpAdded);
+        }
+
+        return ['ok' => true, 'vpAdded' => $vpAdded];
     }
 
     public function getAbilityUsageRows(int $matchId): array
@@ -438,9 +626,9 @@ class Match_Model extends Model
     }
 
     /**
-     * 指定ラウンドの先攻プレイヤーを記録し、前ラウンドの先攻と比較してダブルターンを判定する。
+     * 指定ラウンドの先攻プレイヤーを記録し、Seizing the Initiative を判定する。
      * - first_player_slot はそのラウンドの両 slot 行に同値を保存。
-     * - R>=2 で前ラウンドの先攻と異なる場合、その先攻プレイヤーの行へ is_double_turn=1 を立てる。
+     * - R>=2 で前ラウンドの後攻が先攻になった場合、相手のリードが11未満なら is_double_turn=1。
      */
     private function recordRoundFirstPlayer(int $matchId, int $round, int $slot): void
     {
@@ -454,7 +642,6 @@ class Match_Model extends Model
             ['slot' => $slot, 'match_id' => $matchId, 'round' => $round]
         );
 
-        // ダブルターン判定（R>=2 のみ）
         $isDoubleTurn = false;
         if ($round > 1) {
             $prev = $this->db->select(
@@ -464,8 +651,22 @@ class Match_Model extends Model
                 ['match_id' => $matchId, 'round' => $round - 1]
             );
             $prevSlot = isset($prev[0]['first_player_slot']) ? (int)$prev[0]['first_player_slot'] : null;
+            // 前ラウンドの後攻が今ラウンドの先攻になった = イニシアチブ奪取の候補
             if ($prevSlot !== null && $prevSlot !== $slot) {
-                $isDoubleTurn = true;
+                $match = $this->getMatchById($matchId);
+                if ($match) {
+                    $myVp = $slot === 1
+                        ? (int)($match['player_a_vp'] ?? 0)
+                        : (int)($match['player_b_vp'] ?? 0);
+                    $oppSlot = $slot === 1 ? 2 : 1;
+                    $oppVp = $oppSlot === 1
+                        ? (int)($match['player_a_vp'] ?? 0)
+                        : (int)($match['player_b_vp'] ?? 0);
+                    $oppLead = $oppVp - $myVp;
+                    if ($oppLead < self::INITIATIVE_VP_LEAD_THRESHOLD) {
+                        $isDoubleTurn = true;
+                    }
+                }
             }
         }
 

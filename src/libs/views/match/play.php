@@ -14,6 +14,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 			<div class="sidebar-battleplan">
 				<span class="sidebar-label">BATTLEPLAN</span>
 				<strong id="battleplanName">-</strong>
+				<button type="button" id="btnViewBattleTactics" class="btn-view-battle-tactics">バトルタクティクスを確認</button>
 			</div>
 
 			<div class="match-mode-tabs">
@@ -27,7 +28,10 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 						<span class="vp-player-slot">PLAYER 1</span>
 						<strong class="vp-player-name" id="player1Name">-</strong>
 						<span class="vp-player-faction" id="player1Faction">-</span>
-						<span class="vp-player-priority" id="player1Priority" style="display:none;"></span>
+						<span class="vp-player-badges">
+							<span class="vp-player-priority" id="player1Priority" style="display:none;"></span>
+							<span class="vp-player-initiative" id="player1Initiative" style="display:none;"></span>
+						</span>
 					</div>
 					<div class="vp-counter">
 						<button type="button" class="vp-step vp-minus" data-player="1" data-delta="-1" aria-label="VPを減らす">&minus;</button>
@@ -43,7 +47,10 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 						<span class="vp-player-slot">PLAYER 2</span>
 						<strong class="vp-player-name" id="player2Name">-</strong>
 						<span class="vp-player-faction" id="player2Faction">-</span>
-						<span class="vp-player-priority" id="player2Priority" style="display:none;"></span>
+						<span class="vp-player-badges">
+							<span class="vp-player-priority" id="player2Priority" style="display:none;"></span>
+							<span class="vp-player-initiative" id="player2Initiative" style="display:none;"></span>
+						</span>
 					</div>
 					<div class="vp-counter">
 						<button type="button" class="vp-step vp-minus" data-player="2" data-delta="-1" aria-label="VPを減らす">&minus;</button>
@@ -58,6 +65,10 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 				<div class="sidebar-round">
 					<span class="sidebar-round-label">ラウンド</span>
 					<strong id="currentRoundValue">1</strong> / <span id="maxRoundValue">5</span>
+				</div>
+				<div class="sidebar-turn" id="sidebarTurn">
+					<span class="sidebar-turn-label" id="activeTurnLabel">PLAYER 1 のターン</span>
+					<button type="button" id="btnSwitchTurn" class="btn-switch-turn">相手のターンへ</button>
 				</div>
 				<button type="button" id="btnNextRound" class="btn-next-round">次のラウンドへ</button>
 				<button type="button" id="btnCompleteMatch" class="btn-header-end">試合終了</button>
@@ -153,6 +164,40 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 			<p id="roundStartEmpty" class="phase-ability-empty" style="display:none;"></p>
 			<div class="round-start-modal-actions">
 				<button type="button" id="roundStartClose" class="btn-submit">確認した</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="battleTacticsModal" class="modal-overlay" style="display:none;">
+		<div class="modal-content battle-tactics-modal-content">
+			<h3 id="battleTacticsModalTitle">バトルタクティクス達成</h3>
+			<p id="battleTacticsModalLead" class="battle-tactics-modal-lead">
+				ターン終了時に達成したバトルタクティクスを選択してください。
+			</p>
+			<p id="battleTacticsModalBlocked" class="battle-tactics-modal-blocked" style="display:none;">
+				イニシアチブ奪取（Seizing the Initiative）中のため、バトルタクティクスは達成できません。
+			</p>
+			<p id="battleTacticsModalEmpty" class="battle-tactics-modal-empty" style="display:none;">
+				このプレイヤーのロスターにバトルタクティクスカードが選択されていません。
+			</p>
+			<div id="battleTacticsModalList" class="battle-tactics-modal-list"></div>
+			<div class="battle-tactics-modal-actions">
+				<button type="button" id="battleTacticsModalSkip" class="btn-secondary">達成なしで続行</button>
+				<button type="button" id="battleTacticsModalConfirm" class="btn-submit">確定</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="battleTacticsViewModal" class="modal-overlay" style="display:none;">
+		<div class="modal-content battle-tactics-view-modal-content">
+			<h3 id="battleTacticsViewTitle">バトルタクティクス</h3>
+			<p id="battleTacticsViewLead" class="battle-tactics-view-lead">カード名をタップすると段階の詳細が開きます。</p>
+			<p id="battleTacticsViewEmpty" class="battle-tactics-view-empty" style="display:none;">
+				ロスターにバトルタクティクスカードが選択されていません。
+			</p>
+			<div id="battleTacticsViewList" class="battle-tactics-view-list"></div>
+			<div class="battle-tactics-view-actions">
+				<button type="button" id="battleTacticsViewClose" class="btn-secondary">閉じる</button>
 			</div>
 		</div>
 	</div>

@@ -172,6 +172,159 @@
 		}
 	}
 
+	.battle-tactics-section {
+		margin-top: 2rem;
+		padding-top: 1.5rem;
+		border-top: 1px dashed rgba($color-main, 0.4);
+
+		h3 {
+			font-size: 1.1rem;
+			color: $color-text;
+			margin-bottom: 0.75rem;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+
+			&::before {
+				content: "";
+				display: inline-block;
+				width: 6px;
+				height: 14px;
+				background: $color-accent;
+				border-radius: 2px;
+			}
+		}
+	}
+
+	.battle-tactics-hint {
+		font-size: 0.85rem;
+		color: rgba($color-text, 0.55);
+		margin: 0 0 0.75rem;
+		line-height: 1.5;
+	}
+
+	.battle-tactics-count {
+		font-size: 0.85rem;
+		color: rgba($color-text, 0.7);
+		margin-bottom: 1rem;
+
+		strong {
+			color: $color-accent;
+		}
+	}
+
+	.battle-tactics-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 0.75rem;
+
+		@media (min-width: 768px) {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	.battle-tactic-card {
+		background: $color-background;
+		border: 1px solid rgba($color-main, 0.45);
+		border-radius: 6px;
+		padding: 0.9rem 1rem;
+		transition: border-color 0.15s ease, opacity 0.15s ease;
+
+		&.is-selected {
+			border-color: $color-accent;
+			box-shadow: inset 0 0 0 1px rgba($color-accent, 0.35);
+		}
+
+		&.is-disabled {
+			opacity: 0.55;
+		}
+	}
+
+	.battle-tactic-select {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.65rem;
+		cursor: pointer;
+		margin-bottom: 0.65rem;
+
+		input[type="checkbox"] {
+			margin-top: 0.2rem;
+			width: 1.05rem;
+			height: 1.05rem;
+			accent-color: $color-accent;
+			flex-shrink: 0;
+		}
+	}
+
+	.battle-tactic-name {
+		font-weight: bold;
+		color: $color-text;
+		font-size: 0.95rem;
+		line-height: 1.4;
+	}
+
+	.battle-tactic-stages {
+		margin-top: 0.75rem;
+		padding-top: 0.75rem;
+		border-top: 1px dashed rgba($color-main, 0.35);
+		display: flex;
+		flex-direction: column;
+		gap: 0.65rem;
+	}
+
+	.battle-tactic-stage {
+		padding: 0.55rem 0.65rem;
+		border-radius: 4px;
+		background: rgba($color-base, 0.55);
+		border-left: 3px solid rgba($color-main, 0.6);
+
+		&.stage-affray {
+			border-left-color: $color-accent;
+		}
+
+		&.stage-strike {
+			border-left-color: $color-brick;
+		}
+
+		&.stage-domination {
+			border-left-color: $color-blood;
+		}
+	}
+
+	.stage-badge {
+		display: inline-block;
+		font-size: 0.7rem;
+		font-weight: bold;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: rgba($color-text, 0.65);
+		margin-bottom: 0.25rem;
+	}
+
+	.stage-name {
+		display: block;
+		font-size: 0.88rem;
+		color: $color-text;
+		margin-bottom: 0.25rem;
+	}
+
+	.stage-effect {
+		margin: 0;
+		font-size: 0.82rem;
+		line-height: 1.45;
+		color: rgba($color-text, 0.7);
+	}
+
+	.battle-tactics-empty {
+		font-size: 0.9rem;
+		color: rgba($color-text, 0.5);
+	}
+
 	/* ==========================================
         フォーム・共通要素
        ========================================== */

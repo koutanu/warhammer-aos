@@ -112,15 +112,17 @@ class Roster extends Controller
 			'hero_units'          => $this->model->getHeroUnits($faction_id),
 			'regiment_units'      => $this->model->getRegimentUnits($faction_id),
 			'faction_terrain'     => $this->model->getFactionTerrain($faction_id),
+			'battle_tactics_cards'=> $this->model->getBattleTacticCardsForSeason(),
 			'spell_lores'         => $this->formatLoreData($raw_spells, 'spell'),
 			'prayer_lores'        => $this->formatLoreData($raw_prayers, 'prayer'),
 			'manifestation_lores' => $this->formatLoreData($raw_manifestations, 'manifestation'),
 			'saved_options' => [
-				'battle_formation'   => $roster['battle_formation_id'],
-				'spell_lore'         => $roster['spell_lore_id'],
-				'prayer_lore'        => $roster['prayer_lore_id'],
-				'manifestation_lore' => $roster['manifestation_lore_id'],
-				'faction_terrain'    => $roster['terrain_id'] ?? null,
+				'battle_formation'       => $roster['battle_formation_id'],
+				'spell_lore'             => $roster['spell_lore_id'],
+				'prayer_lore'            => $roster['prayer_lore_id'],
+				'manifestation_lore'     => $roster['manifestation_lore_id'],
+				'faction_terrain'        => $roster['terrain_id'] ?? null,
+				'selected_tactics_cards' => $rosterData['selected_tactics_cards'] ?? [],
 			],
 			'roster_error' => $this->pullFlash('roster_error'),
 		];
@@ -169,6 +171,7 @@ class Roster extends Controller
 			'hero_units'          => $hero_units,
 			'regiment_units'      => $regiment_units,
 			'faction_terrain'     => $this->model->getFactionTerrain((int)$faction_id),
+			'battle_tactics_cards'=> $this->model->getBattleTacticCardsForSeason(),
 
 			'spell_lores'         => $this->formatLoreData($raw_spells, 'spell'),
 			'prayer_lores'        => $this->formatLoreData($raw_prayers, 'prayer'),
@@ -218,6 +221,7 @@ class Roster extends Controller
 			'artefact_target_unit_id'   => $_POST['artefact_target_unit_id'] ?? null,
 			'artefact_regiment_index'   => $_POST['artefact_regiment_index'] ?? null,
 			'artefact_unit_slot'        => $_POST['artefact_unit_slot'] ?? null,
+			'selected_tactics_cards'    => $_POST['selected_tactics_cards'] ?? [],
 			'regiments'              => $_POST['regiments'] ?? [],
 		];
 
