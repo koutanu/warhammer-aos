@@ -89,6 +89,10 @@
 			color: lighten($color-blood, 40%);
 		}
 	}
+
+	.nav-label-full {
+		font-weight: bold;
+	}
 }
 
 // flex-grow のみ（padding / max-height は _fundamental.scss）
