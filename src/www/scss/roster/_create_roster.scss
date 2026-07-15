@@ -99,6 +99,32 @@
 		text-shadow: 0 0 8px rgba($color-accent, 0.3);
 	}
 
+	.roster-title-display .roster-name-input {
+		width: 100%;
+		box-sizing: border-box;
+		background: rgba($color-main, 0.15);
+		border: 1px solid rgba($color-main, 0.45);
+		border-radius: 4px;
+		padding: 0.4rem 0.6rem;
+		font: inherit;
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: $color-text;
+		text-shadow: 0 0 8px rgba($color-accent, 0.3);
+		outline: none;
+
+		&:focus {
+			border-color: $color-accent;
+			box-shadow: 0 0 0 2px rgba($color-accent, 0.25);
+		}
+
+		&::placeholder {
+			color: rgba($color-text, 0.4);
+			font-weight: 400;
+			text-shadow: none;
+		}
+	}
+
 	.meta-row {
 		display: grid;
 		grid-template-columns: 1fr 2fr;

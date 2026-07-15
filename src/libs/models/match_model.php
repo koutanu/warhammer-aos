@@ -628,7 +628,9 @@ class Match_Model extends Model
     /**
      * 指定ラウンドの先攻プレイヤーを記録し、Seizing the Initiative を判定する。
      * - first_player_slot はそのラウンドの両 slot 行に同値を保存。
-     * - R>=2 で前ラウンドの後攻が先攻になった場合、相手のリードが11未満なら is_double_turn=1。
+     * - ダブルターン自体は first_player_slot の入れ替わりで表現する（専用フラグなし）。
+     * - R>=2 で前ラウンド後攻が先攻になり、かつ相手リードが11未満なら
+     *   is_double_turn=1（イニシアチブ奪取。BT不可の判定に使用）。
      */
     private function recordRoundFirstPlayer(int $matchId, int $round, int $slot): void
     {

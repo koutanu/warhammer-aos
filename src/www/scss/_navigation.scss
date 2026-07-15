@@ -110,7 +110,10 @@ $mobile-bottom-nav-height: 3.5rem;
 		max-height: none;
 		overflow-y: visible;
 		padding: 1rem calc(1rem + env(safe-area-inset-right))
-			calc(1rem + #{$mobile-bottom-nav-height} + env(safe-area-inset-bottom))
+			calc(
+				1rem + #{$mobile-bottom-nav-height} +
+					env(safe-area-inset-bottom)
+			)
 			calc(1rem + env(safe-area-inset-left));
 	}
 
@@ -135,7 +138,9 @@ $mobile-bottom-nav-height: 3.5rem;
 			background-color: $color-base;
 			border-bottom: 2px solid $color-main;
 			box-sizing: border-box;
-			min-height: calc(#{$mobile-top-bar-height} + env(safe-area-inset-top));
+			min-height: calc(
+				#{$mobile-top-bar-height} + env(safe-area-inset-top)
+			);
 		}
 
 		.app-title {
@@ -169,7 +174,9 @@ $mobile-bottom-nav-height: 3.5rem;
 			border-top: 2px solid $color-main;
 			box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.35);
 			box-sizing: border-box;
-			min-height: calc(#{$mobile-bottom-nav-height} + env(safe-area-inset-bottom));
+			min-height: calc(
+				#{$mobile-bottom-nav-height} + env(safe-area-inset-bottom)
+			);
 
 			li {
 				flex: 1 1 0;
@@ -184,6 +191,7 @@ $mobile-bottom-nav-height: 3.5rem;
 
 			.nav-label-short {
 				display: inline;
+				font-weight: bold;
 			}
 		}
 

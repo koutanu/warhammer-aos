@@ -53,6 +53,8 @@ class Unit extends Controller
 			'prayer_lores'        => $this->formatLoreData($this->model->getPrayerLores($factionId), 'prayer'),
 			'heroic_traits'       => $this->model->getHeroicTraitsForFaction($factionId),
 			'artefacts'           => $this->model->getArtefactsForFaction($factionId),
+			'season_enhancements' => $this->model->getSeasonEnhancementsForFaction($factionId),
+			'season_enhancement_label' => $this->model->getSeasonEnhancementLabel($factionId),
 			'is_admin' => Auth::isAdmin(),
 			'unit_error'   => $this->pullFlash('unit_error'),
 			'unit_success' => $this->pullFlash('unit_success'),

@@ -636,6 +636,12 @@
 			border-color: rgba($color-accent, 0.45);
 		}
 
+		&.cat-season_enhancement {
+			background: rgba(220, 80, 60, 0.18);
+			color: #f0a090;
+			border-color: rgba(220, 80, 60, 0.4);
+		}
+
 		&.cat-spell {
 			background: rgba(70, 130, 180, 0.22);
 			color: #87ceeb;

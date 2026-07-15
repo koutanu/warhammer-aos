@@ -60,8 +60,21 @@ $isDraw = ($winner === 'Draw');
 					$vp1 = (int)($s1['round_vp'] ?? 0);
 					$vp2 = (int)($s2['round_vp'] ?? 0);
 					$firstSlot = $s1['first_player_slot'] ?? ($s2['first_player_slot'] ?? null);
-					$dt1 = (int)($s1['is_double_turn'] ?? 0) === 1;
-					$dt2 = (int)($s2['is_double_turn'] ?? 0) === 1;
+					$prevFirstSlot = null;
+					if ($r > 1) {
+						$prevS1 = $rounds[$r - 1][1] ?? [];
+						$prevS2 = $rounds[$r - 1][2] ?? [];
+						$prevFirstSlot = $prevS1['first_player_slot'] ?? ($prevS2['first_player_slot'] ?? null);
+					}
+					// 前ラウンド後攻 → 今ラウンド先攻 = ダブルターン（先攻の入れ替わりで導出）
+					$isDoubleTurnRound = $firstSlot !== null
+						&& $prevFirstSlot !== null
+						&& (int)$firstSlot !== (int)$prevFirstSlot;
+					$seize1 = (int)($s1['is_double_turn'] ?? 0) === 1;
+					$seize2 = (int)($s2['is_double_turn'] ?? 0) === 1;
+					// イニシアチブ奪取がある場合は上位概念としてそちらだけ表示
+					$badge1 = $seize1 ? 'initiative' : ($isDoubleTurnRound && (int)$firstSlot === 1 ? 'double' : null);
+					$badge2 = $seize2 ? 'initiative' : ($isDoubleTurnRound && (int)$firstSlot === 2 ? 'double' : null);
 					if ($firstSlot === 1) {
 						$firstLabel = $this->h($p1['name'] ?? 'P1');
 					} elseif ($firstSlot === 2) {
@@ -73,8 +86,8 @@ $isDraw = ($winner === 'Draw');
 					<tr>
 						<td>R<?= $r; ?></td>
 						<td class="round-first-cell"><?= $firstLabel; ?></td>
-						<td><?= $vp1; ?><?php if ($dt1): ?> <span class="double-turn-badge">ダブルターン</span><?php endif; ?></td>
-						<td><?= $vp2; ?><?php if ($dt2): ?> <span class="double-turn-badge">ダブルターン</span><?php endif; ?></td>
+						<td><?= $vp1; ?><?php if ($badge1 === 'initiative'): ?> <span class="initiative-badge">イニシアチブ奪取</span><?php elseif ($badge1 === 'double'): ?> <span class="double-turn-badge">ダブルターン</span><?php endif; ?></td>
+						<td><?= $vp2; ?><?php if ($badge2 === 'initiative'): ?> <span class="initiative-badge">イニシアチブ奪取</span><?php elseif ($badge2 === 'double'): ?> <span class="double-turn-badge">ダブルターン</span><?php endif; ?></td>
 					</tr>
 				<?php endfor; ?>
 			</tbody>

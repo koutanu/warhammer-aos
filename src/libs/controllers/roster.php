@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../types/season_enhancements.php';
+
 class Roster extends Controller
 {
 	private $class_name = 'roster';
@@ -36,6 +38,206 @@ class Roster extends Controller
 			'delete_token'   => Session::setToken($this->class_name . '/delete'),
 		];
 		$this->view->render($this->class_name, 'list', 'ロスター一覧', $data);
+	}
+
+	public function detail($rosterId = '')
+	{
+		$userId = (int)Session::getUserInfo('user_id');
+		$rosterId = (int)$rosterId;
+		$rosterData = $this->model->getRosterWithDetails($rosterId, $userId);
+
+		if (!$rosterData) {
+			header('Location: ' . URL . 'roster/list');
+			exit;
+		}
+
+		$roster = $rosterData['roster'];
+		$regiments = $rosterData['regiments'];
+		$factionId = (int)($roster['faction_id'] ?? 0);
+
+		$formationRow = null;
+		$formationId = (int)($roster['battle_formation_id'] ?? 0);
+		if ($formationId > 0) {
+			foreach ($this->model->getBattleFormations($factionId) as $f) {
+				if ((int)($f['id'] ?? 0) === $formationId) {
+					$formationRow = $f;
+					break;
+				}
+			}
+		}
+
+		$spellLores = $this->formatLoreData($this->model->getSpellLores($factionId), 'spell');
+		$prayerLores = $this->formatLoreData($this->model->getPrayerLores($factionId), 'prayer');
+		$manifestLores = $this->formatLoreData($this->model->getManifestationLores($factionId), 'manifestation');
+		$spellLore = $this->findFormattedLore($spellLores, (int)($roster['spell_lore_id'] ?? 0));
+		$prayerLore = $this->findFormattedLore($prayerLores, (int)($roster['prayer_lore_id'] ?? 0));
+		$manifestLore = $this->findFormattedLore($manifestLores, (int)($roster['manifestation_lore_id'] ?? 0));
+
+		$terrainName = null;
+		$terrainId = (int)($roster['terrain_id'] ?? 0);
+		if ($terrainId > 0) {
+			$unit = $this->model->getUnitById($terrainId);
+			$terrainName = $unit['name'] ?? null;
+		}
+
+		$traitId = (int)($roster['heroic_trait_id'] ?? 0);
+		$artefactId = (int)($roster['artefact_id'] ?? 0);
+		$seasonId = (int)($roster['season_enhancement_id'] ?? 0);
+
+		$trait = $traitId > 0 ? $this->model->getHeroicTraitById($traitId) : null;
+		$artefact = $artefactId > 0 ? $this->model->getArtefactById($artefactId) : null;
+		$seasonEnh = $seasonId > 0 ? $this->model->getSeasonEnhancementById($seasonId) : null;
+		$seasonLabel = $this->model->getSeasonEnhancementLabel($factionId);
+
+		$traitTarget = $trait
+			? $this->findUnitLabelInRegiments(
+				$regiments,
+				$roster['trait_regiment_index'] ?? null,
+				$roster['trait_unit_slot'] ?? 'leader',
+				(int)($roster['trait_target_unit_id'] ?? 0)
+			)
+			: null;
+		$artefactTarget = $artefact
+			? $this->findUnitLabelInRegiments(
+				$regiments,
+				$roster['artefact_regiment_index'] ?? null,
+				$roster['artefact_unit_slot'] ?? 'leader',
+				(int)($roster['artefact_target_unit_id'] ?? 0)
+			)
+			: null;
+		$seasonTarget = $seasonEnh
+			? $this->findUnitLabelInRegiments(
+				$regiments,
+				$roster['season_enhancement_regiment_index'] ?? null,
+				$roster['season_enhancement_unit_slot'] ?? 'leader',
+				(int)($roster['season_enhancement_target_unit_id'] ?? 0)
+			)
+			: null;
+
+		$battleTactics = [];
+		$selectedTacticIds = $rosterData['selected_tactics_cards'] ?? [];
+		if (!empty($selectedTacticIds)) {
+			$allCards = $this->model->getBattleTacticCardsForSeason();
+			$byId = [];
+			foreach ($allCards as $card) {
+				$byId[(int)$card['id']] = $card;
+			}
+			foreach ($selectedTacticIds as $tid) {
+				$tid = (int)$tid;
+				if (!isset($byId[$tid])) {
+					continue;
+				}
+				$card = $byId[$tid];
+				$battleTactics[] = [
+					'id' => $tid,
+					'name' => $card['name'] ?? '',
+					'stages' => $card['stages'] ?? [],
+				];
+			}
+		}
+
+		$data = [
+			'js' => [
+				'match/phases.js',
+				$this->class_name . '/unit_detail.js',
+				$this->class_name . '/detail.js',
+			],
+			'roster' => $roster,
+			'regiments' => $regiments,
+			'army_options' => [
+				'battle_formation' => [
+					'name' => $formationRow['formation_name'] ?? $formationRow['ability_name'] ?? null,
+					'detail' => $formationRow ? $this->buildAbilityModalDetail(
+						$formationRow['formation_name'] ?? $formationRow['ability_name'] ?? '',
+						$formationRow['trigger_phase'] ?? '',
+						$formationRow['effect'] ?? '',
+						$formationRow['flavor_text'] ?? null,
+						false,
+						null,
+						$formationRow['trigger_condition_ja'] ?? null
+					) : null,
+				],
+				'spell_lore' => [
+					'name' => $spellLore['lore_name'] ?? null,
+					'detail' => $spellLore ? $this->buildAbilityModalDetail(
+						$spellLore['lore_name'] ?? '',
+						$spellLore['trigger_phase'] ?? '',
+						$spellLore['combined_effect'] ?? '',
+						null,
+						true
+					) : null,
+				],
+				'prayer_lore' => [
+					'name' => $prayerLore['lore_name'] ?? null,
+					'detail' => $prayerLore ? $this->buildAbilityModalDetail(
+						$prayerLore['lore_name'] ?? '',
+						$prayerLore['trigger_phase'] ?? '',
+						$prayerLore['combined_effect'] ?? '',
+						null,
+						true
+					) : null,
+				],
+				'manifestation_lore' => [
+					'name' => $manifestLore['lore_name'] ?? null,
+					'detail' => $manifestLore ? $this->buildAbilityModalDetail(
+						$manifestLore['lore_name'] ?? '',
+						$manifestLore['trigger_phase'] ?? '',
+						$manifestLore['combined_effect'] ?? '',
+						null,
+						true
+					) : null,
+				],
+				'faction_terrain' => [
+					'name' => $terrainName,
+					'unit_id' => $terrainId > 0 ? $terrainId : null,
+				],
+			],
+			'enhancements' => [
+				'trait' => $trait ? [
+					'name' => $trait['name'],
+					'target' => $traitTarget,
+					'detail' => $this->buildAbilityModalDetail(
+						$trait['name'] ?? '',
+						$trait['trigger_phase'] ?? '',
+						$trait['effect'] ?? $trait['description'] ?? '',
+						null,
+						false,
+						$traitTarget ? ('対象: ' . $traitTarget) : null,
+						$trait['trigger_condition_ja'] ?? null
+					),
+				] : null,
+				'artefact' => $artefact ? [
+					'name' => $artefact['name'],
+					'target' => $artefactTarget,
+					'detail' => $this->buildAbilityModalDetail(
+						$artefact['name'] ?? '',
+						$artefact['trigger_phase'] ?? '',
+						$artefact['effect'] ?? '',
+						$artefact['flavor_text'] ?? null,
+						false,
+						$artefactTarget ? ('対象: ' . $artefactTarget) : null,
+						$artefact['trigger_condition_ja'] ?? null
+					),
+				] : null,
+				'season' => [
+					'label' => $seasonLabel['label_ja'] ?? '追加能力',
+					'name' => $seasonEnh['name'] ?? null,
+					'target' => $seasonTarget,
+					'detail' => $seasonEnh ? $this->buildAbilityModalDetail(
+						$seasonEnh['name'] ?? '',
+						$seasonEnh['trigger_phase'] ?? '',
+						$seasonEnh['effect'] ?? '',
+						null,
+						false,
+						$seasonTarget ? ('対象: ' . $seasonTarget) : null,
+						$seasonEnh['trigger_condition_ja'] ?? null
+					) : null,
+				],
+			],
+			'battle_tactics' => $battleTactics,
+		];
+
+		$this->view->render($this->class_name, 'detail', 'ロスター詳細', $data);
 	}
 
 	public function delete()
@@ -221,6 +423,10 @@ class Roster extends Controller
 			'artefact_target_unit_id'   => $_POST['artefact_target_unit_id'] ?? null,
 			'artefact_regiment_index'   => $_POST['artefact_regiment_index'] ?? null,
 			'artefact_unit_slot'        => $_POST['artefact_unit_slot'] ?? null,
+			'season_enhancement_id'              => $_POST['season_enhancement_id'] ?? null,
+			'season_enhancement_target_unit_id'  => $_POST['season_enhancement_target_unit_id'] ?? null,
+			'season_enhancement_regiment_index'  => $_POST['season_enhancement_regiment_index'] ?? null,
+			'season_enhancement_unit_slot'       => $_POST['season_enhancement_unit_slot'] ?? null,
 			'selected_tactics_cards'    => $_POST['selected_tactics_cards'] ?? [],
 			'regiments'              => $_POST['regiments'] ?? [],
 		];
@@ -452,15 +658,116 @@ class Roster extends Controller
 
 		$factionId = (int)($_GET['faction_id'] ?? 0);
 		if ($factionId <= 0) {
-			echo json_encode(['traits' => [], 'artefacts' => []], JSON_UNESCAPED_UNICODE);
+			echo json_encode([
+				'traits' => [],
+				'artefacts' => [],
+				'seasonEnhancements' => [],
+				'seasonEnhancementLabel' => [
+					'label_ja' => SeasonEnhancements::DEFAULT_LABEL_JA,
+					'label_en' => null,
+				],
+			], JSON_UNESCAPED_UNICODE);
 			exit;
 		}
 
 		echo json_encode([
 			'traits'    => $this->model->getHeroicTraitsForFaction($factionId),
 			'artefacts' => $this->model->getArtefactsForFaction($factionId),
+			'seasonEnhancements' => $this->model->getSeasonEnhancementsForFaction($factionId),
+			'seasonEnhancementLabel' => $this->model->getSeasonEnhancementLabel($factionId),
 		], JSON_UNESCAPED_UNICODE);
 		exit;
+	}
+
+	private function findLoreName(array $lores, int $id, string $nameKey = 'name'): ?string
+	{
+		if ($id <= 0) {
+			return null;
+		}
+		foreach ($lores as $lore) {
+			if ((int)($lore['id'] ?? 0) === $id) {
+				return $lore[$nameKey] ?? $lore['name'] ?? $lore['lore_name'] ?? null;
+			}
+		}
+		return null;
+	}
+
+	private function findFormattedLore(array $lores, int $id): ?array
+	{
+		if ($id <= 0) {
+			return null;
+		}
+		foreach ($lores as $lore) {
+			if ((int)($lore['id'] ?? 0) === $id) {
+				return $lore;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * ロスター詳細モーダル用の共通ペイロード。
+	 *
+	 * @return array{title:string,trigger_phase:string,trigger_condition_ja:?string,effect:string,flavor:?string,effect_html:bool,meta:?string}|null
+	 */
+	private function buildAbilityModalDetail(
+		string $title,
+		string $triggerPhase,
+		string $effect,
+		?string $flavor = null,
+		bool $effectHtml = false,
+		?string $meta = null,
+		?string $triggerConditionJa = null
+	): ?array {
+		$title = trim($title);
+		if ($title === '' && trim($effect) === '') {
+			return null;
+		}
+		$flavor = $flavor !== null ? trim($flavor) : null;
+		$meta = $meta !== null ? trim($meta) : null;
+		$triggerConditionJa = $triggerConditionJa !== null ? trim($triggerConditionJa) : null;
+		return [
+			'title' => $title !== '' ? $title : '詳細',
+			'trigger_phase' => trim($triggerPhase),
+			'trigger_condition_ja' => ($triggerConditionJa !== null && $triggerConditionJa !== '')
+				? $triggerConditionJa
+				: null,
+			'effect' => $effect,
+			'flavor' => ($flavor !== null && $flavor !== '') ? $flavor : null,
+			'effect_html' => $effectHtml,
+			'meta' => ($meta !== null && $meta !== '') ? $meta : null,
+		];
+	}
+
+	private function findUnitLabelInRegiments(array $regiments, $regimentIndex, ?string $unitSlot, int $unitId): ?string
+	{
+		if ($regimentIndex === null || $regimentIndex === '' || $unitId <= 0) {
+			return null;
+		}
+		$regIdx = (int)$regimentIndex;
+		if (!isset($regiments[$regIdx])) {
+			return null;
+		}
+		$regiment = $regiments[$regIdx];
+		$slot = $unitSlot ?? 'leader';
+
+		if ($slot === 'leader') {
+			$hero = $regiment['hero'] ?? null;
+			if ($hero && (int)($hero['id'] ?? 0) === $unitId) {
+				return $hero['name'] ?? null;
+			}
+			return $hero['name'] ?? null;
+		}
+
+		if (preg_match('/^(\d+)$/', (string)$slot, $m)) {
+			$unitIndex = (int)$m[1];
+			$units = $regiment['units'] ?? [];
+			if (isset($units[$unitIndex]) && (int)($units[$unitIndex]['id'] ?? 0) === $unitId) {
+				return $units[$unitIndex]['name'] ?? null;
+			}
+		}
+
+		return null;
 	}
 
 	private function normalizeUnitList(array $units): array

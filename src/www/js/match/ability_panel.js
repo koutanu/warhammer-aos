@@ -662,8 +662,14 @@ document.addEventListener("DOMContentLoaded", () => {
 			groups.get(cat).push(ab);
 		});
 
-		MatchPhases.CATEGORY_ORDER.filter((cat) => groups.has(cat)).forEach(
-			(cat) => {
+		const orderedCategories = [
+			...MatchPhases.CATEGORY_ORDER.filter((cat) => groups.has(cat)),
+			...[...groups.keys()].filter(
+				(cat) => !MatchPhases.CATEGORY_ORDER.includes(cat),
+			),
+		];
+
+		orderedCategories.forEach((cat) => {
 				const items = groups.get(cat).sort((a, b) => {
 					const aUsed = usedMap[a.key]?.used ? 1 : 0;
 					const bUsed = usedMap[b.key]?.used ? 1 : 0;
@@ -689,15 +695,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 				const title = document.createElement("h5");
 				title.className = "phase-ability-group-title";
-				title.textContent = `${MatchPhases.labelCategoryJa(cat)}（${items.length}）`;
+				const groupLabel =
+					cat === "season_enhancement" && items[0]?.source
+						? items[0].source
+						: MatchPhases.labelCategoryJa(cat);
+				title.textContent = `${groupLabel}（${items.length}）`;
 				groupEl.appendChild(title);
 
 				items.forEach((ab) =>
 					groupEl.appendChild(buildAbilityCard(ab, {}, roster)),
 				);
 				els.abilityList.appendChild(groupEl);
-			},
-		);
+			});
 
 		if (passives.length) {
 			const section = document.createElement("section");
@@ -765,7 +774,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			const unitLabel = loreCategories.includes(ab.category)
 				? ""
 				: formatUnitNames(ab);
-			const categoryLabel = MatchPhases.labelCategoryJa(ab.category);
+			const categoryLabel =
+				ab.category === "season_enhancement" && ab.source
+					? ab.source
+					: MatchPhases.labelCategoryJa(ab.category);
 			const phaseNorms =
 				ab.triggerPhaseNorms ||
 				MatchPhases.normalizePhases(ab.triggerPhase);

@@ -137,17 +137,27 @@
 				color: rgba($color-text, 0.8);
 			}
 
-			.double-turn-badge {
+			.double-turn-badge,
+			.initiative-badge {
 				display: inline-block;
 				margin-left: 0.25rem;
 				padding: 0.05rem 0.4rem;
 				border-radius: 10px;
 				font-size: 0.62rem;
 				font-weight: bold;
+				vertical-align: middle;
+			}
+
+			.double-turn-badge {
+				background: rgba($color-main, 0.25);
+				color: rgba($color-text, 0.85);
+				border: 1px solid rgba($color-main, 0.55);
+			}
+
+			.initiative-badge {
 				background: rgba($color-blood, 0.18);
 				color: $color-blood;
 				border: 1px solid rgba($color-blood, 0.5);
-				vertical-align: middle;
 			}
 		}
 	}

@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../types/season_enhancements.php';
+
 class Unit_Model extends Model
 {
 	public function __construct()
@@ -304,6 +306,98 @@ class Unit_Model extends Model
                 WHERE faction_id = :id AND is_hidden = 0 
                 ORDER BY category ASC, name ASC;";
 		return $this->db->select($sql, ['id' => (int)$factionId]);
+	}
+
+	/**
+	 * アキュシーの禍事（シーズン追加能力）一覧。
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	public function getSeasonEnhancementsForFaction(
+		$factionId,
+		string $season = SeasonEnhancements::SEASON_2026_27
+	): array {
+		$sql = "SELECT id, faction_id, season, name, effect, points, sort_order,
+		               activation, usage_scope, usage_per,
+		               trigger_phase, trigger_turn, trigger_condition_ja
+                FROM m_season_enhancements
+                WHERE faction_id = :faction_id
+                  AND season = :season
+                  AND is_hidden = 0
+                ORDER BY sort_order ASC, name ASC;";
+		$rows = $this->db->select($sql, [
+			'faction_id' => (int)$factionId,
+			'season'     => $season,
+		]);
+		if (empty($rows)) {
+			return [];
+		}
+
+		$ids = array_map(static fn($r) => (int)$r['id'], $rows);
+		$bind = [];
+		$placeholders = [];
+		foreach ($ids as $i => $id) {
+			$key = 'eid' . $i;
+			$placeholders[] = ':' . $key;
+			$bind[$key] = $id;
+		}
+		$kwSql = "SELECT sek.enhancement_id, sek.requirement, km.id, km.name, km.keyword_type
+                  FROM m_season_enhancement_keywords sek
+                  JOIN m_keywords_master km ON km.id = sek.keyword_id
+                  WHERE sek.enhancement_id IN (" . implode(',', $placeholders) . ")
+                  ORDER BY sek.enhancement_id ASC, km.sort_order ASC, km.name ASC;";
+		$kwRows = $this->db->select($kwSql, $bind);
+
+		$keywordsByEnh = [];
+		foreach ($kwRows as $kw) {
+			$eid = (int)$kw['enhancement_id'];
+			$keywordsByEnh[$eid][] = [
+				'id'           => (int)$kw['id'],
+				'name'         => $kw['name'],
+				'keyword_type' => $kw['keyword_type'],
+				'requirement'  => ($kw['requirement'] ?? 'require') === 'exclude' ? 'exclude' : 'require',
+			];
+		}
+
+		foreach ($rows as &$row) {
+			$row['id'] = (int)$row['id'];
+			$row['faction_id'] = (int)$row['faction_id'];
+			$row['points'] = (int)$row['points'];
+			$row['sort_order'] = (int)$row['sort_order'];
+			$row['keywords'] = $keywordsByEnh[(int)$row['id']] ?? [];
+		}
+		unset($row);
+
+		return $rows;
+	}
+
+	/**
+	 * @return array{label_ja: string, label_en: string|null}
+	 */
+	public function getSeasonEnhancementLabel(
+		$factionId,
+		string $season = SeasonEnhancements::SEASON_2026_27
+	): array {
+		$sql = "SELECT label_ja, label_en
+                FROM m_faction_season_enhancement_labels
+                WHERE faction_id = :faction_id AND season = :season
+                LIMIT 1;";
+		$rows = $this->db->select($sql, [
+			'faction_id' => (int)$factionId,
+			'season'     => $season,
+		]);
+		if (!empty($rows)) {
+			return [
+				'label_ja' => (string)$rows[0]['label_ja'],
+				'label_en' => $rows[0]['label_en'] !== null && $rows[0]['label_en'] !== ''
+					? (string)$rows[0]['label_en']
+					: null,
+			];
+		}
+		return [
+			'label_ja' => SeasonEnhancements::DEFAULT_LABEL_JA,
+			'label_en' => null,
+		];
 	}
 
 	// =========================================================================

@@ -47,6 +47,9 @@ const MatchBattleTactics = (function () {
 		});
 
 		viewEls.listClose?.addEventListener("click", hideViewList);
+		viewEls.listModal?.addEventListener("click", function (e) {
+			if (e.target === viewEls.listModal) hideViewList();
+		});
 	}
 
 	function getViewerCards() {

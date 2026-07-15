@@ -413,6 +413,77 @@ $freqJa = function (array $row) {
 			</div>
 		</section>
 
+		<?php
+		$seasonEnhancements = $season_enhancements ?? [];
+		$seasonLabel = $season_enhancement_label ?? ['label_ja' => '追加能力', 'label_en' => null];
+		$seasonTableTitle = $seasonLabel['label_ja'];
+		if (!empty($seasonLabel['label_en'])) {
+			$seasonTableTitle .= ' / ' . $seasonLabel['label_en'];
+		}
+		$seasonEligibilityParts = [];
+		if (!empty($seasonEnhancements[0]['keywords'])) {
+			$reqNames = [];
+			$excNames = [];
+			foreach ($seasonEnhancements[0]['keywords'] as $kw) {
+				$name = (string)($kw['name'] ?? '');
+				if ($name === '') {
+					continue;
+				}
+				if (($kw['requirement'] ?? 'require') === 'exclude') {
+					$excNames[] = $name;
+				} else {
+					$reqNames[] = $name;
+				}
+			}
+			if ($reqNames) {
+				$seasonEligibilityParts[] = '必須: ' . implode('、', array_unique($reqNames));
+			}
+			if ($excNames) {
+				$seasonEligibilityParts[] = '除外: ' . implode('、', array_unique($excNames));
+			}
+		}
+		?>
+		<section class="option-section">
+			<button type="button" class="option-section-title" data-accordion aria-expanded="false">
+				<span>アキュシーの禍事 / SCOURGE OF AQSHY<?php if (!empty($seasonEnhancements)): ?> <span class="option-section-count">(<?= count($seasonEnhancements); ?>)</span><?php endif; ?></span>
+				<span class="accordion-icon" aria-hidden="true"></span>
+			</button>
+			<div class="option-section-body">
+				<?php if (empty($seasonEnhancements)): ?>
+					<p class="option-empty">このファクションにはアキュシーの禍事の追加能力が登録されていません。</p>
+				<?php else: ?>
+					<div class="option-card-head">
+						<span class="option-card-name"><?= $this->h($seasonTableTitle); ?></span>
+					</div>
+					<?php if ($seasonEligibilityParts): ?>
+						<p class="option-empty" style="margin-top:0;">
+							ロスター全体で1つ選択。付与先は<?= $this->h(implode(' / ', $seasonEligibilityParts)); ?>。
+						</p>
+					<?php endif; ?>
+					<?php foreach ($seasonEnhancements as $se): ?>
+						<div class="option-card">
+							<div class="option-card-head">
+								<span class="option-card-name"><?= $this->h($se['name']); ?></span>
+								<?php if (!empty($se['points'])): ?>
+									<span class="option-card-points"><?= $this->h($se['points']); ?> pt</span>
+								<?php endif; ?>
+							</div>
+							<?php $seFreq = $freqJa($se); ?>
+							<?php if ($seFreq !== ''): ?>
+								<span class="option-badge option-badge--cat"><?= $this->h($seFreq); ?></span>
+							<?php endif; ?>
+							<?php if (!empty($se['trigger_condition_ja'])): ?>
+								<span class="option-badge"><?= $this->h($se['trigger_condition_ja']); ?></span>
+							<?php elseif (!empty($se['trigger_phase'])): ?>
+								<span class="option-badge"><?= $this->h($phaseJa($se['trigger_phase'])); ?></span>
+							<?php endif; ?>
+							<div class="option-card-effect"><?= nl2br($this->h($se['effect'])); ?></div>
+						</div>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+		</section>
+
 	</div><!-- /#tab-options -->
 
 	<!-- ユニット詳細モーダル（roster/unit_detail.js が制御）。

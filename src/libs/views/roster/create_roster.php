@@ -5,11 +5,30 @@
 		<div class="roster-flash roster-flash-error" role="alert"><?= $this->h($roster_error); ?></div>
 	<?php endif; ?>
 
+	<form id="rosterForm" action="<?= URL; ?>roster/save" method="POST">
+		<input type="hidden" name="token" value="<?= $this->h($token ?? ''); ?>">
+		<?php if (!empty($edit_roster_id)): ?>
+			<input type="hidden" name="roster_id" value="<?= $this->h($edit_roster_id); ?>">
+		<?php endif; ?>
+		<input type="hidden" name="grand_alliance" value="<?= $this->h($roster_meta['grand_alliance'] ?? ''); ?>">
+		<input type="hidden" name="faction_id" value="<?= $this->h($roster_meta['faction_id'] ?? ''); ?>">
+		<input type="hidden" name="roster_points" value="<?= $this->h($roster_meta['roster_points'] ?? ''); ?>">
+
 	<?php if (!empty($roster_meta)): ?>
 		<div class="roster-meta-card">
 			<div class="meta-item roster-title-display">
-				<span class="meta-label">ROSTER NAME</span>
-				<strong class="meta-value"><?= $this->h($roster_meta['roster_name']); ?></strong>
+				<label class="meta-label" for="rosterNameInput">ROSTER NAME</label>
+				<input
+					type="text"
+					id="rosterNameInput"
+					name="roster_name"
+					class="meta-value roster-name-input"
+					value="<?= $this->h($roster_meta['roster_name'] ?? ''); ?>"
+					placeholder="ロスター名"
+					required
+					maxlength="255"
+					autocomplete="off"
+				>
 			</div>
 
 			<div class="meta-item faction-display">
@@ -43,15 +62,6 @@
 		</script>
 	<?php endif; ?>
 
-	<form id="rosterForm" action="<?= URL; ?>roster/save" method="POST">
-		<input type="hidden" name="token" value="<?= $this->h($token ?? ''); ?>">
-		<?php if (!empty($edit_roster_id)): ?>
-			<input type="hidden" name="roster_id" value="<?= $this->h($edit_roster_id); ?>">
-		<?php endif; ?>
-		<input type="hidden" name="roster_name" value="<?= $this->h($roster_meta['roster_name'] ?? ''); ?>">
-		<input type="hidden" name="grand_alliance" value="<?= $this->h($roster_meta['grand_alliance'] ?? ''); ?>">
-		<input type="hidden" name="faction_id" value="<?= $this->h($roster_meta['faction_id'] ?? ''); ?>">
-		<input type="hidden" name="roster_points" value="<?= $this->h($roster_meta['roster_points'] ?? ''); ?>">
 		<input type="hidden" name="heroic_trait_id" id="heroicTraitIdInput" value="">
 		<input type="hidden" name="trait_target_unit_id" id="traitTargetUnitIdInput" value="">
 		<input type="hidden" name="trait_regiment_index" id="traitRegimentIndexInput" value="">
@@ -60,6 +70,10 @@
 		<input type="hidden" name="artefact_target_unit_id" id="artefactTargetUnitIdInput" value="">
 		<input type="hidden" name="artefact_regiment_index" id="artefactRegimentIndexInput" value="">
 		<input type="hidden" name="artefact_unit_slot" id="artefactUnitSlotInput" value="">
+		<input type="hidden" name="season_enhancement_id" id="seasonEnhancementIdInput" value="">
+		<input type="hidden" name="season_enhancement_target_unit_id" id="seasonEnhancementTargetUnitIdInput" value="">
+		<input type="hidden" name="season_enhancement_regiment_index" id="seasonEnhancementRegimentIndexInput" value="">
+		<input type="hidden" name="season_enhancement_unit_slot" id="seasonEnhancementUnitSlotInput" value="">
 
 		<div class="army-options-section">
 			<h3>アーミーオプション / ARMY-WIDE OPTIONS</h3>
@@ -279,8 +293,10 @@
 								<div class="hero-enhancement-actions" style="display:none;">
 									<button type="button" class="btn-add-trait" disabled>+ 英雄特性</button>
 									<button type="button" class="btn-add-artefact" disabled>+ 神器</button>
+									<button type="button" class="btn-add-season-enhancement" disabled>+ 追加能力</button>
 									<div class="enhancement-assigned trait-assigned" style="display:none;"></div>
 									<div class="enhancement-assigned artefact-assigned" style="display:none;"></div>
+									<div class="enhancement-assigned season-assigned" style="display:none;"></div>
 								</div>
 							</div>
 						</div>
@@ -347,8 +363,10 @@
 			<div class="hero-enhancement-actions unit-hero-enhancement" style="display:none;">
 				<button type="button" class="btn-add-trait" disabled>+ 英雄特性</button>
 				<button type="button" class="btn-add-artefact" disabled>+ 神器</button>
+				<button type="button" class="btn-add-season-enhancement" disabled>+ 追加能力</button>
 				<div class="enhancement-assigned trait-assigned" style="display:none;"></div>
 				<div class="enhancement-assigned artefact-assigned" style="display:none;"></div>
+				<div class="enhancement-assigned season-assigned" style="display:none;"></div>
 			</div>
 		</div>
 	</template>
@@ -373,9 +391,6 @@
 			<div class="modal-header">
 				<h3 id="enhancementModalTitle">エンハンスメントを選択</h3>
 				<button type="button" id="btnCloseEnhancementModal">&times;</button>
-			</div>
-			<div class="modal-search-wrap">
-				<input type="text" id="enhancementModalSearch" class="modal-search-input" placeholder="名前で検索..." autocomplete="off">
 			</div>
 			<div id="enhancementModalList"></div>
 			<p id="enhancementModalEmpty" class="modal-empty-msg" style="display:none;">選択肢がありません。</p>
@@ -478,8 +493,10 @@
 						<div class="hero-enhancement-actions" style="display:none;">
 							<button type="button" class="btn-add-trait" disabled>+ 英雄特性</button>
 							<button type="button" class="btn-add-artefact" disabled>+ 神器</button>
+							<button type="button" class="btn-add-season-enhancement" disabled>+ 追加能力</button>
 							<div class="enhancement-assigned trait-assigned" style="display:none;"></div>
 							<div class="enhancement-assigned artefact-assigned" style="display:none;"></div>
+							<div class="enhancement-assigned season-assigned" style="display:none;"></div>
 						</div>
 					</div>
 

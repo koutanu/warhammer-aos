@@ -32,6 +32,7 @@
 							<td><?= $this->h($roster['total_points']); ?> pt</td>
 							<td><?= $this->h($roster['updated_at'] ?? $roster['created_at'] ?? '-'); ?></td>
 							<td class="list-actions">
+								<a href="<?= URL; ?>roster/detail/<?= $this->h($roster['id']); ?>" class="btn-detail">詳細</a>
 								<a href="<?= URL; ?>roster/edit/<?= $this->h($roster['id']); ?>" class="btn-edit">編集</a>
 								<form action="<?= URL; ?>roster/delete" method="post" class="delete-roster-form" onsubmit="return confirm('「<?= $this->h($roster['name']); ?>」を削除しますか？この操作は取り消せません。');">
 									<input type="hidden" name="token" value="<?= $this->h($delete_token); ?>">

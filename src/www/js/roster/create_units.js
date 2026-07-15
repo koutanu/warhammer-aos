@@ -599,6 +599,14 @@ document.addEventListener("DOMContentLoaded", () => {
 		rosterForm.addEventListener("submit", (e) => {
 			reindexRegiments();
 
+			const nameInput = document.getElementById("rosterNameInput");
+			if (nameInput && !nameInput.value.trim()) {
+				e.preventDefault();
+				alert("ロスター名を入力してください。");
+				nameInput.focus();
+				return;
+			}
+
 			const cards = regimentsContainer.querySelectorAll(".regiment-card");
 			for (const card of cards) {
 				const heroInput = card.querySelector(".hero-id-input");
