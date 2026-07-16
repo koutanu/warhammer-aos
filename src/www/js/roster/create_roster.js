@@ -280,11 +280,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		? opts.selected_tactics_cards.map(String)
 		: [];
 	if (savedTactics.length) {
-		document
-			.querySelectorAll(".battle-tactic-checkbox")
-			.forEach((cb) => {
-				cb.checked = savedTactics.includes(String(cb.value));
-			});
+		document.querySelectorAll(".battle-tactic-checkbox").forEach((cb) => {
+			cb.checked = savedTactics.includes(String(cb.value));
+		});
 		if (typeof window.syncBattleTacticSelection === "function") {
 			window.syncBattleTacticSelection();
 		}

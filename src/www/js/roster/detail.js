@@ -29,9 +29,7 @@
 	}
 
 	function formatTrigger(detail) {
-		const conditionJa = String(
-			detail?.trigger_condition_ja || "",
-		).trim();
+		const conditionJa = String(detail?.trigger_condition_ja || "").trim();
 		if (conditionJa) return conditionJa;
 
 		const raw = String(
@@ -66,7 +64,8 @@
 			.map((stage) => {
 				const label =
 					stageLabels[stage.stage] || stage.stage || "Stage";
-				const vp = stage.victory_points != null ? stage.victory_points : 2;
+				const vp =
+					stage.victory_points != null ? stage.victory_points : 2;
 				return `<div class="roster-ability-stage">
 					<span class="roster-ability-stage-badge">${escapeHtml(label)}</span>
 					<strong class="roster-ability-stage-name">${escapeHtml(stage.name || "")}</strong>

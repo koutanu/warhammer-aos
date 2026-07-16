@@ -34,7 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	function collectSelectedUnitIds(excludeEl) {
 		const ids = [];
 		document
-			.querySelectorAll(".regiment-card .hero-id-input, .regiment-card .unit-id-input")
+			.querySelectorAll(
+				".regiment-card .hero-id-input, .regiment-card .unit-id-input",
+			)
 			.forEach((inp) => {
 				if (inp === excludeEl) return;
 				if (inp.value) ids.push(String(inp.value));
@@ -144,7 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			unitBtn.type = "button";
 			unitBtn.className = "modal-unit-btn";
 			const sizeLabel =
-				unit.unit_size && unit.unit_size > 1 ? ` ×${unit.unit_size}` : "";
+				unit.unit_size && unit.unit_size > 1
+					? ` ×${unit.unit_size}`
+					: "";
 			const isHero = isHeroUnit(unit);
 			const alreadySelectedUnique =
 				isUniqueUnit(unit) && selectedIds.includes(String(unit.id));
@@ -158,7 +162,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				heroBadge.textContent = "HERO";
 				unitBtn.appendChild(heroBadge);
 				unitBtn.appendChild(
-					document.createTextNode(`${unit.name}${sizeLabel} (${unit.points} pt)`),
+					document.createTextNode(
+						`${unit.name}${sizeLabel} (${unit.points} pt)`,
+					),
 				);
 			} else {
 				unitBtn.textContent = `${unit.name}${sizeLabel} (${unit.points} pt)`;
@@ -192,7 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	function selectHero(unit) {
 		if (!activeRegimentCard) return;
 
-		const heroInputCheck = activeRegimentCard.querySelector(".hero-id-input");
+		const heroInputCheck =
+			activeRegimentCard.querySelector(".hero-id-input");
 		if (
 			isUniqueUnit(unit) &&
 			collectSelectedUnitIds(heroInputCheck).includes(String(unit.id))
@@ -203,7 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const prevHeroId = activeRegimentCard.dataset.heroId || "";
 		const heroInput = activeRegimentCard.querySelector(".hero-id-input");
-		const heroDisplay = activeRegimentCard.querySelector(".hero-name-display");
+		const heroDisplay =
+			activeRegimentCard.querySelector(".hero-name-display");
 		const selectBtn = activeRegimentCard.querySelector(".btn-select-hero");
 
 		if (prevHeroId && prevHeroId !== String(unit.id)) {
@@ -229,7 +237,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		);
 
 		if (typeof window.renderRegimentHint === "function") {
-			window.renderRegimentHint(activeRegimentCard, unit.regiment_options || "");
+			window.renderRegimentHint(
+				activeRegimentCard,
+				unit.regiment_options || "",
+			);
 		}
 		if (typeof window.updateRegimentHeroState === "function") {
 			window.updateRegimentHeroState(activeRegimentCard);
@@ -307,8 +318,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			window.renderUnitOptionSelector(activeUnitRow, optionCard);
 		}
 
-		const reinforceSection = activeUnitRow.querySelector(".reinforce-section");
-		const reinforceCheckbox = activeUnitRow.querySelector(".reinforce-checkbox");
+		const reinforceSection =
+			activeUnitRow.querySelector(".reinforce-section");
+		const reinforceCheckbox = activeUnitRow.querySelector(
+			".reinforce-checkbox",
+		);
 		const selectBtn = activeUnitRow.querySelector(".btn-select-unit");
 
 		activeUnitRow.dataset.canReinforce = unit.can_reinforce ? "1" : "0";

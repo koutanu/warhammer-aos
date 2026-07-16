@@ -107,7 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const cap = optionCapacityMap(card);
 		const counts = countAssignedByOption(card, excludeRow);
-		const order = getRegimentOptionLimits(card).map((l) => Number(l.option_id));
+		const order = getRegimentOptionLimits(card).map((l) =>
+			Number(l.option_id),
+		);
 		const eligibleOrdered = order.filter((o) => ids.includes(o));
 
 		for (const o of eligibleOrdered) {
@@ -127,7 +129,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const optionIds = getRowOptionIds(row);
 		const limits = getRegimentOptionLimits(card);
-		const eligible = limits.filter((l) => optionIds.includes(Number(l.option_id)));
+		const eligible = limits.filter((l) =>
+			optionIds.includes(Number(l.option_id)),
+		);
 
 		if (container) {
 			container.innerHTML = "";
@@ -135,7 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		if (eligible.length <= 1) {
-			const val = eligible.length === 1 ? Number(eligible[0].option_id) : "";
+			const val =
+				eligible.length === 1 ? Number(eligible[0].option_id) : "";
 			hidden.value = val === "" ? "" : String(val);
 			row.dataset.assignedOptionId = val === "" ? "" : String(val);
 			return;
@@ -230,7 +235,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			regimentsContainer.querySelectorAll(".regiment-card"),
 		).find(leaderIsGeneralUnit);
 		if (!target) return;
-		const radio = target.querySelector('input[name="general_regiment_index"]');
+		const radio = target.querySelector(
+			'input[name="general_regiment_index"]',
+		);
 		if (radio) {
 			radio.checked = true;
 			lastGeneralRegimentIndex = radio.value;
@@ -261,13 +268,15 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (heroId) {
 			regimentCard.classList.remove("regiment-card--no-hero");
 			regimentCard.classList.add("regiment-card--has-hero");
-			if (unitsZone) unitsZone.classList.remove("regiment-units-zone--locked");
+			if (unitsZone)
+				unitsZone.classList.remove("regiment-units-zone--locked");
 			if (addUnitBtn) addUnitBtn.disabled = false;
 			if (hint) hint.style.display = "none";
 		} else {
 			regimentCard.classList.add("regiment-card--no-hero");
 			regimentCard.classList.remove("regiment-card--has-hero");
-			if (unitsZone) unitsZone.classList.add("regiment-units-zone--locked");
+			if (unitsZone)
+				unitsZone.classList.add("regiment-units-zone--locked");
 			if (addUnitBtn) addUnitBtn.disabled = true;
 			if (hint) hint.style.display = "block";
 		}
@@ -276,7 +285,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	function updateAllPoints() {
 		let totalPoints = 0;
 
-		const regimentCards = regimentsContainer.querySelectorAll(".regiment-card");
+		const regimentCards =
+			regimentsContainer.querySelectorAll(".regiment-card");
 		regimentCards.forEach((card) => {
 			let regimentSubtotal = 0;
 
@@ -287,7 +297,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			const unitRows = card.querySelectorAll(".unit-slot-row");
 			unitRows.forEach((row) => {
-				const pts = parseInt(row.getAttribute("data-points") || "0", 10);
+				const pts = parseInt(
+					row.getAttribute("data-points") || "0",
+					10,
+				);
 				regimentSubtotal += pts;
 			});
 
@@ -305,7 +318,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		armySelects.forEach((select) => {
 			if (select.value) {
 				const selectedOption = select.options[select.selectedIndex];
-				totalPoints += parseInt(selectedOption.dataset.points || "0", 10);
+				totalPoints += parseInt(
+					selectedOption.dataset.points || "0",
+					10,
+				);
 			}
 		});
 
@@ -390,9 +406,11 @@ document.addEventListener("DOMContentLoaded", () => {
 				generalRadio.value = String(idx);
 			}
 
-			card.querySelectorAll(".btn-select-hero, .btn-add-unit").forEach((btn) => {
-				btn.dataset.regimentIndex = String(idx);
-			});
+			card.querySelectorAll(".btn-select-hero, .btn-add-unit").forEach(
+				(btn) => {
+					btn.dataset.regimentIndex = String(idx);
+				},
+			);
 
 			reindexUnitSlots(card);
 		});
@@ -439,7 +457,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		const slotList = regimentCard.querySelector(".units-slot-list");
 		if (!slotList || !mainUnitTemplate) return false;
 
-		const currentUnitsCount = slotList.querySelectorAll(".unit-slot-row").length;
+		const currentUnitsCount =
+			slotList.querySelectorAll(".unit-slot-row").length;
 		const maxUnits = getRegimentMaxUnits(regimentCard);
 		if (currentUnitsCount >= maxUnits) {
 			alert(`この連隊のユニットは最大${maxUnits}個までです。`);
@@ -487,7 +506,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (e.target.classList.contains("btn-delete-regiment")) {
 			const card = e.target.closest(".regiment-card");
 
-			const radio = card.querySelector('input[name="general_regiment_index"]');
+			const radio = card.querySelector(
+				'input[name="general_regiment_index"]',
+			);
 			if (radio && radio.checked) {
 				const otherRadio = regimentsContainer.querySelector(
 					`.regiment-card:not([data-regiment-index="${card.dataset.regimentIndex}"]) input[name="general_regiment_index"]`,
@@ -536,7 +557,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		const used = counts[newOption] || 0;
 
 		if (used >= capacity) {
-			alert("選択した編成枠は上限に達しています。別の枠を選ぶか、枠を空けてください。");
+			alert(
+				"選択した編成枠は上限に達しています。別の枠を選ぶか、枠を空けてください。",
+			);
 			e.target.value = row.dataset.assignedOptionId || "";
 			return;
 		}
@@ -564,9 +587,11 @@ document.addEventListener("DOMContentLoaded", () => {
 				}
 
 				const prevCard = lastGeneralRegimentIndex
-					? regimentsContainer.querySelector(
-							`.regiment-card input[name="general_regiment_index"][value="${lastGeneralRegimentIndex}"]`,
-						)?.closest(".regiment-card")
+					? regimentsContainer
+							.querySelector(
+								`.regiment-card input[name="general_regiment_index"][value="${lastGeneralRegimentIndex}"]`,
+							)
+							?.closest(".regiment-card")
 					: null;
 				if (prevCard) {
 					const prevUnitCount =
@@ -651,7 +676,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				return;
 			}
 
-			const tacticsSection = document.getElementById("battleTacticsSection");
+			const tacticsSection = document.getElementById(
+				"battleTacticsSection",
+			);
 			if (tacticsSection) {
 				const maxCards = parseInt(
 					tacticsSection.dataset.maxCards || "2",
@@ -670,7 +697,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 
-	regimentsContainer.querySelectorAll(".regiment-card").forEach(updateRegimentHeroState);
+	regimentsContainer
+		.querySelectorAll(".regiment-card")
+		.forEach(updateRegimentHeroState);
 	enforceGeneralSotaisho();
 	updateAllRegimentUnitLimitLabels();
 	lastGeneralRegimentIndex =
@@ -776,7 +805,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		row.dataset.canReinforce = unit.can_reinforce ? "1" : "0";
 		row.dataset.optionIds = JSON.stringify(unit.option_ids || []);
 		row.dataset.assignedOptionId =
-			unit.assigned_option_id != null ? String(unit.assigned_option_id) : "";
+			unit.assigned_option_id != null
+				? String(unit.assigned_option_id)
+				: "";
 		if (typeof window.renderUnitOptionSelector === "function") {
 			window.renderUnitOptionSelector(row, card);
 		}
@@ -815,9 +846,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		}
 
-
 		if (reg.is_general) {
-			const radio = card.querySelector('input[name="general_regiment_index"]');
+			const radio = card.querySelector(
+				'input[name="general_regiment_index"]',
+			);
 			if (radio) radio.checked = true;
 		}
 

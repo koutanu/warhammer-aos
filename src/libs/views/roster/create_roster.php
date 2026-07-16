@@ -14,53 +14,52 @@
 		<input type="hidden" name="faction_id" value="<?= $this->h($roster_meta['faction_id'] ?? ''); ?>">
 		<input type="hidden" name="roster_points" value="<?= $this->h($roster_meta['roster_points'] ?? ''); ?>">
 
-	<?php if (!empty($roster_meta)): ?>
-		<div class="roster-meta-card">
-			<div class="meta-item roster-title-display">
-				<label class="meta-label" for="rosterNameInput">ROSTER NAME</label>
-				<input
-					type="text"
-					id="rosterNameInput"
-					name="roster_name"
-					class="meta-value roster-name-input"
-					value="<?= $this->h($roster_meta['roster_name'] ?? ''); ?>"
-					placeholder="ロスター名"
-					required
-					maxlength="255"
-					autocomplete="off"
-				>
-			</div>
-
-			<div class="meta-item faction-display">
-				<span class="meta-label">FACTION</span>
-				<span class="meta-value">
-					<?= $this->h($roster_meta['faction_name']); ?>
-				</span>
-			</div>
-
-			<div class="meta-row">
-				<div class="meta-item alliance-badge alliance-<?= strtolower($this->h($roster_meta['grand_alliance'])); ?>">
-					<span class="meta-label">GRAND ALLIANCE</span>
-					<span class="meta-value"><?= strtoupper($this->h($roster_meta['grand_alliance'])); ?></span>
+		<?php if (!empty($roster_meta)): ?>
+			<div class="roster-meta-card">
+				<div class="meta-item roster-title-display">
+					<label class="meta-label" for="rosterNameInput">ROSTER NAME</label>
+					<input
+						type="text"
+						id="rosterNameInput"
+						name="roster_name"
+						class="meta-value roster-name-input"
+						value="<?= $this->h($roster_meta['roster_name'] ?? ''); ?>"
+						placeholder="ロスター名"
+						required
+						maxlength="255"
+						autocomplete="off">
 				</div>
-				<div class="meta-item point-display">
-					<span class="meta-label">POINT</span>
-					<strong class="meta-value"><?= $this->h($roster_meta['roster_points']); ?> pt</strong>
+
+				<div class="meta-item faction-display">
+					<span class="meta-label">FACTION</span>
+					<span class="meta-value">
+						<?= $this->h($roster_meta['faction_name']); ?>
+					</span>
+				</div>
+
+				<div class="meta-row">
+					<div class="meta-item alliance-badge alliance-<?= strtolower($this->h($roster_meta['grand_alliance'])); ?>">
+						<span class="meta-label">GRAND ALLIANCE</span>
+						<span class="meta-value"><?= strtoupper($this->h($roster_meta['grand_alliance'])); ?></span>
+					</div>
+					<div class="meta-item point-display">
+						<span class="meta-label">POINT</span>
+						<strong class="meta-value"><?= $this->h($roster_meta['roster_points']); ?> pt</strong>
+					</div>
 				</div>
 			</div>
-		</div>
-	<?php endif; ?>
+		<?php endif; ?>
 
-	<?php if (!empty($saved_options)): ?>
-		<script id="savedArmyOptions" type="application/json">
-			<?= $saved_options ? json_encode($saved_options, JSON_UNESCAPED_UNICODE) : '{}'; ?>
-		</script>
-	<?php endif; ?>
-	<?php if (!empty($edit_roster_json)): ?>
-		<script id="editRosterData" type="application/json">
-			<?= $edit_roster_json; ?>
-		</script>
-	<?php endif; ?>
+		<?php if (!empty($saved_options)): ?>
+			<script id="savedArmyOptions" type="application/json">
+				<?= $saved_options ? json_encode($saved_options, JSON_UNESCAPED_UNICODE) : '{}'; ?>
+			</script>
+		<?php endif; ?>
+		<?php if (!empty($edit_roster_json)): ?>
+			<script id="editRosterData" type="application/json">
+				<?= $edit_roster_json; ?>
+			</script>
+		<?php endif; ?>
 
 		<input type="hidden" name="heroic_trait_id" id="heroicTraitIdInput" value="">
 		<input type="hidden" name="trait_target_unit_id" id="traitTargetUnitIdInput" value="">
