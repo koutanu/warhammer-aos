@@ -259,7 +259,9 @@
 		border: 1px solid rgba($color-main, 0.45);
 		border-radius: 6px;
 		padding: 0.9rem 1rem;
-		transition: border-color 0.15s ease, opacity 0.15s ease;
+		transition:
+			border-color 0.15s ease,
+			opacity 0.15s ease;
 
 		&.is-selected {
 			border-color: $color-accent;
@@ -950,7 +952,7 @@
 				color: $color-text-muted;
 
 				&.js-open-unit {
-					color: $color-white;
+					// color: $color-white;
 					cursor: pointer;
 
 					&:hover {

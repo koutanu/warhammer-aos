@@ -1979,7 +1979,9 @@ button {
   font-weight: bold;
 }
 .roster.detail .detail-open-btn {
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   background: none;
   border: none;
   padding: 0;
@@ -2137,7 +2139,9 @@ button {
   justify-content: flex-end;
 }
 .roster-ability-modal .btn-close-detail {
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   border: 1px solid #2f4f4f;
   background: rgba(19, 28, 28, 0.8);
   color: #f0ead6;
@@ -2153,7 +2157,9 @@ button {
   position: absolute;
   top: 0.55rem;
   right: 0.7rem;
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   border: none;
   background: transparent;
   color: rgba(240, 234, 214, 0.7);
@@ -2984,7 +2990,6 @@ button {
   color: #aaa;
 }
 .roster.create_roster .unit-slot-row .unit-name-wrap .unit-name-display.js-open-unit {
-  color: #fff;
   cursor: pointer;
 }
 .roster.create_roster .unit-slot-row .unit-name-wrap .unit-name-display.js-open-unit:hover {
