@@ -48,6 +48,25 @@ document.addEventListener("DOMContentLoaded", () => {
 		const target = event.target;
 		if (!target) return;
 
+		const openName = target.closest(
+			".hero-name-display.js-open-unit, .unit-name-display.js-open-unit",
+		);
+		if (openName) {
+			event.preventDefault();
+			const unitId = parseInt(
+				openName.getAttribute("data-unit-id") || "0",
+				10,
+			);
+			if (!unitId || typeof window.RosterUnitDetail === "undefined") {
+				return;
+			}
+			window.RosterUnitDetail.show({
+				id: unitId,
+				name: openName.getAttribute("data-unit-name") || "",
+			});
+			return;
+		}
+
 		if (target.classList.contains("btn-select-unit")) {
 			event.preventDefault();
 			activeUnitRow = target.closest(".unit-slot-row");
@@ -229,6 +248,9 @@ document.addEventListener("DOMContentLoaded", () => {
 					? ` <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">×${unit.unit_size}</span>`
 					: "";
 			heroDisplay.innerHTML = `${unit.name}${sizeLabel} <span style="color: #ffcc00; font-size: 0.85rem; margin-left: 0.5rem; font-weight: bold;">(${unit.points} pt)</span>`;
+			if (typeof window.markUnitNameOpenable === "function") {
+				window.markUnitNameOpenable(heroDisplay, unit.id, unit.name);
+			}
 		}
 		if (selectBtn) selectBtn.textContent = "Heroを変更";
 
@@ -300,6 +322,9 @@ document.addEventListener("DOMContentLoaded", () => {
 					: "";
 			const heroBadge = isHeroUnit(unit) ? heroBadgeHtml() : "";
 			nameDisplay.innerHTML = `${heroBadge}${unit.name}${sizeLabel} <span style="color: #ffcc00; font-size: 0.85rem; margin-left: 0.5rem; font-weight: bold;">(${unit.points} pt)</span>`;
+			if (typeof window.markUnitNameOpenable === "function") {
+				window.markUnitNameOpenable(nameDisplay, unit.id, unit.name);
+			}
 		}
 
 		activeUnitRow.setAttribute("data-base-points", unit.points);

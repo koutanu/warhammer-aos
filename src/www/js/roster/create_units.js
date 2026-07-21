@@ -9,6 +9,15 @@ function buildHeroBadgeHtml() {
 }
 window.buildHeroBadgeHtml = buildHeroBadgeHtml;
 
+// 選択済みユニット名をクリックで詳細モーダルを開けるようにする
+function markUnitNameOpenable(el, unitId, unitName) {
+	if (!el || !unitId) return;
+	el.classList.add("js-open-unit");
+	el.setAttribute("data-unit-id", String(unitId));
+	el.setAttribute("data-unit-name", unitName || "");
+}
+window.markUnitNameOpenable = markUnitNameOpenable;
+
 document.addEventListener("DOMContentLoaded", () => {
 	const regimentsContainer = document.getElementById("regimentsContainer");
 	const btnAddRegiment = document.getElementById("btnAddRegiment");
@@ -745,6 +754,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		card.dataset.heroPoints = String(hero.points || 0);
 		if (heroDisplay) {
 			heroDisplay.innerHTML = `${hero.name} <span style="color: #ffcc00; font-size: 0.85rem; margin-left: 0.5rem; font-weight: bold;">(${hero.points} pt)</span>`;
+			markUnitNameOpenable(heroDisplay, hero.id, hero.name);
 		}
 		if (selectBtn) selectBtn.textContent = "Heroを変更";
 		card.dataset.regimentOptionLimits = JSON.stringify(
@@ -794,6 +804,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					? window.buildHeroBadgeHtml()
 					: "";
 			nameDisplay.innerHTML = `${heroBadge}${unit.name} <span style="color: #ffcc00; font-size: 0.85rem; margin-left: 0.5rem; font-weight: bold;">(${basePts} pt)</span>`;
+			markUnitNameOpenable(nameDisplay, unit.id, unit.name);
 		}
 		row.setAttribute("data-base-points", basePts);
 		row.setAttribute("data-points", pts);

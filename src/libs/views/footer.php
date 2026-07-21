@@ -13,10 +13,12 @@
 <!-- PWA: Service Worker 登録（サブディレクトリ配信のため絶対パスで登録） -->
 <script>
 	if ("serviceWorker" in navigator) {
-		window.addEventListener("load", function () {
+		window.addEventListener("load", function() {
 			navigator.serviceWorker
-				.register("<?= $this->h(URL); ?>sw.js", { scope: "<?= $this->h(URL); ?>" })
-				.catch(function (err) {
+				.register("<?= $this->h(URL); ?>sw.js", {
+					scope: "<?= $this->h(URL); ?>"
+				})
+				.catch(function(err) {
 					console.warn("Service Worker registration failed:", err);
 				});
 		});

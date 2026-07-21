@@ -2663,6 +2663,14 @@ button {
 .roster.create_roster .hero-name-wrap .hero-name-display {
   color: rgba(240, 234, 214, 0.6);
 }
+.roster.create_roster .hero-name-wrap .hero-name-display.js-open-unit {
+  color: #f0ead6;
+  cursor: pointer;
+}
+.roster.create_roster .hero-name-wrap .hero-name-display.js-open-unit:hover {
+  color: #d4af37;
+  text-decoration: underline;
+}
 .roster.create_roster .btn-select-hero {
   padding: 0.5rem 1rem;
   background: rgba(47, 79, 79, 0.25);
@@ -2974,6 +2982,14 @@ button {
 }
 .roster.create_roster .unit-slot-row .unit-name-wrap .unit-name-display {
   color: #aaa;
+}
+.roster.create_roster .unit-slot-row .unit-name-wrap .unit-name-display.js-open-unit {
+  color: #fff;
+  cursor: pointer;
+}
+.roster.create_roster .unit-slot-row .unit-name-wrap .unit-name-display.js-open-unit:hover {
+  color: #d4af37;
+  text-decoration: underline;
 }
 .roster.create_roster .unit-slot-row .unit-name-wrap .unit-points-badge {
   color: var(--color-accent, #ffcc00);

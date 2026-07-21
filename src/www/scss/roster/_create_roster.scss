@@ -561,6 +561,16 @@
 
 		.hero-name-display {
 			color: rgba($color-text, 0.6);
+
+			&.js-open-unit {
+				color: $color-text;
+				cursor: pointer;
+
+				&:hover {
+					color: $color-accent;
+					text-decoration: underline;
+				}
+			}
 		}
 	}
 
@@ -938,6 +948,16 @@
 
 			.unit-name-display {
 				color: $color-text-muted;
+
+				&.js-open-unit {
+					color: $color-white;
+					cursor: pointer;
+
+					&:hover {
+						color: $color-accent;
+						text-decoration: underline;
+					}
+				}
 			}
 
 			.unit-points-badge {
