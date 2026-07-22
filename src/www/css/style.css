@@ -33,8 +33,7 @@ a {
 
 html {
   -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-       text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -101,8 +100,7 @@ button {
   border: none;
   cursor: pointer;
   outline: none;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none;
 }
 
@@ -337,7 +335,7 @@ button {
     border-top: none;
   }
   .side-nav .nav-footer .nav-item.logout {
-    color: rgb(255, 62.5, 62.5);
+    color: #ff3f3f;
   }
 }
 .login {
@@ -420,6 +418,7 @@ button {
   align-items: flex-start;
   padding: 1.2rem;
   box-sizing: border-box;
+  transition: transform 0.1s ease, filter 0.1s ease;
 }
 .home .grid-item1 .grid-bg-img {
   position: absolute;
@@ -427,8 +426,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   border-radius: 12px;
   z-index: 1;
   transform-origin: center;
@@ -449,9 +447,6 @@ button {
   z-index: 3;
   font-weight: bold;
 }
-.home .grid-item1 {
-  transition: transform 0.1s ease, filter 0.1s ease;
-}
 .home .grid-item1:active {
   transform: scale(0.97);
   filter: brightness(0.8);
@@ -468,6 +463,9 @@ button {
 }
 .home .grid-item4 {
   background: #2f4f4f;
+}
+.home .grid-item5 {
+  background: #00ced1;
 }
 
 /* ==========================================================
@@ -491,6 +489,12 @@ button {
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
   padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px;
+  /* ----------------------------------------------------------
+     3段構成のデータシート風レイアウト（図鑑モーダル専用）
+     1段目: 画像 / 連隊編成 / キーワード
+     2段目: 基本情報ステータス / 武器テーブル
+     3段目: アビリティ
+     ---------------------------------------------------------- */
 }
 #unitDetailModal[style*="display: block"], #unitDetailModal[style*="display: flex"] {
   display: flex !important;
@@ -568,8 +572,7 @@ button {
 #unitDetailModal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -682,14 +685,6 @@ button {
   cursor: pointer;
   border: 1px solid #444;
 }
-#unitDetailModal {
-  /* ----------------------------------------------------------
-     3段構成のデータシート風レイアウト（図鑑モーダル専用）
-     1段目: 画像 / 連隊編成 / キーワード
-     2段目: 基本情報ステータス / 武器テーブル
-     3段目: アビリティ
-     ---------------------------------------------------------- */
-}
 #unitDetailModal .detail-modal-content--datasheet .detail-top-row,
 #unitDetailModal .detail-modal-content--datasheet .detail-stats-row {
   display: flex;
@@ -779,17 +774,13 @@ button {
   text-transform: capitalize; /* 単語の頭文字を大文字に（stormcast → Stormcast） */
   font-weight: bold;
   box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
 }
 .unit.index div p:last-child,
 .unit.index div a:last-child,
 .unit.index div .faction-item:last-child {
   margin-bottom: 0;
-}
-.unit.index div p,
-.unit.index div a,
-.unit.index div .faction-item {
-  cursor: pointer;
-  transition: transform 0.1s ease, background-color 0.1s ease;
 }
 .unit.index div p:active,
 .unit.index div a:active,
@@ -828,6 +819,10 @@ button {
   color: #f0ead6;
 }
 
+.unit.faction-units {
+  /* --- タブ --- */
+  /* --- 軍勢オプション --- */
+}
 .unit.faction-units .unit-list-header {
   display: flex;
   justify-content: space-between;
@@ -889,8 +884,7 @@ button {
 .unit.faction-units .unit-card-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .unit.faction-units .unit-card-name {
@@ -992,9 +986,6 @@ button {
   margin: 0;
   width: auto;
 }
-.unit.faction-units {
-  /* --- タブ --- */
-}
 .unit.faction-units .unit-tabs {
   display: flex;
   gap: 0.4rem;
@@ -1029,9 +1020,6 @@ button {
 }
 .unit.faction-units .unit-tab-panel.is-active {
   display: block;
-}
-.unit.faction-units {
-  /* --- 軍勢オプション --- */
 }
 .unit.faction-units .option-section {
   margin-bottom: 0.75rem;
@@ -1467,9 +1455,6 @@ button {
   background: rgba(19, 28, 28, 0.9);
   color: #f0ead6;
 }
-.unit.unit-edit .keyword-param-input:-moz-read-only {
-  opacity: 0.45;
-}
 .unit.unit-edit .keyword-param-input:read-only {
   opacity: 0.45;
 }
@@ -1511,6 +1496,8 @@ button {
   border-radius: 12px; /* 既存デザインと統一した角丸 */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   box-sizing: border-box;
+  /* 作成ボタン（共通の .btn クラスをロスター専用に拡張） */
+  /* スマホ縦画面での表示調整（入れ子のなかにメディアクエリを配置） */
 }
 .roster.index h2 {
   color: #d4af37; /* 聖なるゴールド */
@@ -1530,10 +1517,13 @@ button {
   line-height: 1.5;
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .roster.index .form-group {
   margin-bottom: 1.75rem;
+  /* フォーム要素のオーバーライド（共通リセットの #fff 背景を上書き） */
+  /* プレースホルダーの色調整 */
+  /* セレクトボックスにカスタムの矢印（ゴールド）を配置 */
 }
 .roster.index .form-group label {
   display: block;
@@ -1541,9 +1531,6 @@ button {
   font-weight: bold;
   font-size: 1.05rem;
   margin-bottom: 0.6rem;
-}
-.roster.index .form-group {
-  /* フォーム要素のオーバーライド（共通リセットの #fff 背景を上書き） */
 }
 .roster.index .form-group input[type=text],
 .roster.index .form-group select {
@@ -1556,8 +1543,7 @@ button {
   border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none; /* iOS/Safariのデフォルト形状をリセット */
 }
 .roster.index .form-group input[type=text]:focus,
@@ -1566,17 +1552,8 @@ button {
   border-color: #d4af37;
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
 }
-.roster.index .form-group {
-  /* プレースホルダーの色調整 */
-}
-.roster.index .form-group input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
-}
 .roster.index .form-group input::placeholder {
   color: rgba(240, 234, 214, 0.4);
-}
-.roster.index .form-group {
-  /* セレクトボックスにカスタムの矢印（ゴールド）を配置 */
 }
 .roster.index .form-group select {
   cursor: pointer;
@@ -1585,9 +1562,6 @@ button {
   background-position: right 14px center;
   background-size: 16px;
   padding-right: 40px;
-}
-.roster.index {
-  /* 作成ボタン（共通の .btn クラスをロスター専用に拡張） */
 }
 .roster.index .btn-submit {
   background: #d4af37;
@@ -1606,9 +1580,6 @@ button {
 .roster.index .btn-submit:active {
   transform: scale(0.98); /* 既存のグリッド等と統一したタップ時のフィードバック */
   background-color: #bfa032; /* 少し沈んだゴールドに */
-}
-.roster.index {
-  /* スマホ縦画面での表示調整（入れ子のなかにメディアクエリを配置） */
 }
 @media (max-width: 768px) {
   .roster.index {
@@ -1724,12 +1695,12 @@ button {
 .roster.list .roster-flash-success {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
 }
 .roster.list .roster-flash-error {
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .roster.list .roster-list-table {
   width: 100%;
@@ -1776,7 +1747,7 @@ button {
   border: none;
   padding: 0;
   cursor: pointer;
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
   font-weight: bold;
   font-size: inherit;
   font-family: inherit;
@@ -1979,9 +1950,7 @@ button {
   font-weight: bold;
 }
 .roster.detail .detail-open-btn {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   background: none;
   border: none;
   padding: 0;
@@ -2139,9 +2108,7 @@ button {
   justify-content: flex-end;
 }
 .roster-ability-modal .btn-close-detail {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   border: 1px solid #2f4f4f;
   background: rgba(19, 28, 28, 0.8);
   color: #f0ead6;
@@ -2157,9 +2124,7 @@ button {
   position: absolute;
   top: 0.55rem;
   right: 0.7rem;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   border: none;
   background: transparent;
   color: rgba(240, 234, 214, 0.7);
@@ -2183,6 +2148,33 @@ button {
   color: #f0ead6;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
+  /* ==========================================
+         roster_meta カードデザイン
+        ========================================== */
+  /* ==========================================
+         アーミーオプションセクション & グリッドレイアウト
+        ========================================== */
+  /* ==========================================
+         フォーム・共通要素
+        ========================================== */
+  /* ==========================================
+         連隊の編成セクション / REGIMENTS
+        ========================================== */
+  /* ==========================================
+         下部固定 ポイントカウンター (Sticky Footer)
+        ========================================== */
+  /* ==========================================
+         ボタン周りのレイアウト
+        ========================================== */
+  /* ==========================================
+       5. 削除ボタン・随伴部隊レイアウト設定
+      ========================================== */
+  /* ==========================================================
+    詳細モーダル（#unitDetailModal）は図鑑と共通化したため、
+    scss/unit/_detail_modal.scss のグローバル定義に一本化。
+    ※ここでローカル上書きすると詳細度の関係で図鑑と表示がズレ、
+      モーダル枠からのはみ出し（オーバーレイ非スクロール）も発生する。
+    ========================================================== */
 }
 .roster.create_roster h2 {
   font-size: 1.5rem;
@@ -2202,12 +2194,12 @@ button {
 .roster.create_roster .roster-flash-error {
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .roster.create_roster .roster-flash-success {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
 }
 .roster.create_roster .lore-divider {
   border: none;
@@ -2225,11 +2217,6 @@ button {
   color: rgba(240, 234, 214, 0.45);
   border-top: 1px dashed rgba(47, 79, 79, 0.3);
   padding-top: 0.6rem;
-}
-.roster.create_roster {
-  /* ==========================================
-         roster_meta カードデザイン
-        ========================================== */
 }
 .roster.create_roster .roster-meta-card {
   background: #131c1c;
@@ -2277,11 +2264,6 @@ button {
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
 }
-.roster.create_roster .roster-title-display .roster-name-input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
-  font-weight: 400;
-  text-shadow: none;
-}
 .roster.create_roster .roster-title-display .roster-name-input::placeholder {
   color: rgba(240, 234, 214, 0.4);
   font-weight: 400;
@@ -2315,11 +2297,6 @@ button {
   color: #f0ead6;
   font-size: 1rem;
   font-weight: bold;
-}
-.roster.create_roster {
-  /* ==========================================
-         アーミーオプションセクション & グリッドレイアウト
-        ========================================== */
 }
 .roster.create_roster .army-options-section {
   margin-top: 2rem;
@@ -2476,11 +2453,6 @@ button {
   font-size: 0.9rem;
   color: rgba(240, 234, 214, 0.5);
 }
-.roster.create_roster {
-  /* ==========================================
-         フォーム・共通要素
-        ========================================== */
-}
 .roster.create_roster .form-group {
   margin-bottom: 1.5rem;
   display: flex;
@@ -2506,9 +2478,7 @@ button {
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .form-group select:focus,
 .roster.create_roster .form-group input[type=text]:focus {
@@ -2521,7 +2491,7 @@ button {
   background: rgba(47, 79, 79, 0.2);
   border: 1px solid #2f4f4f;
   border-radius: 4px;
-  color: rgb(216.512345679, 183.3950617284, 75.987654321);
+  color: #d9b74c;
   font-size: 0.85rem;
   font-weight: bold;
   cursor: pointer;
@@ -2585,7 +2555,7 @@ button {
   font-weight: bold;
   text-transform: uppercase;
   background: rgba(47, 79, 79, 0.25);
-  color: rgb(222.8296296296, 195.1481481481, 105.3703703704);
+  color: #dfc369;
   border: 1px solid rgba(47, 79, 79, 0.5);
   border-radius: 4px;
   margin-bottom: 0.75rem;
@@ -2597,11 +2567,6 @@ button {
   line-height: 1.6;
   color: rgba(240, 234, 214, 0.95);
   white-space: pre-wrap;
-}
-.roster.create_roster {
-  /* ==========================================
-         連隊の編成セクション / REGIMENTS
-        ========================================== */
 }
 .roster.create_roster .regiments-section {
   margin-top: 2.5rem;
@@ -2809,17 +2774,12 @@ button {
   font-size: 1.05rem;
   margin-left: 0.25rem;
 }
-.roster.create_roster {
-  /* ==========================================
-         下部固定 ポイントカウンター (Sticky Footer)
-        ========================================== */
-}
 .roster.create_roster .roster-sticky-counter {
   position: sticky;
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgba(19.784375, 28.915625, 28.915625, 0.95);
+  background: rgba(20, 29, 29, 0.95);
   backdrop-filter: blur(8px);
   border-top: 2px solid #2f4f4f;
   padding: 1rem 1.5rem;
@@ -2844,11 +2804,6 @@ button {
   color: #d4af37;
   text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }
-.roster.create_roster {
-  /* ==========================================
-         ボタン周りのレイアウト
-        ========================================== */
-}
 .roster.create_roster .form-actions {
   display: flex;
   justify-content: space-between;
@@ -2857,7 +2812,7 @@ button {
 }
 .roster.create_roster .btn-submit {
   padding: 0.85rem 2rem;
-  background: linear-gradient(135deg, #d4af37, rgb(177.7777777778, 144.8888888889, 38.2222222222));
+  background: linear-gradient(135deg, #d4af37, #b29126);
   color: #131c1c;
   border: none;
   border-radius: 4px;
@@ -2868,7 +2823,7 @@ button {
   transition: all 0.2s;
 }
 .roster.create_roster .btn-submit:hover {
-  background: linear-gradient(135deg, rgb(216.512345679, 183.3950617284, 75.987654321), #d4af37);
+  background: linear-gradient(135deg, #d9b74c, #d4af37);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
@@ -2898,18 +2853,13 @@ button {
     transform: translateY(0);
   }
 }
-.roster.create_roster {
-  /* ==========================================
-       5. 削除ボタン・随伴部隊レイアウト設定
-      ========================================== */
-}
 .roster.create_roster .unit-slot-row .btn-delete-unit, .roster.create_roster .btn-delete-regiment {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background-color: rgba(139, 0, 0, 0.15);
   border: 1px solid #be0000;
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
@@ -2918,7 +2868,7 @@ button {
 }
 .roster.create_roster .unit-slot-row .btn-delete-unit:hover, .roster.create_roster .btn-delete-regiment:hover {
   background-color: rgba(139, 0, 0, 0.3);
-  border-color: rgb(255, 11.5, 11.5);
+  border-color: #ff0c0c;
   color: #f0ead6;
 }
 .roster.create_roster .unit-slot-row .btn-delete-unit:active, .roster.create_roster .btn-delete-regiment:active {
@@ -2947,9 +2897,7 @@ button {
   font-size: 0.95rem;
   outline: none;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .unit-slot-row .select-wrapper .unit-select:focus {
   border-color: #d4af37;
@@ -3115,9 +3063,6 @@ button {
 .roster.create_roster .modal-content .modal-search-input:focus {
   border-color: var(--color-accent, #ffcc00);
 }
-.roster.create_roster .modal-content .modal-search-input::-moz-placeholder {
-  color: #aaa;
-}
 .roster.create_roster .modal-content .modal-search-input::placeholder {
   color: #aaa;
 }
@@ -3244,14 +3189,6 @@ button {
   border-radius: 3px;
   cursor: pointer;
 }
-.roster.create_roster {
-  /* ==========================================================
-    詳細モーダル（#unitDetailModal）は図鑑と共通化したため、
-    scss/unit/_detail_modal.scss のグローバル定義に一本化。
-    ※ここでローカル上書きすると詳細度の関係で図鑑と表示がズレ、
-      モーダル枠からのはみ出し（オーバーレイ非スクロール）も発生する。
-    ========================================================== */
-}
 @keyframes detailModalBoxFadeIn {
   from {
     opacity: 0;
@@ -3336,7 +3273,7 @@ button {
   font-weight: bold;
   text-transform: uppercase;
   background: rgba(47, 79, 79, 0.25);
-  color: rgb(222.8296296296, 195.1481481481, 105.3703703704);
+  color: #dfc369;
   border: 1px solid rgba(47, 79, 79, 0.5);
   border-radius: 4px;
   margin-bottom: 0.5rem;
@@ -3457,7 +3394,7 @@ button {
 }
 .match.setup .btn-submit {
   padding: 0.85rem 2rem;
-  background: linear-gradient(135deg, #d4af37, rgb(177.7777777778, 144.8888888889, 38.2222222222));
+  background: linear-gradient(135deg, #d4af37, #b29126);
   color: #131c1c;
   border: none;
   border-radius: 4px;
@@ -4107,7 +4044,7 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.25rem;
-  background: rgba(19.784375, 28.915625, 28.915625, 0.95);
+  background: rgba(20, 29, 29, 0.95);
   backdrop-filter: blur(8px);
   border-top: 2px solid #2f4f4f;
   flex-shrink: 0;
@@ -4586,7 +4523,7 @@ button {
   flex-shrink: 0;
   padding: 0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(47, 79, 79, 0.5);
-  background: rgba(21.85625, 31.94375, 31.94375, 0.98);
+  background: rgba(22, 32, 32, 0.98);
   backdrop-filter: blur(8px);
 }
 .match.scoreboard .modal-overlay .round-start-modal-content .round-start-modal-actions .btn-submit {
@@ -4595,7 +4532,7 @@ button {
   padding: 0.75rem 1.25rem;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #d4af37, rgb(169.3827160494, 138.0469135802, 36.4172839506));
+  background: linear-gradient(135deg, #d4af37, #a98a24);
   color: #131c1c;
   font-size: 1rem;
   font-weight: bold;
@@ -4776,8 +4713,7 @@ button {
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb-placeholder {
@@ -4879,8 +4815,7 @@ button {
 .match.scoreboard .match-unit-detail-modal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -5110,8 +5045,7 @@ button {
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-placeholder {
@@ -5190,8 +5124,7 @@ button {
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-placeholder {
@@ -5260,8 +5193,7 @@ button {
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-placeholder {
@@ -5353,6 +5285,10 @@ button {
   padding-left: 0.6rem;
   border-left: 3px solid rgba(95, 158, 160, 0.6);
 }
+.match.scoreboard .phase-ability-group.cat-battleplan {
+  padding-left: 0.6rem;
+  border-left: 3px solid rgba(218, 165, 32, 0.65);
+}
 .match.scoreboard .phase-ability-group-title {
   margin: 0;
   font-size: 0.82rem;
@@ -5374,6 +5310,9 @@ button {
 .cat-common .match.scoreboard .phase-ability-group-title {
   color: #9fe2e0;
 }
+.cat-battleplan .match.scoreboard .phase-ability-group-title {
+  color: #e8c547;
+}
 .match.scoreboard .phase-ability-card {
   padding: 0.75rem;
   border: 1px solid rgba(47, 79, 79, 0.45);
@@ -5385,9 +5324,7 @@ button {
   cursor: pointer;
   min-height: 48px;
   -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  user-select: none;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 .match.scoreboard .phase-ability-card.is-expandable:hover {
@@ -5402,9 +5339,7 @@ button {
 }
 .match.scoreboard .phase-ability-card .ability-effect-box,
 .match.scoreboard .phase-ability-card .ability-effect-box * {
-  -webkit-user-select: text;
-     -moz-user-select: text;
-          user-select: text;
+  user-select: text;
 }
 .match.scoreboard .phase-ability-card.is-open {
   border-left-color: #d4af37;
@@ -5502,6 +5437,11 @@ button {
   background: rgba(95, 158, 160, 0.2);
   color: #9fe2e0;
   border-color: rgba(95, 158, 160, 0.45);
+}
+.match.scoreboard .ability-category-badge.cat-battleplan {
+  background: rgba(218, 165, 32, 0.18);
+  color: #e8c547;
+  border-color: rgba(218, 165, 32, 0.5);
 }
 .match.scoreboard .ability-category-badge.cat-terrain {
   background: rgba(47, 79, 79, 0.35);
@@ -5641,8 +5581,7 @@ button {
 .match.scoreboard .ability-effect-box .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .ability-effect-box .ability-unit-thumb-placeholder {
@@ -5799,8 +5738,7 @@ button {
 .match.scoreboard .deployment-unit-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .deployment-unit-thumb-placeholder {
@@ -5849,9 +5787,18 @@ button {
   color: #f3a3a3;
   border-color: rgba(205, 92, 92, 0.45);
 }
+.match.scoreboard .ability-category-badge.cat-battleplan {
+  background: rgba(218, 165, 32, 0.18);
+  color: #e8c547;
+  border-color: rgba(218, 165, 32, 0.5);
+}
 .match.scoreboard .phase-ability-group.cat-battletrait {
   padding-left: 0.6rem;
   border-left: 3px solid rgba(205, 92, 92, 0.55);
+}
+.match.scoreboard .phase-ability-group.cat-battleplan {
+  padding-left: 0.6rem;
+  border-left: 3px solid rgba(218, 165, 32, 0.65);
 }
 .match.scoreboard .deployment-footer {
   display: flex;
@@ -6157,7 +6104,7 @@ button {
 }
 .match.history .list-header .btn-submit:active {
   transform: scale(0.98);
-  background-color: rgb(186.1728395062, 151.7308641975, 40.0271604938);
+  background-color: #ba9828;
 }
 .match.history .roster-flash {
   padding: 0.75rem 1rem;
@@ -6169,12 +6116,12 @@ button {
 .match.history .roster-flash-success {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
 }
 .match.history .roster-flash-error {
   background: rgba(139, 0, 0, 0.15);
   border: 1px solid rgba(139, 0, 0, 0.5);
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
 }
 .match.history .roster-list-table-wrap {
   overflow-x: auto;
@@ -6295,7 +6242,7 @@ button {
 .match.history .list-actions .btn-delete {
   display: inline-block;
   padding: 0.4rem 0.9rem;
-  color: rgb(255, 11.5, 11.5);
+  color: #ff0c0c;
   background: none;
   border: 1px solid rgba(139, 0, 0, 0.5);
   border-radius: 6px;
@@ -6343,7 +6290,7 @@ button {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
   border-radius: 8px;
-  color: rgb(225.537037037, 200.1851851852, 117.962962963);
+  color: #e2c876;
   box-sizing: border-box;
 }
 .active-match-banner .active-match-banner-lead {
@@ -6390,7 +6337,7 @@ button {
 }
 .active-match-banner .active-match-banner-link:active {
   transform: scale(0.97);
-  background-color: rgb(186.1728395062, 151.7308641975, 40.0271604938);
+  background-color: #ba9828;
 }
 
 .match.setup .active-match-banner {
@@ -6560,6 +6507,224 @@ button {
     padding: 1rem;
   }
 }
+.battleplan {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+.battleplan .battleplan-page-title {
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  color: #d4af37;
+  border-bottom: 2px solid #2f4f4f;
+  padding-bottom: 0.5rem;
+  margin: 0 0 1.25rem;
+  font-family: "Georgia", serif;
+}
+.battleplan .battleplan-back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: rgba(240, 234, 214, 0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.battleplan .battleplan-back-link:hover {
+  color: #d4af37;
+}
+.battleplan .battleplan-empty {
+  color: rgba(240, 234, 214, 0.7);
+  margin: 1rem 0;
+}
+.battleplan .battleplan-detail-meta {
+  margin: -0.5rem 0 1.5rem;
+  color: rgba(240, 234, 214, 0.75);
+  font-size: 0.95rem;
+}
+.battleplan .battleplan-section-title {
+  font-size: 1.15rem;
+  color: #f0ead6;
+  margin: 0 0 1rem;
+  letter-spacing: 0.04em;
+}
+.battleplan .battleplan-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.battleplan .battleplan-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  background: #1a2626;
+  border: 1px solid #2f4f4f;
+  border-left: 4px solid #d4af37;
+  border-radius: 0 8px 8px 0;
+  color: #f0ead6;
+  text-decoration: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+.battleplan .battleplan-list-item:active {
+  transform: scale(0.98);
+}
+.battleplan .battleplan-list-item:hover {
+  border-color: #d4af37;
+}
+.battleplan .battleplan-list-name {
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+.battleplan .battleplan-list-meta {
+  font-size: 0.85rem;
+  color: rgba(240, 234, 214, 0.65);
+  white-space: nowrap;
+}
+.battleplan .battleplan-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.battleplan .battleplan-card {
+  background: #1a2626;
+  border: 1px solid #2f4f4f;
+  border-left: 4px solid #d4af37;
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+.battleplan .battleplan-card--deployment {
+  border-left-color: #6b7c7c;
+}
+.battleplan .battleplan-card--round_start {
+  border-left-color: #00ced1;
+}
+.battleplan .battleplan-card--hero {
+  border-left-color: #d4af37;
+}
+.battleplan .battleplan-card--movement {
+  border-left-color: #5a9e6f;
+}
+.battleplan .battleplan-card--shooting {
+  border-left-color: #4a8fd4;
+}
+.battleplan .battleplan-card--charge {
+  border-left-color: #e97451;
+}
+.battleplan .battleplan-card--combat {
+  border-left-color: #8b0000;
+}
+.battleplan .battleplan-card--end {
+  border-left-color: #9a7bb8;
+}
+.battleplan .battleplan-card--any {
+  border-left-color: #8a8a7a;
+}
+.battleplan .battleplan-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.battleplan .battleplan-card-name {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #f0ead6;
+  margin: 0;
+}
+.battleplan .battleplan-card-cp {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+}
+.battleplan .battleplan-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+.battleplan .battleplan-card-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  line-height: 1.4;
+}
+.battleplan .battleplan-card-badge--deployment {
+  background: rgba(107, 124, 124, 0.18);
+  border-color: rgba(107, 124, 124, 0.65);
+  color: #6b7c7c;
+}
+.battleplan .battleplan-card-badge--round_start {
+  background: rgba(0, 206, 209, 0.18);
+  border-color: rgba(0, 206, 209, 0.65);
+  color: #00ced1;
+}
+.battleplan .battleplan-card-badge--hero {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.65);
+  color: #d4af37;
+}
+.battleplan .battleplan-card-badge--movement {
+  background: rgba(90, 158, 111, 0.18);
+  border-color: rgba(90, 158, 111, 0.65);
+  color: #5a9e6f;
+}
+.battleplan .battleplan-card-badge--shooting {
+  background: rgba(74, 143, 212, 0.18);
+  border-color: rgba(74, 143, 212, 0.65);
+  color: #4a8fd4;
+}
+.battleplan .battleplan-card-badge--charge {
+  background: rgba(233, 116, 81, 0.18);
+  border-color: rgba(233, 116, 81, 0.65);
+  color: #e97451;
+}
+.battleplan .battleplan-card-badge--combat {
+  background: rgba(139, 0, 0, 0.18);
+  border-color: rgba(139, 0, 0, 0.65);
+  color: #8b0000;
+}
+.battleplan .battleplan-card-badge--end {
+  background: rgba(154, 123, 184, 0.18);
+  border-color: rgba(154, 123, 184, 0.65);
+  color: #9a7bb8;
+}
+.battleplan .battleplan-card-badge--any {
+  background: rgba(138, 138, 122, 0.18);
+  border-color: rgba(138, 138, 122, 0.65);
+  color: #8a8a7a;
+}
+.battleplan .battleplan-card-badge--turn {
+  background: rgba(47, 79, 79, 0.25);
+  border-color: rgba(47, 79, 79, 0.55);
+  color: rgba(240, 234, 214, 0.9);
+}
+.battleplan .battleplan-card-badge--condition {
+  background: rgba(240, 234, 214, 0.08);
+  border-color: rgba(240, 234, 214, 0.25);
+  color: rgba(240, 234, 214, 0.8);
+  font-weight: normal;
+}
+.battleplan .battleplan-card-effect {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: rgba(240, 234, 214, 0.9);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .home {
     display: grid;
@@ -6585,4 +6750,6 @@ button {
     display: block;
     padding: 0.5rem 0;
   }
-}/*# sourceMappingURL=style.css.map */
+}
+
+/*# sourceMappingURL=style.css.map */

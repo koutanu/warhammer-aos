@@ -492,6 +492,11 @@
 			padding-left: 0.6rem;
 			border-left: 3px solid rgba(95, 158, 160, 0.6);
 		}
+
+		&.cat-battleplan {
+			padding-left: 0.6rem;
+			border-left: 3px solid rgba(218, 165, 32, 0.65);
+		}
 	}
 
 	.phase-ability-group-title {
@@ -517,6 +522,10 @@
 
 		.cat-common & {
 			color: #9fe2e0;
+		}
+
+		.cat-battleplan & {
+			color: #e8c547;
 		}
 	}
 
@@ -670,6 +679,12 @@
 			background: rgba(95, 158, 160, 0.2);
 			color: #9fe2e0;
 			border-color: rgba(95, 158, 160, 0.45);
+		}
+
+		&.cat-battleplan {
+			background: rgba(218, 165, 32, 0.18);
+			color: #e8c547;
+			border-color: rgba(218, 165, 32, 0.5);
 		}
 
 		&.cat-terrain {
@@ -1073,9 +1088,20 @@
 		border-color: rgba(205, 92, 92, 0.45);
 	}
 
+	.ability-category-badge.cat-battleplan {
+		background: rgba(218, 165, 32, 0.18);
+		color: #e8c547;
+		border-color: rgba(218, 165, 32, 0.5);
+	}
+
 	.phase-ability-group.cat-battletrait {
 		padding-left: 0.6rem;
 		border-left: 3px solid rgba(205, 92, 92, 0.55);
+	}
+
+	.phase-ability-group.cat-battleplan {
+		padding-left: 0.6rem;
+		border-left: 3px solid rgba(218, 165, 32, 0.65);
 	}
 
 	.deployment-footer {

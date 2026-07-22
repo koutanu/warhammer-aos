@@ -1494,6 +1494,68 @@ class Roster_Model extends Model
 	}
 
 	/**
+	 * 試合で選んだバトルプランに紐づくアビリティをデッキ形式で返す。
+	 * 両プレイヤーに同じ行を載せ、フェイズ／ターンはクライアント側でフィルタする。
+	 */
+	public function getBattleplanAbilityDeckForMatch(int $battleplanId): array
+	{
+		if ($battleplanId <= 0) {
+			return [];
+		}
+
+		$rows = $this->db->select(
+			'SELECT a.id, a.name, a.effect, a.command_cost, a.activation, a.usage_scope, a.usage_per,
+			        a.trigger_phase, a.trigger_turn, a.icon_type, a.trigger_condition_ja,
+			        bp.name AS battleplan_name
+			 FROM m_battleplan_abilities a
+			 INNER JOIN m_battleplans bp ON bp.id = a.battleplan_id
+			 WHERE a.battleplan_id = :battleplan_id
+			   AND (a.is_hidden = 0 OR a.is_hidden IS NULL)
+			 ORDER BY a.sort_order ASC, a.name ASC;',
+			['battleplan_id' => $battleplanId]
+		);
+
+		$deck = [];
+		foreach ($rows as $row) {
+			$abilityId = (int)($row['id'] ?? 0);
+			if ($abilityId <= 0) {
+				continue;
+			}
+			$commandCost = ($row['command_cost'] === null || $row['command_cost'] === '')
+				? null
+				: (int)$row['command_cost'];
+			$key = 'battleplan:' . $abilityId;
+			$source = trim((string)($row['battleplan_name'] ?? ''));
+			if ($source === '') {
+				$source = 'バトルプラン';
+			}
+			$entry = $this->buildDeckEntry(
+				$key,
+				$row['name'] ?? '',
+				$row['effect'] ?? '',
+				$row['trigger_phase'] ?? '',
+				$row['trigger_turn'] ?? '',
+				$source,
+				null,
+				'battleplan',
+				$key,
+				$commandCost,
+				$row['activation'] ?? 'active',
+				$row['usage_scope'] ?? 'unlimited',
+				$row['usage_per'] ?? 'army',
+				trim((string)($row['trigger_condition_ja'] ?? ''))
+			);
+			$iconType = trim((string)($row['icon_type'] ?? ''));
+			if ($iconType !== '') {
+				$entry['iconType'] = $iconType;
+			}
+			$deck[] = $entry;
+		}
+
+		return $deck;
+	}
+
+	/**
 	 * 全ファクション共通のコアアビリティ／ユニバーサルコマンドを取得する。
 	 * 特定ユニット/ファクションに属さず、command_cost にCP費用を保持する。
 	 */

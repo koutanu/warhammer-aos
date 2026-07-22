@@ -40,6 +40,7 @@ const MatchPhases = {
 
 	/** アビリティ種別（デッキ category） */
 	CATEGORY_LABELS_JA: {
+		battleplan: "バトルプラン",
 		common: "汎用コマンド/コアアビリティ",
 		battletrait: "戦闘特性",
 		terrain: "陣営地形",
@@ -54,6 +55,7 @@ const MatchPhases = {
 	},
 
 	CATEGORY_ORDER: [
+		"battleplan",
 		"unit",
 		"battletrait",
 		"terrain",

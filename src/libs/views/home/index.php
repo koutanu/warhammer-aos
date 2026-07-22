@@ -7,5 +7,6 @@
 	<a href="<?= URL; ?>roster/index" class="grid-item grid-item2">ロスター作成</a>
 	<a href="<?= URL; ?>unit/index" class="grid-item grid-item3">ユニット図鑑</a>
 	<a href="<?= URL; ?>match/history" class="grid-item grid-item4">戦績</a>
-	<a href="<?= URL; ?>admin/logout" class="grid-item grid-item5">ログアウト</a>
+	<a href="<?= URL; ?>battleplan" class="grid-item grid-item5">バトルプラン</a>
+	<a href="<?= URL; ?>admin/logout" class="grid-item grid-item6">ログアウト</a>
 </div>

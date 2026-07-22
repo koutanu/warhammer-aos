@@ -44,6 +44,10 @@
 					<a href="<?= $this->h(URL); ?>rule"
 						class="nav-item <?= $class === 'rule' ? 'active' : ''; ?>">Rule</a>
 				</li>
+				<li>
+					<a href="<?= $this->h(URL); ?>battleplan"
+						class="nav-item <?= $class === 'battleplan' ? 'active' : ''; ?>">Battleplans</a>
+				</li>
 			</ul>
 
 			<!-- 下部に配置したいメニュー（ログアウトなど）／スマホでは上部タイトル横 -->

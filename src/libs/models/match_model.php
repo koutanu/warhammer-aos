@@ -907,28 +907,36 @@ class Match_Model extends Model
         $map = [];
         $match = $this->getMatchById($matchId);
         $rosterId = 0;
+        $battleplanId = 0;
         if ($match) {
             $rosterId = $playerSlot === 1
                 ? (int)($match['player_a_roster_id'] ?? 0)
                 : (int)($match['player_b_roster_id'] ?? 0);
+            $battleplanId = (int)($match['battleplan_id'] ?? 0);
         }
 
+        require_once MODELS . 'roster_model.php';
+        $rosterModel = new Roster_Model();
+        $deck = [];
+        if ($battleplanId > 0) {
+            $deck = array_merge($deck, $rosterModel->getBattleplanAbilityDeckForMatch($battleplanId));
+        }
         if ($rosterId > 0) {
-            require_once MODELS . 'roster_model.php';
-            $rosterModel = new Roster_Model();
-			foreach ($rosterModel->getRosterAbilityDeckForMatch($rosterId) as $entry) {
-                // usage_scope によって使用済みの保持スコープを決める。
-                // once_per_battle -> battle (ゲーム終了まで保持)
-                // once_per_round  -> round  (同一バトルラウンド内のみ保持)
-                // それ以外(once_per_turn/once_per_phase/unlimited) -> turn (毎ターンリセット)
-                $scope = $entry['usageScope'] ?? '';
-                if ($scope === 'once_per_battle') {
-                    $map[$entry['key']] = 'battle';
-                } elseif ($scope === 'once_per_round') {
-                    $map[$entry['key']] = 'round';
-                } else {
-                    $map[$entry['key']] = 'turn';
-                }
+            $deck = array_merge($deck, $rosterModel->getRosterAbilityDeckForMatch($rosterId));
+        }
+
+        foreach ($deck as $entry) {
+            // usage_scope によって使用済みの保持スコープを決める。
+            // once_per_battle -> battle (ゲーム終了まで保持)
+            // once_per_round  -> round  (同一バトルラウンド内のみ保持)
+            // それ以外(once_per_turn/once_per_phase/unlimited) -> turn (毎ターンリセット)
+            $scope = $entry['usageScope'] ?? '';
+            if ($scope === 'once_per_battle') {
+                $map[$entry['key']] = 'battle';
+            } elseif ($scope === 'once_per_round') {
+                $map[$entry['key']] = 'round';
+            } else {
+                $map[$entry['key']] = 'turn';
             }
         }
 
@@ -964,12 +972,18 @@ class Match_Model extends Model
             ],
         ];
 
+        $battleplanId = (int)($match['battleplan_id'] ?? 0);
+        $battleplanDeck = $this->loadBattleplanAbilityDeck($battleplanId);
+
         foreach ($slots as $slot => &$player) {
             $fid = $player['factionId'];
             $player['factionName'] = ($fid && isset($factionMap[$fid])) ? $factionMap[$fid]['name'] : '';
             $player['grandAlliance'] = ($fid && isset($factionMap[$fid])) ? $factionMap[$fid]['grand_alliance'] : '';
             $player['roster'] = $this->loadRosterSummary($player['rosterId']);
-            $player['abilitiesDeck'] = $this->loadRosterAbilityDeck($player['rosterId']);
+            $player['abilitiesDeck'] = array_merge(
+                $battleplanDeck,
+                $this->loadRosterAbilityDeck($player['rosterId'])
+            );
         }
         unset($player);
 
@@ -994,6 +1008,16 @@ class Match_Model extends Model
         require_once MODELS . 'roster_model.php';
         $rosterModel = new Roster_Model();
         return $rosterModel->getRosterAbilityDeckForMatch($rosterId);
+    }
+
+    private function loadBattleplanAbilityDeck(int $battleplanId): array
+    {
+        if ($battleplanId <= 0) {
+            return [];
+        }
+        require_once MODELS . 'roster_model.php';
+        $rosterModel = new Roster_Model();
+        return $rosterModel->getBattleplanAbilityDeckForMatch($battleplanId);
     }
 
     public function recalcTotals(int $matchId): array
