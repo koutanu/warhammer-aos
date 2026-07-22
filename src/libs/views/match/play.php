@@ -80,12 +80,6 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					<code id="p2ShareUrl"><?= $this->h($p2ShareUrl); ?></code>
 					<button type="button" id="btnCopyP2Url" class="btn-copy-p2-url">コピー</button>
 				</div>
-				<div>
-					<span>期待値</span>
-					<p>ダイス2個の合計は7</p>
-					<p>3+3+で残るダイスの確率44.4%</p>
-					<p>3+3+かつ相手の6+防御を回避する確率37.04%</p>
-				</div>
 			<?php endif; ?>
 		</aside>
 
@@ -93,11 +87,11 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 			<section id="deploymentView" class="match-deployment-view" style="display:none;">
 				<div class="deployment-header">
 					<h3 class="deployment-title">配置ターン</h3>
-					<p class="deployment-lead">連隊を配置し、配置フェイズで使えるアビリティを確認してください。準備ができたら「配置完了」を押して最初のラウンドを開始します。</p>
+					<!-- <p class="deployment-lead">連隊を配置し、配置フェイズで使えるアビリティを確認してください。準備ができたら「配置完了」を押して最初のラウンドを開始します。</p> -->
 				</div>
 				<div class="deployment-body">
 					<section class="deployment-section">
-						<h4 class="deployment-section-title">配置フェイズで使えるアビリティ（参照）</h4>
+						<!-- <h4 class="deployment-section-title">配置フェイズで使えるアビリティ（参照）</h4> -->
 						<p id="deploymentAbilityEmpty" class="phase-ability-empty" style="display:none;"></p>
 						<div id="deploymentAbilityList" class="phase-ability-list"></div>
 					</section>

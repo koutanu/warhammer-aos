@@ -416,51 +416,8 @@
 	}
 
 	.phase-passive-section {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
 		padding-top: 0.75rem;
 		border-top: 1px solid rgba($color-main, 0.35);
-	}
-
-	.phase-passive-toggle {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		width: 100%;
-		padding: 0.4rem 0.55rem;
-		font-size: 0.82rem;
-		font-weight: bold;
-		letter-spacing: 0.02em;
-		text-align: left;
-		border: 1px solid rgba($color-main, 0.45);
-		background: rgba($color-background, 0.6);
-		color: rgba($color-text, 0.8);
-		border-radius: 4px;
-		cursor: pointer;
-		transition:
-			border-color 0.15s,
-			background 0.15s;
-
-		&:hover {
-			border-color: rgba($color-accent, 0.5);
-			color: rgba($color-text, 0.95);
-		}
-
-		&[aria-expanded="true"] {
-			border-color: rgba($color-accent, 0.5);
-		}
-	}
-
-	.phase-passive-arrow {
-		flex-shrink: 0;
-		font-size: 0.75rem;
-		color: rgba($color-text, 0.6);
-	}
-
-	.phase-passive-body {
-		flex-direction: column;
-		gap: 0.6rem;
 	}
 
 	.phase-ability-card--passive {

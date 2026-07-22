@@ -197,20 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
 			e.preventDefault();
 			toggleAbilityCard(card);
 		});
-
-		els.abilityList?.addEventListener("click", (e) => {
-			const toggle = e.target.closest(".phase-passive-toggle");
-			if (!toggle) return;
-			const body = toggle.parentElement?.querySelector(
-				".phase-passive-body",
-			);
-			if (!body) return;
-			const open = body.style.display === "flex";
-			body.style.display = open ? "none" : "flex";
-			toggle.setAttribute("aria-expanded", String(!open));
-			const arrow = toggle.querySelector(".phase-passive-arrow");
-			if (arrow) arrow.textContent = open ? "▸" : "▾";
-		});
 	}
 
 	function toggleAbilityCard(card) {
@@ -710,18 +696,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		if (passives.length) {
 			const section = document.createElement("section");
-			section.className = "phase-passive-section";
+			section.className = "phase-ability-group phase-passive-section";
 
-			const toggle = document.createElement("button");
-			toggle.type = "button";
-			toggle.className = "phase-passive-toggle";
-			toggle.setAttribute("aria-expanded", "false");
-			toggle.innerHTML = `<span class="phase-passive-arrow">▸</span>常時発動（パッシブ）（${passives.length}）`;
-			section.appendChild(toggle);
+			const title = document.createElement("h5");
+			title.className = "phase-ability-group-title";
+			title.textContent = `常時発動（パッシブ）（${passives.length}）`;
+			section.appendChild(title);
 
-			const body = document.createElement("div");
-			body.className = "phase-passive-body";
-			body.style.display = "none";
 			passives
 				.slice()
 				.sort((a, b) => {
@@ -732,11 +713,10 @@ document.addEventListener("DOMContentLoaded", () => {
 					return (a.name || "").localeCompare(b.name || "");
 				})
 				.forEach((ab) =>
-					body.appendChild(
+					section.appendChild(
 						buildAbilityCard(ab, { passive: true }, roster),
 					),
 				);
-			section.appendChild(body);
 
 			els.abilityList.appendChild(section);
 		}

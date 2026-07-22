@@ -5292,44 +5292,8 @@ button {
   gap: 1rem;
 }
 .match.scoreboard .phase-passive-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(47, 79, 79, 0.35);
-}
-.match.scoreboard .phase-passive-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-  font-weight: bold;
-  letter-spacing: 0.02em;
-  text-align: left;
-  border: 1px solid rgba(47, 79, 79, 0.45);
-  background: rgba(19, 28, 28, 0.6);
-  color: rgba(240, 234, 214, 0.8);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-.match.scoreboard .phase-passive-toggle:hover {
-  border-color: rgba(212, 175, 55, 0.5);
-  color: rgba(240, 234, 214, 0.95);
-}
-.match.scoreboard .phase-passive-toggle[aria-expanded=true] {
-  border-color: rgba(212, 175, 55, 0.5);
-}
-.match.scoreboard .phase-passive-arrow {
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  color: rgba(240, 234, 214, 0.6);
-}
-.match.scoreboard .phase-passive-body {
-  flex-direction: column;
-  gap: 0.6rem;
 }
 .match.scoreboard .phase-ability-card--passive {
   border-left-color: rgba(47, 79, 79, 0.55);
