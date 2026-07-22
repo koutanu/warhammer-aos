@@ -36,6 +36,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	let viewPhase = "hero";
 	let viewTurn = "my";
 
+	// renderPhasePanel() より前に初期化（TDZ 回避）
+	const ABILITY_CATEGORIES_WITHOUT_UNIT = new Set([
+		"common",
+		"battleplan",
+		"battletrait",
+		"formation",
+	]);
+
 	bindModeTabs();
 	bindPhaseActions();
 
@@ -264,9 +272,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		renderStepper(viewPhase);
-		renderMovementStrip(viewPhase, myPlayer?.roster || null);
-		renderShootingStrip(viewPhase, myPlayer?.roster || null);
-		renderCombatStrip(viewPhase, myPlayer?.roster || null);
+		renderMovementStrip(viewPhase, myPlayer?.roster || null, game);
+		renderShootingStrip(viewPhase, myPlayer?.roster || null, game);
+		renderCombatStrip(viewPhase, myPlayer?.roster || null, game);
 		renderAbilities(state, game, myPlayer, isMyTurn);
 	}
 
@@ -318,21 +326,59 @@ document.addEventListener("DOMContentLoaded", () => {
 		return names.length === 1 ? names[0] : "";
 	}
 
-	function collectRosterUnits(roster) {
-		const seen = new Map();
-		(roster?.regiments || []).forEach((reg) => {
-			[reg.hero, ...(reg.units || [])]
-				.filter(Boolean)
-				.forEach((unit) => {
-					const id = unit.id;
-					if (id && !seen.has(id)) seen.set(id, unit);
-				});
-		});
-		const terrain = roster?.terrain;
-		if (terrain?.id && !seen.has(terrain.id)) {
-			seen.set(terrain.id, terrain);
+	function collectRosterUnits(roster, destroyedMap = null) {
+		const units = [];
+		const seenKeys = new Set();
+
+		function pushUnit(unit) {
+			if (!unit) return;
+			const key =
+				unit.instanceKey ||
+				(unit.id ? `legacy:${unit.id}` : "");
+			if (!key || seenKeys.has(key)) return;
+			if (destroyedMap && destroyedMap[key]) return;
+			seenKeys.add(key);
+			units.push(unit);
 		}
-		return [...seen.values()];
+
+		(roster?.regiments || []).forEach((reg) => {
+			pushUnit(reg.hero);
+			(reg.units || []).forEach(pushUnit);
+		});
+		pushUnit(roster?.terrain);
+		return units;
+	}
+
+	function getDestroyedMapForViewer(game) {
+		return game?.destroyedUnits?.[viewerSlot] || {};
+	}
+
+	function livingRosterUnits(roster, game) {
+		return collectRosterUnits(roster, getDestroyedMapForViewer(game));
+	}
+
+	function isAbilityAvailable(ab, livingUnits) {
+		const category = ab.category || "unit";
+		if (ABILITY_CATEGORIES_WITHOUT_UNIT.has(category)) {
+			return true;
+		}
+		const linked = resolveAbilityUnits(ab, livingUnits);
+		if (
+			category === "spell" ||
+			category === "prayer" ||
+			category === "manifestation"
+		) {
+			return linked.length > 0;
+		}
+		const names = ab.unitNames?.length
+			? ab.unitNames
+			: ab.unitName
+				? [ab.unitName]
+				: [];
+		if (!names.length) {
+			return true;
+		}
+		return linked.length > 0;
 	}
 
 	function keywordBaseName(token) {
@@ -375,9 +421,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		return null;
 	}
 
-	function resolveAbilityUnits(ab, roster) {
-		if (!roster) return [];
-		const allUnits = collectRosterUnits(roster);
+	function resolveAbilityUnits(ab, unitsOrRoster) {
+		const allUnits = Array.isArray(unitsOrRoster)
+			? unitsOrRoster
+			: collectRosterUnits(unitsOrRoster);
 		const category = ab.category || "unit";
 
 		if (category === "spell" || category === "manifestation") {
@@ -398,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const byName = new Map();
 		allUnits.forEach((u) => {
-			if (u.name) byName.set(u.name, u);
+			if (u.name && !byName.has(u.name)) byName.set(u.name, u);
 		});
 		return names.map((name) => byName.get(name)).filter(Boolean);
 	}
@@ -472,7 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		</section>`;
 	}
 
-	function renderMovementStrip(viewPhase, roster) {
+	function renderMovementStrip(viewPhase, roster, game = null) {
 		const strip = els.phaseMovementStrip;
 		if (!strip) return;
 
@@ -483,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		const units = collectRosterUnits(roster)
+		const units = livingRosterUnits(roster, game)
 			.filter((u) => u.id)
 			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
@@ -519,7 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		</section>`;
 	}
 
-	function renderShootingStrip(viewPhase, roster) {
+	function renderShootingStrip(viewPhase, roster, game = null) {
 		const strip = els.phaseShootingStrip;
 		if (!strip) return;
 
@@ -530,7 +577,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		const units = collectRosterUnits(roster)
+		const units = livingRosterUnits(roster, game)
 			.filter((u) => u.id && u.hasRangedWeapon)
 			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
@@ -566,7 +613,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		</section>`;
 	}
 
-	function renderCombatStrip(viewPhase, roster) {
+	function renderCombatStrip(viewPhase, roster, game = null) {
 		const strip = els.phaseCombatStrip;
 		if (!strip) return;
 
@@ -577,7 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		const units = collectRosterUnits(roster)
+		const units = livingRosterUnits(roster, game)
 			.filter((u) => u.id && u.hasWeapon)
 			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
@@ -598,6 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const deck = myPlayer?.abilitiesDeck || [];
 		const usedMap = game.usedAbilities?.[viewerSlot] || {};
+		const livingUnits = livingRosterUnits(myPlayer?.roster || null, game);
 
 		const filtered = deck.filter((ab) => {
 			const phaseNorms =
@@ -608,7 +656,8 @@ document.addEventListener("DOMContentLoaded", () => {
 				MatchPhases.normalizeTriggerTurn(ab.triggerTurn);
 			return (
 				MatchPhases.matchesAnyPhase(phaseNorms, viewPhase) &&
-				MatchPhases.matchesCurrentTurn(turnNorm, isMyTurn)
+				MatchPhases.matchesCurrentTurn(turnNorm, isMyTurn) &&
+				isAbilityAvailable(ab, livingUnits)
 			);
 		});
 
@@ -638,8 +687,6 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		if (els.abilityEmpty) els.abilityEmpty.style.display = "none";
-
-		const roster = myPlayer?.roster || null;
 
 		const groups = new Map();
 		actives.forEach((ab) => {
@@ -689,7 +736,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				groupEl.appendChild(title);
 
 				items.forEach((ab) =>
-					groupEl.appendChild(buildAbilityCard(ab, {}, roster)),
+					groupEl.appendChild(buildAbilityCard(ab, {}, livingUnits)),
 				);
 				els.abilityList.appendChild(groupEl);
 			});
@@ -714,7 +761,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				})
 				.forEach((ab) =>
 					section.appendChild(
-						buildAbilityCard(ab, { passive: true }, roster),
+						buildAbilityCard(ab, { passive: true }, livingUnits),
 					),
 				);
 
@@ -722,7 +769,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	}
 
-	function buildAbilityCard(ab, opts = {}, roster = null) {
+	function buildAbilityCard(ab, opts = {}, livingUnits = []) {
 		const isPassive = !!opts.passive;
 		const state = MatchStateManager.getState();
 		const game = state.game || { usedAbilities: {} };
@@ -819,7 +866,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				: "";
 
 			const abilityUnits = hasEffect
-				? resolveAbilityUnits(ab, roster)
+				? resolveAbilityUnits(ab, livingUnits)
 				: [];
 			const unitThumbsHtml = buildUnitThumbsHtml(abilityUnits, ab.category);
 

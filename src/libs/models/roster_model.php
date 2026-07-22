@@ -773,6 +773,7 @@ class Roster_Model extends Model
 				'enhancement_artefact' => $row['enhancement_artefact'],
 				'hero' => [
 					'id'       => $heroId,
+					'instanceKey' => 'hero:' . (int)$row['id'],
 					'name'     => $row['hero_name'],
 					'points'   => (int)$row['hero_points'],
 					'keywords' => $row['hero_keywords'],
@@ -789,8 +790,10 @@ class Roster_Model extends Model
 				'units' => array_map(function ($u) use ($rangedSet, $weaponSet) {
 					$basePts = (int)$u['points'];
 					$unitId = (int)$u['unit_id'];
+					$rosterUnitId = (int)($u['id'] ?? 0);
 					return [
 						'id'            => $unitId,
+						'instanceKey'   => 'unit:' . $rosterUnitId,
 						'name'          => $u['name'],
 						'points'        => !empty($u['is_reinforced']) ? $basePts * 2 : $basePts,
 						'basePoints'    => $basePts,
@@ -1151,12 +1154,13 @@ class Roster_Model extends Model
 			$seen[$unitId] = true;
 
 			$manifestations[] = [
-				'id'        => (int)$unit['id'],
-				'name'      => $unit['name'],
-				'points'    => (int)($unit['points'] ?? 0),
-				'image'     => $unit['image'] ?? null,
-				'keywords'  => $unit['keywords'] ?? '',
-				'spellName' => $row['manifestation_name'] ?? null,
+				'id'          => (int)$unit['id'],
+				'instanceKey' => 'manifest:' . (int)$unit['id'],
+				'name'        => $unit['name'],
+				'points'      => (int)($unit['points'] ?? 0),
+				'image'       => $unit['image'] ?? null,
+				'keywords'    => $unit['keywords'] ?? '',
+				'spellName'   => $row['manifestation_name'] ?? null,
 			];
 		}
 
@@ -1187,11 +1191,12 @@ class Roster_Model extends Model
 		$unit = $unit[0];
 
 		return [
-			'id'       => (int)$unit['id'],
-			'name'     => $unit['name'],
-			'points'   => (int)($unit['points'] ?? 0),
-			'image'    => $unit['image'] ?? null,
-			'keywords' => $unit['keywords'] ?? '',
+			'id'          => (int)$unit['id'],
+			'instanceKey' => 'terrain:' . (int)$unit['id'],
+			'name'        => $unit['name'],
+			'points'      => (int)($unit['points'] ?? 0),
+			'image'       => $unit['image'] ?? null,
+			'keywords'    => $unit['keywords'] ?? '',
 		];
 	}
 

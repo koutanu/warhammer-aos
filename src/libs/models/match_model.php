@@ -294,6 +294,10 @@ class Match_Model extends Model
             ['match_id' => $matchId]
         );
         $this->db->executesql(
+            'DELETE FROM t_match_unit_status WHERE match_id = :match_id;',
+            ['match_id' => $matchId]
+        );
+        $this->db->executesql(
             'DELETE FROM t_match_round_scores WHERE match_id = :match_id;',
             ['match_id' => $matchId]
         );
@@ -344,6 +348,7 @@ class Match_Model extends Model
 
         $players = $this->buildPlayersFromMatch($match, $factionMap, $rounds);
         $usedAbilities = $this->buildUsedAbilitiesMap($matchId);
+        $destroyedUnits = $this->buildDestroyedUnitsMap($matchId);
         $btProgress = $this->getBattleTacticProgressMap($matchId);
 
         $currentGameRound = (int)($match['game_battle_round'] ?? 1);
@@ -377,6 +382,7 @@ class Match_Model extends Model
                 'phase'           => $match['game_phase'] ?? 'hero',
                 'turnCounter'     => (int)($match['game_turn_counter'] ?? 1),
                 'usedAbilities'   => $usedAbilities,
+                'destroyedUnits'  => $destroyedUnits,
             ],
             'updatedAt'      => $match['updated_at'],
         ];
@@ -594,6 +600,85 @@ class Match_Model extends Model
         }
 
         return $map;
+    }
+
+    /**
+     * @return array<int, array<string, true>> player_slot => [ unit_key => true ]
+     */
+    public function buildDestroyedUnitsMap(int $matchId): array
+    {
+        $rows = $this->db->select(
+            'SELECT player_slot, unit_key FROM t_match_unit_status
+             WHERE match_id = :match_id AND is_destroyed = 1;',
+            ['match_id' => $matchId]
+        );
+        $map = [];
+        foreach ($rows as $row) {
+            $slot = (int)$row['player_slot'];
+            $key = (string)$row['unit_key'];
+            if ($key === '') {
+                continue;
+            }
+            $map[$slot][$key] = true;
+        }
+        return $map;
+    }
+
+    public function toggleUnitDestroyed(int $matchId, int $playerSlot, string $unitKey): bool
+    {
+        $unitKey = trim($unitKey);
+        if (!in_array($playerSlot, [1, 2], true) || $unitKey === '') {
+            return false;
+        }
+
+        $match = $this->getMatchById($matchId);
+        if (!$match || $match['status'] === 'completed') {
+            return false;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $rows = $this->db->select(
+            'SELECT id FROM t_match_unit_status
+             WHERE match_id = :match_id AND player_slot = :player_slot AND unit_key = :unit_key
+             LIMIT 1;',
+            [
+                'match_id'    => $matchId,
+                'player_slot' => $playerSlot,
+                'unit_key'    => $unitKey,
+            ]
+        );
+
+        if (!empty($rows)) {
+            $result = $this->db->executesql(
+                'DELETE FROM t_match_unit_status WHERE id = :id;',
+                ['id' => (int)$rows[0]['id']]
+            );
+            if (!(bool)$result[0]) {
+                return false;
+            }
+        } else {
+            $result = $this->db->executesql(
+                'INSERT INTO t_match_unit_status
+                    (match_id, player_slot, unit_key, is_destroyed, updated_at)
+                 VALUES
+                    (:match_id, :player_slot, :unit_key, 1, :updated_at);',
+                [
+                    'match_id'    => $matchId,
+                    'player_slot' => $playerSlot,
+                    'unit_key'    => $unitKey,
+                    'updated_at'  => $now,
+                ]
+            );
+            if (!(bool)$result[0]) {
+                return false;
+            }
+        }
+
+        $this->db->executesql(
+            'UPDATE t_matches SET updated_at = :updated_at WHERE id = :id;',
+            ['updated_at' => $now, 'id' => $matchId]
+        );
+        return true;
     }
 
     public function completeDeployment(int $matchId, int $firstPlayerSlot): bool
