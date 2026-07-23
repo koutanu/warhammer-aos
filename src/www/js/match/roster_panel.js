@@ -119,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					id: parseInt(btn.dataset.unitId, 10),
 					name: btn.dataset.unitName,
 					keywords: btn.dataset.unitKeywords,
+					playerSlot: viewingOpponent ? opponentSlot : viewerSlot,
 				};
 				if (window.RosterUnitDetail) {
 					window.RosterUnitDetail.show(unit);

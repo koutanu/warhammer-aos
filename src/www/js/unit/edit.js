@@ -52,6 +52,42 @@
 		syncControlLabel();
 		initHeroRegimentToggle();
 		initKeywordParamInputs();
+		initKeywordFactionFilter();
+	}
+
+	function initKeywordFactionFilter() {
+		const form = document.getElementById("unitEditForm");
+		const factionSelect = form
+			? form.querySelector('select[name="faction_id"]')
+			: document.querySelector('select[name="faction_id"]');
+		if (!factionSelect) return;
+
+		function sync() {
+			const selected = parseInt(factionSelect.value, 10) || 0;
+			document.querySelectorAll(".keyword-option-row").forEach(function (row) {
+				const kwFactionId = parseInt(row.getAttribute("data-faction-id") || "0", 10) || 0;
+				const visible = kwFactionId === 0 || kwFactionId === selected;
+				row.style.display = visible ? "" : "none";
+				if (!visible) {
+					const cb = row.querySelector(
+						'input[type="checkbox"][name="unit_keyword_ids[]"]',
+					);
+					const param = row.querySelector(".keyword-param-input");
+					if (cb) cb.checked = false;
+					if (param) {
+						param.value = "";
+						param.readOnly = true;
+					}
+				}
+			});
+			const heroCb = document.querySelector(
+				'input[name="unit_keyword_ids[]"][data-hero-keyword="1"]',
+			);
+			if (heroCb) heroCb.dispatchEvent(new Event("change"));
+		}
+
+		factionSelect.addEventListener("change", sync);
+		sync();
 	}
 
 	function initKeywordParamInputs() {

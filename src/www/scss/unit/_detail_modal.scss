@@ -193,6 +193,75 @@
 		font-size: 0.9rem;
 	}
 
+	.detail-unit-enhancements {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		margin-top: 0.75rem;
+	}
+
+	.detail-enhancement-box {
+		background: #2a2a32;
+		border-left: 3px solid rgba(186, 85, 211, 0.55);
+		padding: 0.65rem 0.75rem;
+		border-radius: 0 6px 6px 0;
+
+		&.detail-enhancement-box--artefact {
+			border-left-color: rgba(212, 175, 55, 0.55);
+		}
+
+		&.detail-enhancement-box--season {
+			border-left-color: rgba(220, 80, 60, 0.55);
+		}
+
+		.detail-enhancement-head {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0.4rem;
+			margin-bottom: 0.35rem;
+		}
+
+		.detail-enhancement-badge {
+			display: inline-block;
+			padding: 0.1rem 0.35rem;
+			border-radius: 3px;
+			font-size: 0.68rem;
+			font-weight: bold;
+			letter-spacing: 0.02em;
+			border: 1px solid transparent;
+			background: rgba(186, 85, 211, 0.18);
+			color: #e0b0ff;
+			border-color: rgba(186, 85, 211, 0.4);
+
+			&.detail-enhancement-badge--artefact {
+				background: rgba(212, 175, 55, 0.18);
+				color: #ffcc00;
+				border-color: rgba(212, 175, 55, 0.45);
+			}
+
+			&.detail-enhancement-badge--season {
+				background: rgba(220, 80, 60, 0.18);
+				color: #f0a090;
+				border-color: rgba(220, 80, 60, 0.4);
+			}
+		}
+
+		.detail-enhancement-name {
+			font-weight: bold;
+			color: #ffcc00;
+			font-size: 0.9rem;
+		}
+
+		.detail-enhancement-effect {
+			margin: 0;
+			font-size: 0.82rem;
+			line-height: 1.45;
+			color: #ddd;
+			white-space: pre-wrap;
+		}
+	}
+
 	.detail-regiment-options {
 		.detail-regiment-list {
 			margin: 0;

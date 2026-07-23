@@ -488,6 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			id: parseInt(thumb.dataset.unitId, 10),
 			name: thumb.dataset.unitName,
 			keywords: thumb.dataset.unitKeywords,
+			playerSlot: viewerSlot,
 		});
 	}
 
@@ -750,6 +751,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			title.textContent = `常時発動（パッシブ）（${passives.length}）`;
 			section.appendChild(title);
 
+			const grid = document.createElement("div");
+			grid.className = "phase-passive-grid";
+
 			passives
 				.slice()
 				.sort((a, b) => {
@@ -760,11 +764,12 @@ document.addEventListener("DOMContentLoaded", () => {
 					return (a.name || "").localeCompare(b.name || "");
 				})
 				.forEach((ab) =>
-					section.appendChild(
+					grid.appendChild(
 						buildAbilityCard(ab, { passive: true }, livingUnits),
 					),
 				);
 
+			section.appendChild(grid);
 			els.abilityList.appendChild(section);
 		}
 	}

@@ -129,8 +129,10 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 							$acceptsParam = !empty($kw['accepts_param']);
 							$paramVal = $unitKeywordLinks[$kid] ?? '';
 							$isChecked = array_key_exists($kid, $unitKeywordLinks);
+							$kwFactionId = (int)($kw['faction_id'] ?? 0);
 							?>
-							<label class="regiment-option-check keyword-option-row">
+							<label class="regiment-option-check keyword-option-row"
+								data-faction-id="<?= $this->h($kwFactionId); ?>">
 								<input type="checkbox" name="unit_keyword_ids[]" value="<?= $this->h($kid); ?>"
 									<?= UnitKeywordFlags::isHeroKeyword($kw['name']) ? 'data-hero-keyword="1"' : ''; ?>
 									<?= $acceptsParam ? 'data-accepts-param="1"' : ''; ?>

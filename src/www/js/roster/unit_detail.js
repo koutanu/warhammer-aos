@@ -42,6 +42,111 @@ window.RosterUnitDetail = (function () {
 		return wardStr ? `${saveStr}/${wardStr}` : saveStr;
 	}
 
+	function escapeHtml(str) {
+		return String(str ?? "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
+
+	/**
+	 * マッチ状態などから、このユニットに割当された神器・英雄特性・追加能力を解決する。
+	 * @returns {{trait:?object, artefact:?object, season:?object}|null}
+	 */
+	function resolveUnitEnhancements(unit) {
+		if (unit?.enhancements) return unit.enhancements;
+
+		const unitId = Number(unit?.id || unit?.unitId || 0);
+		if (!unitId) return null;
+
+		const players =
+			(typeof MatchStateManager !== "undefined" &&
+				MatchStateManager.getState?.()?.players) ||
+			[];
+		if (!players.length) return null;
+
+		const slot = Number(unit.playerSlot || 0);
+		const candidates = slot
+			? players.filter((p) => Number(p.slot) === slot)
+			: players;
+
+		for (const player of candidates) {
+			const enh = player?.roster?.enhancements;
+			if (!enh) continue;
+			const trait =
+				enh.trait && Number(enh.trait.targetUnitId) === unitId
+					? enh.trait
+					: null;
+			const artefact =
+				enh.artefact && Number(enh.artefact.targetUnitId) === unitId
+					? enh.artefact
+					: null;
+			const season =
+				enh.season && Number(enh.season.targetUnitId) === unitId
+					? enh.season
+					: null;
+			if (trait || artefact || season) return { trait, artefact, season };
+		}
+		return null;
+	}
+
+	function renderUnitEnhancements(unit) {
+		const container = getEl("detailUnitEnhancements");
+		if (!container) return;
+
+		const resolved = resolveUnitEnhancements(unit);
+		const items = [];
+		if (resolved?.trait) {
+			items.push({
+				label: resolved.trait.label || "英雄特性",
+				name: resolved.trait.name,
+				effect: resolved.trait.effect,
+				kind: "trait",
+			});
+		}
+		if (resolved?.artefact) {
+			items.push({
+				label: resolved.artefact.label || "神器",
+				name: resolved.artefact.name,
+				effect: resolved.artefact.effect,
+				kind: "artefact",
+			});
+		}
+		if (resolved?.season) {
+			items.push({
+				label: resolved.season.label || "追加能力",
+				name: resolved.season.name,
+				effect: resolved.season.effect,
+				kind: "season",
+			});
+		}
+
+		if (!items.length) {
+			container.innerHTML = "";
+			container.style.display = "none";
+			return;
+		}
+
+		container.innerHTML = items
+			.map(
+				(item) => `
+			<div class="detail-enhancement-box detail-enhancement-box--${item.kind}">
+				<div class="detail-enhancement-head">
+					<span class="detail-enhancement-badge detail-enhancement-badge--${item.kind}">${escapeHtml(item.label)}</span>
+					<strong class="detail-enhancement-name">${escapeHtml(item.name || "-")}</strong>
+				</div>
+				${
+					item.effect
+						? `<p class="detail-enhancement-effect">${escapeHtml(item.effect)}</p>`
+						: ""
+				}
+			</div>`,
+			)
+			.join("");
+		container.style.display = "";
+	}
+
 	/**
 	 * アビリティのアイコン分類(icon_type)からアイコン <img> を生成する。
 	 * 解決ロジックは MatchPhases に集約し、未読込時は最低限のフォールバックを使う。
@@ -112,6 +217,7 @@ window.RosterUnitDetail = (function () {
 		if (flavorTextEl) flavorTextEl.textContent = unit.flavor_text || "...";
 		if (regimentSection) regimentSection.style.display = "none";
 		if (regimentOptionsEl) regimentOptionsEl.innerHTML = "";
+		renderUnitEnhancements(unit);
 
 		// 画像はいったん隠してから、取得結果に応じて表示する
 		const imageEl = getEl("detailUnitImage");

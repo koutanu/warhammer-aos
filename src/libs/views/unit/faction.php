@@ -512,6 +512,7 @@ $freqJa = function (array $row) {
 							<h4>KEYWORDS / キーワード</h4>
 							<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
 						</div>
+						<div id="detailUnitEnhancements" class="detail-unit-enhancements" style="display:none;"></div>
 						<div class="detail-description-section">
 							<p id="detailUnitFlavorText" class="detail-flavor-text">-</p>
 						</div>

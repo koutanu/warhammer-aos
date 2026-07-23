@@ -192,13 +192,13 @@ class Unit_Model extends Model
 	public function getAllKeywords(?string $type = null)
 	{
 		if ($type === 'unit' || $type === 'faction') {
-			$sql = "SELECT id, name, keyword_type, effect, sort_order, accepts_param
+			$sql = "SELECT id, name, keyword_type, effect, sort_order, accepts_param, faction_id
                     FROM m_keywords_master
                     WHERE keyword_type = :keyword_type
                     ORDER BY sort_order ASC, name ASC, id ASC;";
 			return $this->db->select($sql, ['keyword_type' => $type]);
 		}
-		$sql = "SELECT id, name, keyword_type, effect, sort_order, accepts_param
+		$sql = "SELECT id, name, keyword_type, effect, sort_order, accepts_param, faction_id
                 FROM m_keywords_master
                 ORDER BY keyword_type ASC, sort_order ASC, name ASC, id ASC;";
 		return $this->db->select($sql);
@@ -422,7 +422,7 @@ class Unit_Model extends Model
 			return [false, 'ファクションが不正です。'];
 		}
 
-		$keywordFlags = $this->deriveUnitFlagsFromKeywordIds($data['unit_keyword_ids'] ?? []);
+		$keywordFlags = $this->deriveUnitFlagsFromKeywordIds($data['unit_keyword_ids'] ?? [], $factionId);
 		$isSpecial = !empty($data['is_terrain']) || !empty($data['is_manifestation']);
 		if ($isSpecial) {
 			$keywordFlags['is_hero'] = 0;
@@ -483,6 +483,7 @@ class Unit_Model extends Model
 			$this->syncUnitAbilities((int)$unitId, $data['abilities'] ?? []);
 			$this->syncUnitKeywords(
 				(int)$unitId,
+				$factionId,
 				$data['unit_keyword_ids'] ?? [],
 				$data['faction_keyword_ids'] ?? [],
 				$data['unit_keyword_params'] ?? [],
@@ -627,6 +628,7 @@ class Unit_Model extends Model
 	 */
 	private function syncUnitKeywords(
 		int $unitId,
+		int $unitFactionId,
 		array $unitKeywordIds,
 		array $factionKeywordIds,
 		array $unitKeywordParams = [],
@@ -635,8 +637,8 @@ class Unit_Model extends Model
 		$this->db->prepare('DELETE FROM m_unit_keywords WHERE unit_id = :unit_id;')
 			->execute([':unit_id' => $unitId]);
 
-		$unitIds = $this->filterKeywordIdsByType($unitKeywordIds, 'unit');
-		$factionIds = $this->filterKeywordIdsByType($factionKeywordIds, 'faction');
+		$unitIds = $this->filterKeywordIdsByTypeAndFaction($unitKeywordIds, 'unit', $unitFactionId);
+		$factionIds = $this->filterKeywordIdsByTypeAndFaction($factionKeywordIds, 'faction', $unitFactionId);
 		if (empty($unitIds) && empty($factionIds)) {
 			return;
 		}
@@ -703,9 +705,11 @@ class Unit_Model extends Model
 	 *
 	 * @return array{is_hero:int, is_general:int, is_unique:int}
 	 */
-	private function deriveUnitFlagsFromKeywordIds(array $unitKeywordIds): array
+	private function deriveUnitFlagsFromKeywordIds(array $unitKeywordIds, int $unitFactionId = 0): array
 	{
-		$ids = $this->filterKeywordIdsByType($unitKeywordIds, 'unit');
+		$ids = $unitFactionId > 0
+			? $this->filterKeywordIdsByTypeAndFaction($unitKeywordIds, 'unit', $unitFactionId)
+			: $this->filterKeywordIdsByType($unitKeywordIds, 'unit');
 		if (empty($ids)) {
 			return ['is_hero' => 0, 'is_general' => 0, 'is_unique' => 0];
 		}
@@ -734,6 +738,28 @@ class Unit_Model extends Model
 		$sql = "SELECT id FROM m_keywords_master WHERE keyword_type = ? AND id IN ({$placeholders});";
 		$stmt = $this->db->prepare($sql);
 		$stmt->execute(array_merge([$type], $ids));
+		return array_map(static fn($r) => (int)$r['id'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+	}
+
+	/**
+	 * 指定タイプかつファクションに適合するキーワード ID のみを返す。
+	 * faction_id が NULL のキーワードは全ファクション共通として許可する。
+	 */
+	private function filterKeywordIdsByTypeAndFaction(array $keywordIds, string $type, int $unitFactionId): array
+	{
+		$type = ($type === 'faction') ? 'faction' : 'unit';
+		$ids = array_values(array_unique(array_filter(array_map('intval', $keywordIds), static fn($v) => $v > 0)));
+		if (empty($ids)) {
+			return [];
+		}
+
+		$placeholders = implode(',', array_fill(0, count($ids), '?'));
+		$sql = "SELECT id FROM m_keywords_master
+                WHERE keyword_type = ?
+                  AND id IN ({$placeholders})
+                  AND (faction_id IS NULL OR faction_id = ?);";
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute(array_merge([$type], $ids, [$unitFactionId]));
 		return array_map(static fn($r) => (int)$r['id'], $stmt->fetchAll(PDO::FETCH_ASSOC));
 	}
 

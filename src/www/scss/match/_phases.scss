@@ -420,6 +420,13 @@
 		border-top: 1px solid rgba($color-main, 0.35);
 	}
 
+	.phase-passive-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.6rem;
+		align-items: start;
+	}
+
 	.phase-ability-card--passive {
 		border-left-color: rgba($color-main, 0.55);
 		background: rgba($color-background, 0.45);

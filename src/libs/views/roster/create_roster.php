@@ -87,7 +87,7 @@
 								<?php $pts = $formation['points'] ?? 0; ?>
 								<option value="<?= $this->h($formation['id']); ?>"
 									data-points="<?= $this->h($pts); ?>"
-									data-ability-name="<?= $this->h($formation['formation_name']); ?>"
+									data-ability-name="<?= $this->h($formation['ability_name']); ?>"
 									data-trigger="<?= $this->h($formation['trigger_phase']); ?>"
 									data-effect="<?= $this->h($formation['effect']); ?>"
 									data-flavor="<?= $this->h($formation['flavor_text'] ?? ''); ?>">
@@ -450,6 +450,7 @@
 						<h4>KEYWORDS / キーワード</h4>
 						<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
 					</div>
+					<div id="detailUnitEnhancements" class="detail-unit-enhancements" style="display:none;"></div>
 					<div class="detail-description-section">
 						<p id="detailUnitFlavorText" class="detail-flavor-text">-</p>
 					</div>

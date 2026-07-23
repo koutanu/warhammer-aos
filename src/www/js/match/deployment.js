@@ -109,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			id: parseInt(row.dataset.unitId, 10),
 			name: row.dataset.unitName,
 			keywords: row.dataset.unitKeywords,
+			playerSlot: viewerSlot,
 		});
 	}
 

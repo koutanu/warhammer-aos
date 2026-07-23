@@ -225,6 +225,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 							<h4>KEYWORDS / キーワード</h4>
 							<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
 						</div>
+						<div id="detailUnitEnhancements" class="detail-unit-enhancements" style="display:none;"></div>
 					</div>
 				</div>
 			</div>

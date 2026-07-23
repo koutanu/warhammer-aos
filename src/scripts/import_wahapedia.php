@@ -601,7 +601,10 @@ function ensureKeywordsTables(PDO $pdo): void
             keyword_type ENUM(\'unit\',\'faction\') NOT NULL DEFAULT \'unit\',
             effect TEXT NULL,
             sort_order INT NOT NULL DEFAULT 0,
-            UNIQUE KEY uq_m_keywords_master_name_type (name, keyword_type)
+            accepts_param TINYINT(1) NOT NULL DEFAULT 0,
+            faction_id INT NULL DEFAULT NULL,
+            UNIQUE KEY uq_m_keywords_master_name_type (name, keyword_type),
+            INDEX idx_keywords_master_faction (faction_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
     );
     $pdo->exec(
@@ -620,6 +623,15 @@ function ensureKeywordsTables(PDO $pdo): void
     $cols = $pdo->query('DESCRIBE m_keywords_master')->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('accepts_param', $cols, true)) {
         $pdo->exec('ALTER TABLE m_keywords_master ADD COLUMN accepts_param TINYINT(1) NOT NULL DEFAULT 0 AFTER sort_order');
+    }
+    if (!in_array('faction_id', $cols, true)) {
+        $pdo->exec('ALTER TABLE m_keywords_master ADD COLUMN faction_id INT NULL DEFAULT NULL AFTER accepts_param');
+    }
+    $idxRows = $pdo->query(
+        "SHOW INDEX FROM m_keywords_master WHERE Key_name = 'idx_keywords_master_faction'"
+    )->fetchAll(PDO::FETCH_ASSOC);
+    if (empty($idxRows)) {
+        $pdo->exec('ALTER TABLE m_keywords_master ADD INDEX idx_keywords_master_faction (faction_id)');
     }
     $ukCols = $pdo->query('DESCRIBE m_unit_keywords')->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('param_value', $ukCols, true)) {

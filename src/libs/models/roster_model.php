@@ -1030,20 +1030,28 @@ class Roster_Model extends Model
 			return null;
 		}
 
+		$rosterRow = $data['roster'];
+
 		return [
-			'id'           => (int)$data['roster']['id'],
-			'name'         => $data['roster']['name'],
-			'factionId'    => (int)$data['roster']['faction_id'],
-			'factionName'  => $data['roster']['faction_name'] ?? '',
-			'totalPoints'  => (int)$data['roster']['total_points'],
-			'heroicTrait'  => $this->resolveEnhancementName($data['roster']['heroic_trait_id'] ?? null, 'trait'),
-			'artefact'     => $this->resolveEnhancementName($data['roster']['artefact_id'] ?? null, 'artefact'),
+			'id'           => (int)$rosterRow['id'],
+			'name'         => $rosterRow['name'],
+			'factionId'    => (int)$rosterRow['faction_id'],
+			'factionName'  => $rosterRow['faction_name'] ?? '',
+			'totalPoints'  => (int)$rosterRow['total_points'],
+			'heroicTrait'  => $this->resolveEnhancementName($rosterRow['heroic_trait_id'] ?? null, 'trait'),
+			'artefact'     => $this->resolveEnhancementName($rosterRow['artefact_id'] ?? null, 'artefact'),
 			'seasonEnhancement' => $this->resolveEnhancementName(
-				$data['roster']['season_enhancement_id'] ?? null,
+				$rosterRow['season_enhancement_id'] ?? null,
 				'season'
 			),
-			'manifestations' => $this->getManifestationUnitsForLore((int)($data['roster']['manifestation_lore_id'] ?? 0)),
-			'terrain'      => $this->getTerrainUnitForMatch((int)($data['roster']['terrain_id'] ?? 0)),
+			// ユニット詳細モーダル用: 割当先 unitId 付きの神器・英雄特性・追加能力
+			'enhancements' => [
+				'trait'    => $this->resolveEnhancementDetailForMatch($rosterRow, 'trait'),
+				'artefact' => $this->resolveEnhancementDetailForMatch($rosterRow, 'artefact'),
+				'season'   => $this->resolveEnhancementDetailForMatch($rosterRow, 'season'),
+			],
+			'manifestations' => $this->getManifestationUnitsForLore((int)($rosterRow['manifestation_lore_id'] ?? 0)),
+			'terrain'      => $this->getTerrainUnitForMatch((int)($rosterRow['terrain_id'] ?? 0)),
 			'battleTactics' => $this->getSelectedBattleTacticCardsForMatch($rosterId),
 			'regiments'    => array_map(function ($reg) {
 				return [
@@ -2541,5 +2549,74 @@ class Roster_Model extends Model
 			return null;
 		}
 		return $row ? $row['name'] : null;
+	}
+
+	/**
+	 * マッチ用ユニット詳細向けに、割当先付きのエンハンスメント詳細を返す。
+	 *
+	 * @return array{id:int,name:string,effect:string,targetUnitId:int,label?:string}|null
+	 */
+	private function resolveEnhancementDetailForMatch(array $roster, string $type): ?array
+	{
+		if ($type === 'trait') {
+			$id = (int)($roster['heroic_trait_id'] ?? 0);
+			if ($id <= 0) {
+				return null;
+			}
+			$row = $this->getHeroicTraitById($id);
+			if (!$row) {
+				return null;
+			}
+			return [
+				'id'           => $id,
+				'name'         => (string)($row['name'] ?? ''),
+				'effect'       => (string)($row['effect'] ?? $row['description'] ?? ''),
+				'targetUnitId' => (int)($roster['trait_target_unit_id'] ?? 0),
+				'label'        => '英雄特性',
+			];
+		}
+
+		if ($type === 'artefact') {
+			$id = (int)($roster['artefact_id'] ?? 0);
+			if ($id <= 0) {
+				return null;
+			}
+			$row = $this->getArtefactById($id);
+			if (!$row) {
+				return null;
+			}
+			return [
+				'id'           => $id,
+				'name'         => (string)($row['name'] ?? ''),
+				'effect'       => (string)($row['effect'] ?? $row['flavor_text'] ?? ''),
+				'targetUnitId' => (int)($roster['artefact_target_unit_id'] ?? 0),
+				'label'        => '神器',
+			];
+		}
+
+		if ($type === 'season') {
+			$id = (int)($roster['season_enhancement_id'] ?? 0);
+			if ($id <= 0) {
+				return null;
+			}
+			$row = $this->getSeasonEnhancementById($id);
+			if (!$row) {
+				return null;
+			}
+			$factionId = (int)($roster['faction_id'] ?? 0);
+			$season = (string)($row['season'] ?? SeasonEnhancements::SEASON_2026_27);
+			$labelInfo = $factionId > 0
+				? $this->getSeasonEnhancementLabel($factionId, $season)
+				: ['label_ja' => SeasonEnhancements::DEFAULT_LABEL_JA];
+			return [
+				'id'           => $id,
+				'name'         => (string)($row['name'] ?? ''),
+				'effect'       => (string)($row['effect'] ?? ''),
+				'targetUnitId' => (int)($roster['season_enhancement_target_unit_id'] ?? 0),
+				'label'        => (string)($labelInfo['label_ja'] ?? SeasonEnhancements::DEFAULT_LABEL_JA),
+			];
+		}
+
+		return null;
 	}
 }

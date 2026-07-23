@@ -8,7 +8,10 @@ CREATE TABLE IF NOT EXISTS m_keywords_master (
   keyword_type ENUM('unit','faction') NOT NULL DEFAULT 'unit',
   effect       TEXT NULL,
   sort_order   INT NOT NULL DEFAULT 0,
-  UNIQUE KEY uq_m_keywords_master_name_type (name, keyword_type)
+  accepts_param TINYINT(1) NOT NULL DEFAULT 0,
+  faction_id   INT NULL DEFAULT NULL,
+  UNIQUE KEY uq_m_keywords_master_name_type (name, keyword_type),
+  INDEX idx_keywords_master_faction (faction_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS m_unit_keywords (
