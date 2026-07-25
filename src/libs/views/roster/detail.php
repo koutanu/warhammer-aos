@@ -45,6 +45,18 @@ $armyKeys = [
 	</div>
 
 	<section class="detail-section">
+		<h3>メモ</h3>
+		<?php
+		$memoText = trim((string)($roster['memo'] ?? ''));
+		?>
+		<?php if ($memoText !== ''): ?>
+			<div class="detail-memo-body"><?= nl2br($this->h($memoText)); ?></div>
+		<?php else: ?>
+			<p class="detail-value detail-muted">未登録</p>
+		<?php endif; ?>
+	</section>
+
+	<section class="detail-section">
 		<h3>アーミーオプション</h3>
 		<ul class="detail-kv-list">
 			<?php foreach ($armyKeys as $key => $label): ?>

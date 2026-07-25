@@ -79,6 +79,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					<span>Player 2 用 URL:</span>
 					<code id="p2ShareUrl"><?= $this->h($p2ShareUrl); ?></code>
 					<button type="button" id="btnCopyP2Url" class="btn-copy-p2-url">コピー</button>
+					<button type="button" id="btnRosterMemo" class="btn-roster-memo">メモ</button>
 				</div>
 			<?php endif; ?>
 		</aside>
@@ -203,6 +204,16 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 			<div class="confirm-modal-actions">
 				<button type="button" id="confirmModalCancel" class="btn-secondary">キャンセル</button>
 				<button type="button" id="confirmModalOk" class="btn-submit">OK</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="rosterMemoModal" class="modal-overlay" style="display:none;">
+		<div class="modal-content confirm-modal-content roster-memo-modal-content">
+			<h3>メモ</h3>
+			<div id="rosterMemoBody" class="roster-memo-modal-body"></div>
+			<div class="confirm-modal-actions">
+				<button type="button" id="rosterMemoClose" class="btn-secondary">閉じる</button>
 			</div>
 		</div>
 	</div>

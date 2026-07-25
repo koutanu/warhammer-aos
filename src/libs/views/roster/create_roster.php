@@ -47,6 +47,17 @@
 						<strong class="meta-value"><?= $this->h($roster_meta['roster_points']); ?> pt</strong>
 					</div>
 				</div>
+
+				<div class="meta-item roster-memo-field">
+					<label class="meta-label" for="rosterMemoInput">MEMO / メモ（任意）</label>
+					<textarea
+						id="rosterMemoInput"
+						name="memo"
+						class="roster-memo-input"
+						rows="4"
+						maxlength="5000"
+						placeholder="試合中に見返したいメモなど"><?= $this->h($roster_meta['memo'] ?? ''); ?></textarea>
+				</div>
 			</div>
 		<?php endif; ?>
 

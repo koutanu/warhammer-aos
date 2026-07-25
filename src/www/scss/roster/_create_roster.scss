@@ -125,6 +125,38 @@
 		}
 	}
 
+	.roster-memo-field {
+		margin-top: 0.85rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid rgba($color-main, 0.3);
+	}
+
+	.roster-memo-input {
+		width: 100%;
+		box-sizing: border-box;
+		margin-top: 0.35rem;
+		background: rgba($color-main, 0.12);
+		border: 1px solid rgba($color-main, 0.45);
+		border-radius: 4px;
+		padding: 0.55rem 0.65rem;
+		font: inherit;
+		font-size: 0.9rem;
+		line-height: 1.5;
+		color: $color-text;
+		resize: vertical;
+		min-height: 5.5rem;
+		outline: none;
+
+		&:focus {
+			border-color: $color-accent;
+			box-shadow: 0 0 0 2px rgba($color-accent, 0.25);
+		}
+
+		&::placeholder {
+			color: rgba($color-text, 0.4);
+		}
+	}
+
 	.meta-row {
 		display: grid;
 		grid-template-columns: 1fr 2fr;
@@ -726,11 +758,9 @@
 	}
 
 	/* ==========================================
-        下部固定 ポイントカウンター (Sticky Footer)
+        ポイントカウンター
        ========================================== */
 	.roster-sticky-counter {
-		position: sticky;
-		bottom: 0;
 		left: 0;
 		width: 100%;
 		background: rgba(color.adjust($color-base, $lightness: -3%), 0.95);
@@ -740,7 +770,6 @@
 		margin: 2rem -2rem -2rem -2rem;
 		border-radius: 0 0 8px 8px;
 		box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.4);
-		z-index: 100;
 		box-sizing: border-box;
 
 		.counter-content {

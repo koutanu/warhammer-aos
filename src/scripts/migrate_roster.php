@@ -38,6 +38,7 @@ $alterColumns = [
 	'trait_unit_slot'       => 'VARCHAR(16) DEFAULT NULL',
 	'artefact_unit_slot'    => 'VARCHAR(16) DEFAULT NULL',
 	'terrain_id'            => 'INT(11) DEFAULT NULL',
+	'memo'                  => 'TEXT DEFAULT NULL',
 ];
 
 $existing = $pdo->query('DESCRIBE t_rosters')->fetchAll(PDO::FETCH_COLUMN);

@@ -35,3 +35,4 @@ CREATE TABLE IF NOT EXISTS t_roster_regiment_units (
 -- trait_target_unit_id INT NULL
 -- artefact_target_unit_id INT NULL
 -- terrain_id INT NULL  -- 選択された陣営地形(m_units.id)。NULL=未選択
+-- memo TEXT NULL  -- ロスター用メモ（任意）

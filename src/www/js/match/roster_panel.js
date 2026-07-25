@@ -11,6 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
 	const panelTitle = document.getElementById("rosterViewTitle");
 	const btnViewOpponent = document.getElementById("btnViewOpponentRoster");
 	const btnCopyP2Url = document.getElementById("btnCopyP2Url");
+	const btnRosterMemo = document.getElementById("btnRosterMemo");
+	const rosterMemoModal = document.getElementById("rosterMemoModal");
+	const rosterMemoBody = document.getElementById("rosterMemoBody");
+	const rosterMemoClose = document.getElementById("rosterMemoClose");
 
 	if (!view || !panelBody) return;
 
@@ -302,6 +306,32 @@ document.addEventListener("DOMContentLoaded", () => {
 				?.writeText(text)
 				.then(() => alert("Player 2 用 URL をコピーしました。"))
 				.catch(() => prompt("URL をコピーしてください:", text));
+		});
+	}
+
+	function closeRosterMemoModal() {
+		if (!rosterMemoModal) return;
+		rosterMemoModal.style.display = "none";
+		window.ModalScroll?.unlock("rosterMemoModal");
+	}
+
+	function openRosterMemoModal() {
+		if (!rosterMemoModal || !rosterMemoBody) return;
+		const memo = (getPlayer(viewerSlot)?.roster?.memo || "").trim();
+		rosterMemoBody.textContent = memo || "メモなし";
+		rosterMemoModal.style.display = "flex";
+		window.ModalScroll?.lock("rosterMemoModal");
+	}
+
+	if (btnRosterMemo) {
+		btnRosterMemo.addEventListener("click", openRosterMemoModal);
+	}
+	if (rosterMemoClose) {
+		rosterMemoClose.addEventListener("click", closeRosterMemoModal);
+	}
+	if (rosterMemoModal) {
+		rosterMemoModal.addEventListener("click", (e) => {
+			if (e.target === rosterMemoModal) closeRosterMemoModal();
 		});
 	}
 

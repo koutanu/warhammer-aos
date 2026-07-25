@@ -1954,6 +1954,15 @@ button {
   color: rgba(240, 234, 214, 0.55);
   font-size: 0.85em;
 }
+.roster.detail .detail-memo-body {
+  color: #f0ead6;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  background: rgba(19, 28, 28, 0.45);
+  border-left: 3px solid rgba(212, 175, 55, 0.55);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+}
 .roster.detail .detail-section {
   margin-bottom: 1.75rem;
 }
@@ -2348,6 +2357,37 @@ button {
   color: rgba(240, 234, 214, 0.4);
   font-weight: 400;
   text-shadow: none;
+}
+.roster.create_roster .roster-memo-field {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(47, 79, 79, 0.3);
+}
+.roster.create_roster .roster-memo-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.35rem;
+  background: rgba(47, 79, 79, 0.12);
+  border: 1px solid rgba(47, 79, 79, 0.45);
+  border-radius: 4px;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #f0ead6;
+  resize: vertical;
+  min-height: 5.5rem;
+  outline: none;
+}
+.roster.create_roster .roster-memo-input:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+.roster.create_roster .roster-memo-input::-moz-placeholder {
+  color: rgba(240, 234, 214, 0.4);
+}
+.roster.create_roster .roster-memo-input::placeholder {
+  color: rgba(240, 234, 214, 0.4);
 }
 .roster.create_roster .meta-row {
   display: grid;
@@ -2877,8 +2917,6 @@ button {
         ========================================== */
 }
 .roster.create_roster .roster-sticky-counter {
-  position: sticky;
-  bottom: 0;
   left: 0;
   width: 100%;
   background: rgba(19.784375, 28.915625, 28.915625, 0.95);
@@ -2888,7 +2926,6 @@ button {
   margin: 2rem -2rem -2rem -2rem;
   border-radius: 0 0 8px 8px;
   box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.4);
-  z-index: 100;
   box-sizing: border-box;
 }
 .roster.create_roster .roster-sticky-counter .counter-content {
@@ -4257,6 +4294,23 @@ button {
 .match.scoreboard .modal-overlay .confirm-modal-content p {
   margin-bottom: 1.5rem;
   color: rgba(240, 234, 214, 0.8);
+}
+.match.scoreboard .modal-overlay .confirm-modal-content.roster-memo-modal-content {
+  max-width: 480px;
+  text-align: left;
+}
+.match.scoreboard .modal-overlay .confirm-modal-content.roster-memo-modal-content .roster-memo-modal-body {
+  margin-bottom: 1.5rem;
+  color: rgba(240, 234, 214, 0.85);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.match.scoreboard .modal-overlay .confirm-modal-content.roster-memo-modal-content .confirm-modal-actions {
+  justify-content: flex-end;
 }
 .match.scoreboard .modal-overlay .confirm-modal-content .confirm-modal-actions {
   display: flex;
@@ -6046,7 +6100,8 @@ button {
   color: #d4af37;
   font-size: 0.72rem;
 }
-.match.scoreboard .match-p2-share-banner .btn-copy-p2-url {
+.match.scoreboard .match-p2-share-banner .btn-copy-p2-url,
+.match.scoreboard .match-p2-share-banner .btn-roster-memo {
   padding: 0.25rem 0.6rem;
   border: 1px solid rgba(212, 175, 55, 0.45);
   background: transparent;
@@ -6055,6 +6110,10 @@ button {
   font-size: 0.72rem;
   cursor: pointer;
   flex-shrink: 0;
+}
+.match.scoreboard .match-p2-share-banner .btn-roster-memo {
+  width: 100%;
+  margin-top: 0.15rem;
 }
 
 .match.summary {

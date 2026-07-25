@@ -836,6 +836,26 @@
 				color: rgba($color-text, 0.8);
 			}
 
+			&.roster-memo-modal-content {
+				max-width: 480px;
+				text-align: left;
+
+				.roster-memo-modal-body {
+					margin-bottom: 1.5rem;
+					color: rgba($color-text, 0.85);
+					font-size: 0.95rem;
+					line-height: 1.6;
+					white-space: pre-wrap;
+					word-break: break-word;
+					max-height: 50vh;
+					overflow-y: auto;
+				}
+
+				.confirm-modal-actions {
+					justify-content: flex-end;
+				}
+			}
+
 			.confirm-modal-actions {
 				display: flex;
 				gap: 1rem;

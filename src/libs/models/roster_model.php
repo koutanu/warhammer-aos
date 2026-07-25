@@ -1038,6 +1038,7 @@ class Roster_Model extends Model
 			'factionId'    => (int)$rosterRow['faction_id'],
 			'factionName'  => $rosterRow['faction_name'] ?? '',
 			'totalPoints'  => (int)$rosterRow['total_points'],
+			'memo'         => (string)($rosterRow['memo'] ?? ''),
 			'heroicTrait'  => $this->resolveEnhancementName($rosterRow['heroic_trait_id'] ?? null, 'trait'),
 			'artefact'     => $this->resolveEnhancementName($rosterRow['artefact_id'] ?? null, 'artefact'),
 			'seasonEnhancement' => $this->resolveEnhancementName(
@@ -2121,6 +2122,9 @@ class Roster_Model extends Model
 		$sqls = [];
 		$binds = [];
 
+		$memo = trim((string)($data['memo'] ?? ''));
+		$memoValue = $memo !== '' ? $memo : null;
+
 		if ($rosterId) {
 			$sqls[] = 'UPDATE t_rosters SET
 				name = :name,
@@ -2133,6 +2137,7 @@ class Roster_Model extends Model
 				terrain_id = :terrain_id,
 				grand_alliance = :grand_alliance,
 				point_limit = :point_limit,
+				memo = :memo,
 				heroic_trait_id = :heroic_trait_id,
 				trait_target_unit_id = :trait_target_unit_id,
 				trait_regiment_index = :trait_regiment_index,
@@ -2158,6 +2163,7 @@ class Roster_Model extends Model
 				'terrain_id'             => $this->nullableInt($data['faction_terrain'] ?? null),
 				'grand_alliance'         => $data['grand_alliance'] ?? null,
 				'point_limit'            => $pointLimit ?: null,
+				'memo'                   => $memoValue,
 				'updated_at'             => $now,
 				'id'                     => $rosterId,
 				'user_id'                => $userId,
@@ -2170,7 +2176,7 @@ class Roster_Model extends Model
 				user_id, faction_id, name, total_points,
 				battle_formation_id, spell_lore_id, prayer_lore_id, manifestation_lore_id,
 				terrain_id,
-				grand_alliance, point_limit,
+				grand_alliance, point_limit, memo,
 				heroic_trait_id, trait_target_unit_id, trait_regiment_index, trait_unit_slot,
 				artefact_id, artefact_target_unit_id, artefact_regiment_index, artefact_unit_slot,
 				season_enhancement_id, season_enhancement_target_unit_id,
@@ -2180,7 +2186,7 @@ class Roster_Model extends Model
 				:user_id, :faction_id, :name, :total_points,
 				:battle_formation_id, :spell_lore_id, :prayer_lore_id, :manifestation_lore_id,
 				:terrain_id,
-				:grand_alliance, :point_limit,
+				:grand_alliance, :point_limit, :memo,
 				:heroic_trait_id, :trait_target_unit_id, :trait_regiment_index, :trait_unit_slot,
 				:artefact_id, :artefact_target_unit_id, :artefact_regiment_index, :artefact_unit_slot,
 				:season_enhancement_id, :season_enhancement_target_unit_id,
@@ -2199,6 +2205,7 @@ class Roster_Model extends Model
 				'terrain_id'             => $this->nullableInt($data['faction_terrain'] ?? null),
 				'grand_alliance'         => $data['grand_alliance'] ?? null,
 				'point_limit'            => $pointLimit ?: null,
+				'memo'                   => $memoValue,
 				'created_at'             => $now,
 				'updated_at'             => $now,
 			]);
