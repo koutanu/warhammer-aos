@@ -165,6 +165,14 @@ const MatchBattleTactics = (function () {
 		progress.textContent = `進捗: ${card.highestCompletedOrder || 0} / 3（Affray → Strike → Domination）`;
 		stagesWrap.appendChild(progress);
 
+		const cardEffectText = String(card.effect || "").trim();
+		if (cardEffectText) {
+			const cardEffect = document.createElement("p");
+			cardEffect.className = "battle-tactics-detail-card-effect";
+			cardEffect.textContent = cardEffectText;
+			stagesWrap.appendChild(cardEffect);
+		}
+
 		const stages = [...(card.stages || [])].sort(
 			(a, b) => (a.stageOrder || 0) - (b.stageOrder || 0),
 		);

@@ -19,6 +19,7 @@
  *   name: string,
  *   season: string,
  *   grand_alliance: string|null,
+ *   effect: string|null,
  *   sort_order: int,
  *   stages: list<BattleTacticStage>
  * }

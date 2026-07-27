@@ -7,7 +7,7 @@
 --   activation   ENUM('active','passive','reaction')                                   発動様式
 --   usage_scope  ENUM('unlimited','once_per_turn','once_per_phase','once_per_battle')   使用回数スコープ
 --   usage_per    ENUM('unit','army')                                                    once-per の対象軸((Army)の正規化)
---   trigger_phase SET('deployment','hero','movement','shooting','charge','combat','end','any')  発動フェイズ(複数可)
+--   trigger_phase SET('deployment','round_start','hero','movement','shooting','charge','combat','end','any')  発動フェイズ(複数可)
 --   trigger_turn ENUM('your','opponent','any','battle')                                 発動ターン
 --   icon_type    VARCHAR(20)   表示カテゴリ(Offensive/Defensive/.../Special)
 --   trigger_condition_ja TEXT  個別の日本語表示オーバーライド(フロント表示のみ優先)
@@ -41,7 +41,7 @@ ALTER TABLE m_common_abilities
 ALTER TABLE m_common_abilities DROP COLUMN trigger_phase;
 ALTER TABLE m_common_abilities DROP COLUMN trigger_turn;
 ALTER TABLE m_common_abilities
-    ADD COLUMN trigger_phase SET('deployment','hero','movement','shooting','charge','combat','end','any') NULL DEFAULT NULL AFTER usage_per,
+    ADD COLUMN trigger_phase SET('deployment','round_start','hero','movement','shooting','charge','combat','end','any') NULL DEFAULT NULL AFTER usage_per,
     ADD COLUMN trigger_turn  ENUM('your','opponent','any','battle') NOT NULL DEFAULT 'your' AFTER trigger_phase;
 
 -- m_heroic_traits -----------------------------------------------------------

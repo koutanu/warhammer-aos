@@ -846,7 +846,7 @@ class Roster_Model extends Model
 	 */
 	public function getBattleTacticCardsForSeason(string $season = BattleTactics::SEASON_2026_27): array
 	{
-		$sql = 'SELECT id, name, season, grand_alliance, sort_order
+		$sql = 'SELECT id, name, season, grand_alliance, effect, sort_order
                 FROM m_battle_tactics
                 WHERE season = :season
                 ORDER BY sort_order ASC, id ASC;';
@@ -887,11 +887,13 @@ class Roster_Model extends Model
 		$result = [];
 		foreach ($cards as $card) {
 			$cid = (int)$card['id'];
+			$effect = isset($card['effect']) ? trim((string)$card['effect']) : '';
 			$result[] = [
 				'id'              => $cid,
 				'name'            => $card['name'],
 				'season'          => $card['season'],
 				'grand_alliance'  => $card['grand_alliance'],
+				'effect'          => $effect !== '' ? $effect : null,
 				'sort_order'      => (int)$card['sort_order'],
 				'stages'          => $stagesByCard[$cid] ?? [],
 			];
@@ -1068,7 +1070,7 @@ class Roster_Model extends Model
 	/**
 	 * マッチ用: ロスター選択済み BT カードを段階付きで返す。
 	 *
-	 * @return list<array{id:int,name:string,sortOrder:int,stages:list<array{id:int,stage:string,stageOrder:int,name:string,effect:string,victoryPoints:int}>}>
+	 * @return list<array{id:int,name:string,effect:?string,sortOrder:int,stages:list<array{id:int,stage:string,stageOrder:int,name:string,effect:string,victoryPoints:int}>}>
 	 */
 	public function getSelectedBattleTacticCardsForMatch(int $rosterId): array
 	{
@@ -1103,6 +1105,7 @@ class Roster_Model extends Model
 			$result[] = [
 				'id'        => (int)$card['id'],
 				'name'      => $card['name'],
+				'effect'    => $card['effect'] ?? null,
 				'sortOrder' => (int)$sortOrder,
 				'stages'    => $stages,
 			];

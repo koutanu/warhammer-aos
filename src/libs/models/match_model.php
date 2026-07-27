@@ -407,18 +407,20 @@ class Match_Model extends Model
     }
 
     /**
-     * @param list<array{id:int,name:string,sortOrder:int,stages:list}> $rosterCards
+     * @param list<array{id:int,name:string,effect?:?string,sortOrder:int,stages:list}> $rosterCards
      * @param array<int, int> $progressByTacticId
-     * @return list<array{id:int,name:string,sortOrder:int,highestCompletedOrder:int,stages:list}>
+     * @return list<array{id:int,name:string,effect:?string,sortOrder:int,highestCompletedOrder:int,stages:list}>
      */
     private function buildPlayerBattleTactics(array $rosterCards, array $progressByTacticId): array
     {
         $result = [];
         foreach ($rosterCards as $card) {
             $id = (int)$card['id'];
+            $effect = isset($card['effect']) ? trim((string)$card['effect']) : '';
             $result[] = [
                 'id'                     => $id,
                 'name'                   => $card['name'],
+                'effect'                 => $effect !== '' ? $effect : null,
                 'sortOrder'              => (int)($card['sortOrder'] ?? 0),
                 'highestCompletedOrder'  => (int)($progressByTacticId[$id] ?? 0),
                 'stages'                 => $card['stages'] ?? [],
