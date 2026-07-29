@@ -533,6 +533,28 @@ class Matchplay extends Controller
         });
     }
 
+    public function toggleManifestationSummoned()
+    {
+        $this->jsonResponse(function () {
+            $body = $this->getJsonBody();
+            $this->requireTokenFromBody($body);
+            $matchId = (int)($body['matchId'] ?? 0);
+            $playerSlot = (int)($body['playerSlot'] ?? 0);
+            $unitKey = trim($body['unitKey'] ?? '');
+
+            if ($matchId <= 0 || !in_array($playerSlot, [1, 2], true) || $unitKey === '') {
+                $this->jsonError('無効なパラメータです。', 400);
+            }
+
+            $ok = $this->model->toggleManifestationSummoned($matchId, $playerSlot, $unitKey);
+            if (!$ok) {
+                $this->jsonError('顕現の召喚状態の更新に失敗しました。', 500);
+            }
+
+            return ['success' => true, 'state' => $this->model->buildMatchState($matchId)];
+        });
+    }
+
     public function getPlayerAbilities($matchId = '', $playerSlot = '')
     {
         $this->jsonResponse(function () use ($matchId, $playerSlot) {

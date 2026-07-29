@@ -1,7 +1,9 @@
 <?php
 $stateJson = json_encode($initial_state ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP);
 $viewerSlot = (int)($viewer_slot ?? 1);
-$p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
+$playBaseUrl = URL . 'match/play/' . (int)($match_id ?? 0);
+$p1Url = $playBaseUrl;
+$p2Url = $playBaseUrl . '?slot=2';
 ?>
 <div class="match scoreboard" id="scoreboardApp"
 	data-match-id="<?= $this->h($match_id); ?>"
@@ -77,10 +79,12 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 
 			<?php if ($viewerSlot === 1): ?>
 				<div id="p2ShareBanner" class="match-p2-share-banner">
-					<span>Player 2 用 URL:</span>
-					<code id="p2ShareUrl"><?= $this->h($p2ShareUrl); ?></code>
-					<button type="button" id="btnCopyP2Url" class="btn-copy-p2-url">Player 2へ</button>
+					<button type="button" id="btnGoPlayer2" class="btn-go-player" data-href="<?= $this->h($p2Url); ?>">Player 2へ</button>
 					<button type="button" id="btnRosterMemo" class="btn-roster-memo">メモ</button>
+				</div>
+			<?php else: ?>
+				<div id="p2ShareBanner" class="match-p2-share-banner">
+					<button type="button" id="btnGoPlayer1" class="btn-go-player" data-href="<?= $this->h($p1Url); ?>">Player 1へ</button>
 				</div>
 			<?php endif; ?>
 		</aside>

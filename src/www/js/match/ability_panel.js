@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	function startGamePoll() {
 		stopGamePoll();
-		gamePollTimer = setInterval(pollGameState, 15000);
+		gamePollTimer = setInterval(pollGameState, 3000);
 	}
 
 	function stopGamePoll() {
@@ -160,6 +160,17 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 
 		els.abilityList?.addEventListener("click", (e) => {
+			const summonBtn = e.target.closest(".ability-summon-toggle");
+			if (summonBtn) {
+				const unitKey = summonBtn.dataset.manifestUnitKey || "";
+				if (!unitKey) return;
+				postGameAction("match/toggleManifestationSummoned", {
+					playerSlot: viewerSlot,
+					unitKey,
+				});
+				return;
+			}
+
 			const toggleBtn = e.target.closest(".ability-used-toggle");
 			if (!toggleBtn) return;
 			const card = toggleBtn.closest(".phase-ability-card");
@@ -180,8 +191,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				openUnitDetailFromThumb(thumb);
 				return;
 			}
-			// 使用済みトグルのタップはアコーディオンを開閉しない。
+			// 使用済み・召喚トグルのタップはアコーディオンを開閉しない。
 			if (e.target.closest(".ability-used-toggle")) return;
+			if (e.target.closest(".ability-summon-toggle")) return;
 			toggleAbilityCard(e.target.closest(".phase-ability-card"));
 		});
 
@@ -364,6 +376,31 @@ document.addEventListener("DOMContentLoaded", () => {
 			(reg.units || []).forEach(pushUnit);
 		});
 		pushUnit(roster?.terrain);
+		return units;
+	}
+
+	function collectOpponentRosterUnits(roster, destroyedMap = null, summonedMap = null) {
+		const units = collectRosterUnits(roster, destroyedMap);
+		const seenKeys = new Set(
+			units.map(
+				(unit) =>
+					unit.instanceKey ||
+					(unit.id ? `legacy:${unit.id}` : ""),
+			),
+		);
+
+		(roster?.manifestations || []).forEach((unit) => {
+			if (!unit) return;
+			const key =
+				unit.instanceKey ||
+				(unit.id ? `legacy:${unit.id}` : "");
+			if (!key || seenKeys.has(key)) return;
+			if (!summonedMap || !summonedMap[key]) return;
+			if (destroyedMap && destroyedMap[key]) return;
+			seenKeys.add(key);
+			units.push(unit);
+		});
+
 		return units;
 	}
 
@@ -693,7 +730,12 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		const destroyedMap = game?.destroyedUnits?.[opponentSlot] || {};
-		const units = collectRosterUnits(roster, destroyedMap)
+		const summonedMap = game?.summonedUnits?.[opponentSlot] || {};
+		const units = collectOpponentRosterUnits(
+			roster,
+			destroyedMap,
+			summonedMap,
+		)
 			.filter((u) => u.id)
 			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
@@ -843,23 +885,33 @@ document.addEventListener("DOMContentLoaded", () => {
 	function buildAbilityCard(ab, opts = {}, livingUnits = []) {
 		const isPassive = !!opts.passive;
 		const state = MatchStateManager.getState();
-		const game = state.game || { usedAbilities: {} };
+		const game = state.game || { usedAbilities: {}, summonedUnits: {} };
 		const usedMap = game.usedAbilities?.[viewerSlot] || {};
+		const summonedMap = game.summonedUnits?.[viewerSlot] || {};
 		{
 			// パッシブ/回数無制限(unlimited)は使用済み管理対象外なのでトグル/使用済み表現を出さない。
 			const tracked = !isPassive && MatchPhases.isUsageTracked(ab);
 			const used = tracked && !!usedMap[ab.key]?.used;
+			const manifestUnitKey = String(ab.manifestUnitKey || "").trim();
+			const summoned =
+				ab.category === "manifestation" &&
+				manifestUnitKey !== "" &&
+				!!summonedMap[manifestUnitKey];
 			const effectText = String(ab.effect || "").trim();
 			const hasEffect = effectText !== "";
 			const card = document.createElement("article");
 			card.className =
 				"phase-ability-card" +
 				(used ? " is-used" : "") +
+				(summoned ? " is-summoned" : "") +
 				(isPassive ? " phase-ability-card--passive" : "") +
 				(hasEffect ? " is-expandable" : "") +
 				(ab.category ? ` cat-${ab.category}` : "");
 			card.dataset.abilityKey = ab.key;
 			card.dataset.triggerTurn = ab.triggerTurn || "";
+			if (manifestUnitKey) {
+				card.dataset.manifestUnitKey = manifestUnitKey;
+			}
 			// 効果説明があるカードのみアコーディオン開閉のタップ対象にする。
 			if (hasEffect) {
 				card.setAttribute("role", "button");
@@ -936,6 +988,13 @@ document.addEventListener("DOMContentLoaded", () => {
 					</button>`
 				: "";
 
+			const summonToggle =
+				ab.category === "manifestation" && manifestUnitKey
+					? `<button type="button" class="ability-summon-toggle${summoned ? " is-summoned" : ""}" data-manifest-unit-key="${escapeAttr(manifestUnitKey)}" aria-pressed="${summoned}">
+						${summoned ? "召喚中" : "召喚成功"}
+					</button>`
+					: "";
+
 			const abilityUnits = hasEffect
 				? resolveAbilityUnits(ab, livingUnits)
 				: [];
@@ -951,13 +1010,14 @@ document.addEventListener("DOMContentLoaded", () => {
 						</div>
 						<strong class="ability-name">${escapeHtml(ab.name)}</strong>
 					</div>
-					${usedToggle}
+					<div class="ability-card-actions">${usedToggle}${summonToggle}</div>
 				</div>
 				<div class="ability-card-meta">
 					${metaParts.length ? `<span class="ability-source">${escapeHtml(metaParts.join(" / "))}</span>` : ""}
 					${metaBadges}
 					${freqBadge}
 					${used ? '<span class="ability-used-badge">使用済み</span>' : ""}
+					${summoned ? '<span class="ability-summoned-badge">召喚中</span>' : ""}
 					${hasEffect ? '<span class="ability-expand-chevron" aria-hidden="true">▾</span>' : ""}
 				</div>
 				${hasEffect ? `<div class="ability-effect-box" style="display:none;"><p>${escapeHtml(effectText)}</p>${unitThumbsHtml}</div>` : ""}

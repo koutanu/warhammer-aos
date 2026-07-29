@@ -349,6 +349,7 @@ class Match_Model extends Model
         $players = $this->buildPlayersFromMatch($match, $factionMap, $rounds);
         $usedAbilities = $this->buildUsedAbilitiesMap($matchId);
         $destroyedUnits = $this->buildDestroyedUnitsMap($matchId);
+        $summonedUnits = $this->buildSummonedUnitsMap($matchId);
         $btProgress = $this->getBattleTacticProgressMap($matchId);
 
         $currentGameRound = (int)($match['game_battle_round'] ?? 1);
@@ -383,6 +384,7 @@ class Match_Model extends Model
                 'turnCounter'     => (int)($match['game_turn_counter'] ?? 1),
                 'usedAbilities'   => $usedAbilities,
                 'destroyedUnits'  => $destroyedUnits,
+                'summonedUnits'   => $summonedUnits,
             ],
             'updatedAt'      => $match['updated_at'],
         ];
@@ -609,9 +611,29 @@ class Match_Model extends Model
      */
     public function buildDestroyedUnitsMap(int $matchId): array
     {
+        return $this->buildUnitStatusFlagMap($matchId, 'is_destroyed');
+    }
+
+    /**
+     * @return array<int, array<string, true>> player_slot => [ unit_key => true ]
+     */
+    public function buildSummonedUnitsMap(int $matchId): array
+    {
+        return $this->buildUnitStatusFlagMap($matchId, 'is_summoned');
+    }
+
+    /**
+     * @return array<int, array<string, true>> player_slot => [ unit_key => true ]
+     */
+    private function buildUnitStatusFlagMap(int $matchId, string $flagColumn): array
+    {
+        if (!in_array($flagColumn, ['is_destroyed', 'is_summoned'], true)) {
+            return [];
+        }
+
         $rows = $this->db->select(
-            'SELECT player_slot, unit_key FROM t_match_unit_status
-             WHERE match_id = :match_id AND is_destroyed = 1;',
+            "SELECT player_slot, unit_key FROM t_match_unit_status
+             WHERE match_id = :match_id AND {$flagColumn} = 1;",
             ['match_id' => $matchId]
         );
         $map = [];
@@ -628,8 +650,17 @@ class Match_Model extends Model
 
     public function toggleUnitDestroyed(int $matchId, int $playerSlot, string $unitKey): bool
     {
+        return $this->toggleUnitStatusFlag($matchId, $playerSlot, $unitKey, 'is_destroyed');
+    }
+
+    public function toggleManifestationSummoned(int $matchId, int $playerSlot, string $unitKey): bool
+    {
         $unitKey = trim($unitKey);
-        if (!in_array($playerSlot, [1, 2], true) || $unitKey === '') {
+        if (
+            !in_array($playerSlot, [1, 2], true)
+            || $unitKey === ''
+            || strpos($unitKey, 'manifest:') !== 0
+        ) {
             return false;
         }
 
@@ -640,7 +671,7 @@ class Match_Model extends Model
 
         $now = date('Y-m-d H:i:s');
         $rows = $this->db->select(
-            'SELECT id FROM t_match_unit_status
+            'SELECT id, is_destroyed, is_summoned FROM t_match_unit_status
              WHERE match_id = :match_id AND player_slot = :player_slot AND unit_key = :unit_key
              LIMIT 1;',
             [
@@ -650,20 +681,14 @@ class Match_Model extends Model
             ]
         );
 
-        if (!empty($rows)) {
-            $result = $this->db->executesql(
-                'DELETE FROM t_match_unit_status WHERE id = :id;',
-                ['id' => (int)$rows[0]['id']]
-            );
-            if (!(bool)$result[0]) {
-                return false;
-            }
-        } else {
+        // 顕現は再召喚可能なので、召喚 ON 時は撃破フラグも必ず落とす。
+        // 召喚 OFF（追放）時は行を削除して未召喚状態に戻す。
+        if (empty($rows)) {
             $result = $this->db->executesql(
                 'INSERT INTO t_match_unit_status
-                    (match_id, player_slot, unit_key, is_destroyed, updated_at)
+                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, updated_at)
                  VALUES
-                    (:match_id, :player_slot, :unit_key, 1, :updated_at);',
+                    (:match_id, :player_slot, :unit_key, 0, 1, :updated_at);',
                 [
                     'match_id'    => $matchId,
                     'player_slot' => $playerSlot,
@@ -671,6 +696,130 @@ class Match_Model extends Model
                     'updated_at'  => $now,
                 ]
             );
+            if (!(bool)$result[0]) {
+                return false;
+            }
+        } else {
+            $row = $rows[0];
+            $isSummoned = (int)($row['is_summoned'] ?? 0);
+
+            if ($isSummoned) {
+                $result = $this->db->executesql(
+                    'DELETE FROM t_match_unit_status WHERE id = :id;',
+                    ['id' => (int)$row['id']]
+                );
+            } else {
+                $result = $this->db->executesql(
+                    'UPDATE t_match_unit_status
+                     SET is_destroyed = 0,
+                         is_summoned = 1,
+                         updated_at = :updated_at
+                     WHERE id = :id;',
+                    [
+                        'updated_at' => $now,
+                        'id'         => (int)$row['id'],
+                    ]
+                );
+            }
+            if (!(bool)$result[0]) {
+                return false;
+            }
+        }
+
+        $this->db->executesql(
+            'UPDATE t_matches SET updated_at = :updated_at WHERE id = :id;',
+            ['updated_at' => $now, 'id' => $matchId]
+        );
+        return true;
+    }
+
+    /**
+     * is_destroyed / is_summoned をトグルする。
+     * 両方 0 になった行は削除し、片方だけ残る場合は行を維持する。
+     */
+    private function toggleUnitStatusFlag(
+        int $matchId,
+        int $playerSlot,
+        string $unitKey,
+        string $flagColumn
+    ): bool {
+        $unitKey = trim($unitKey);
+        if (
+            !in_array($playerSlot, [1, 2], true)
+            || $unitKey === ''
+            || !in_array($flagColumn, ['is_destroyed', 'is_summoned'], true)
+        ) {
+            return false;
+        }
+
+        $match = $this->getMatchById($matchId);
+        if (!$match || $match['status'] === 'completed') {
+            return false;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $rows = $this->db->select(
+            'SELECT id, is_destroyed, is_summoned FROM t_match_unit_status
+             WHERE match_id = :match_id AND player_slot = :player_slot AND unit_key = :unit_key
+             LIMIT 1;',
+            [
+                'match_id'    => $matchId,
+                'player_slot' => $playerSlot,
+                'unit_key'    => $unitKey,
+            ]
+        );
+
+        if (empty($rows)) {
+            $isDestroyed = $flagColumn === 'is_destroyed' ? 1 : 0;
+            $isSummoned = $flagColumn === 'is_summoned' ? 1 : 0;
+            $result = $this->db->executesql(
+                'INSERT INTO t_match_unit_status
+                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, updated_at)
+                 VALUES
+                    (:match_id, :player_slot, :unit_key, :is_destroyed, :is_summoned, :updated_at);',
+                [
+                    'match_id'     => $matchId,
+                    'player_slot'  => $playerSlot,
+                    'unit_key'     => $unitKey,
+                    'is_destroyed' => $isDestroyed,
+                    'is_summoned'  => $isSummoned,
+                    'updated_at'   => $now,
+                ]
+            );
+            if (!(bool)$result[0]) {
+                return false;
+            }
+        } else {
+            $row = $rows[0];
+            $isDestroyed = (int)($row['is_destroyed'] ?? 0);
+            $isSummoned = (int)($row['is_summoned'] ?? 0);
+
+            if ($flagColumn === 'is_destroyed') {
+                $isDestroyed = $isDestroyed ? 0 : 1;
+            } else {
+                $isSummoned = $isSummoned ? 0 : 1;
+            }
+
+            if ($isDestroyed === 0 && $isSummoned === 0) {
+                $result = $this->db->executesql(
+                    'DELETE FROM t_match_unit_status WHERE id = :id;',
+                    ['id' => (int)$row['id']]
+                );
+            } else {
+                $result = $this->db->executesql(
+                    'UPDATE t_match_unit_status
+                     SET is_destroyed = :is_destroyed,
+                         is_summoned = :is_summoned,
+                         updated_at = :updated_at
+                     WHERE id = :id;',
+                    [
+                        'is_destroyed' => $isDestroyed,
+                        'is_summoned'  => $isSummoned,
+                        'updated_at'   => $now,
+                        'id'           => (int)$row['id'],
+                    ]
+                );
+            }
             if (!(bool)$result[0]) {
                 return false;
             }

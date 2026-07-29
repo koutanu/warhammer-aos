@@ -23,9 +23,11 @@ const MatchStateManager = {
 			turnCounter: 1,
 			usedAbilities: {},
 			destroyedUnits: {},
+			summonedUnits: {},
 		};
 		state.game.usedAbilities = state.game.usedAbilities || {};
 		state.game.destroyedUnits = state.game.destroyedUnits || {};
+		state.game.summonedUnits = state.game.summonedUnits || {};
 		if (state.game.firstPlayer === undefined) {
 			state.game.firstPlayer = null;
 		}
@@ -71,6 +73,7 @@ const MatchStateManager = {
 				turnCounter: 1,
 				usedAbilities: {},
 				destroyedUnits: {},
+				summonedUnits: {},
 			};
 		}
 		const localPhase = this.state.game.phase;
@@ -86,6 +89,7 @@ const MatchStateManager = {
 			game.turnCounter ?? this.state.game.turnCounter;
 		this.state.game.usedAbilities = game.usedAbilities || {};
 		this.state.game.destroyedUnits = game.destroyedUnits || {};
+		this.state.game.summonedUnits = game.summonedUnits || {};
 		this.state.game.phase = localPhase;
 		if (updatedAt) {
 			this.state.updatedAt = updatedAt;

@@ -1633,19 +1633,21 @@ class Roster_Model extends Model
 		?string $usagePer = 'unit',
 		?string $triggerCondition = '',
 		?string $castingValue = null,
-		?string $castingType = null
+		?string $castingType = null,
+		?string $manifestUnitKey = null
 	): array {
 		$dedupeKey = $dedupeKey ?? $key;
 		$unitNames = $unitName ? [$unitName] : [];
 
 		$castingValue = $castingValue !== null ? trim((string)$castingValue) : '';
 		$castingType = $castingType !== null ? trim((string)$castingType) : '';
+		$manifestUnitKey = $manifestUnitKey !== null ? trim((string)$manifestUnitKey) : '';
 
 		$activation = $this->normalizeActivation($activation);
 		$usageScope = $this->normalizeUsageScope($usageScope);
 		$usagePer   = $this->normalizeUsagePer($usagePer);
 
-		return [
+		$entry = [
 			'key'              => $dedupeKey,
 			'dedupeKey'        => $dedupeKey,
 			'name'             => $name,
@@ -1667,6 +1669,10 @@ class Roster_Model extends Model
 			'castingValue'     => $castingValue !== '' ? $castingValue : null,
 			'castingType'      => $castingType !== '' ? $castingType : null,
 		];
+		if ($manifestUnitKey !== '') {
+			$entry['manifestUnitKey'] = $manifestUnitKey;
+		}
+		return $entry;
 	}
 
 	/** activation を正規化(active/passive/reaction)。 */
@@ -1736,6 +1742,13 @@ class Roster_Model extends Model
 
 		$entries = [];
 		foreach ($rows as $row) {
+			$manifestUnitKey = null;
+			if ($category === 'manifestation') {
+				$unitId = (int)($row['unit_id'] ?? 0);
+				if ($unitId > 0) {
+					$manifestUnitKey = 'manifest:' . $unitId;
+				}
+			}
 			$entries[] = $this->buildDeckEntry(
 				$keyPrefix . ':' . $loreRowId . ':' . (int)$row['id'],
 				$row[$nameColumn] ?? $row['lore_name'] ?? '',
@@ -1751,7 +1764,9 @@ class Roster_Model extends Model
 				$row['usage_scope'] ?? 'unlimited',
 				$row['usage_per'] ?? 'unit',
 				trim((string)($row['trigger_condition_ja'] ?? '')),
-				$row[$valueColumn] ?? null
+				$row[$valueColumn] ?? null,
+				null,
+				$manifestUnitKey
 			);
 		}
 		return $entries;

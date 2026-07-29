@@ -10,7 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	const panelBody = document.getElementById("rosterPanelBody");
 	const panelTitle = document.getElementById("rosterViewTitle");
 	const btnViewOpponent = document.getElementById("btnViewOpponentRoster");
-	const btnCopyP2Url = document.getElementById("btnCopyP2Url");
+	const btnGoPlayer2 = document.getElementById("btnGoPlayer2");
+	const btnGoPlayer1 = document.getElementById("btnGoPlayer1");
 	const btnRosterMemo = document.getElementById("btnRosterMemo");
 	const rosterMemoModal = document.getElementById("rosterMemoModal");
 	const rosterMemoBody = document.getElementById("rosterMemoBody");
@@ -59,6 +60,16 @@ document.addEventListener("DOMContentLoaded", () => {
 	function isDestroyed(slot, instanceKey) {
 		if (!instanceKey) return false;
 		return !!getDestroyedMap(slot)[instanceKey];
+	}
+
+	function getSummonedMap(slot) {
+		const state = getState();
+		return state?.game?.summonedUnits?.[slot] || {};
+	}
+
+	function isSummoned(slot, instanceKey) {
+		if (!instanceKey) return false;
+		return !!getSummonedMap(slot)[instanceKey];
 	}
 
 	function renderRoster(player, isOpponent) {
@@ -151,6 +162,17 @@ document.addEventListener("DOMContentLoaded", () => {
 				toggleDestroyed(slotNum, unitKey);
 			});
 		});
+
+		panelBody.querySelectorAll(".unit-btn-banish-toggle").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				const unitKey = btn.dataset.instanceKey;
+				const slotNum = parseInt(btn.dataset.playerSlot, 10);
+				if (!unitKey || !slotNum) return;
+				toggleManifestationSummoned(slotNum, unitKey);
+			});
+		});
 	}
 
 	function destroyToggleHtml(unit, slot, canToggle, destroyed) {
@@ -166,8 +188,46 @@ document.addEventListener("DOMContentLoaded", () => {
 			aria-label="${escapeAttr(unit.name || "ユニット")}を${destroyed ? "生存に戻す" : "撃破にする"}"${disabled}>撃破</button>`;
 	}
 
+	function banishToggleHtml(unit, slot, canToggle, summoned) {
+		const key = unit.instanceKey || "";
+		if (!key || !summoned) return "";
+		const disabled = canToggle ? "" : " disabled";
+		return `<button type="button"
+			class="unit-btn-banish-toggle"
+			data-instance-key="${escapeAttr(key)}"
+			data-player-slot="${slot}"
+			aria-pressed="true"
+			aria-label="${escapeAttr(unit.name || "顕現")}を追放する"${disabled}>追放</button>`;
+	}
+
 	function manifestButtonHtml(unit, slot, canToggle) {
-		const destroyed = isDestroyed(slot, unit.instanceKey);
+		const key = unit.instanceKey || "";
+		const isManifestation = key.indexOf("manifest:") === 0;
+		const destroyed = isDestroyed(slot, key);
+		const summoned = isManifestation && isSummoned(slot, key);
+
+		if (isManifestation) {
+			const summonedBadge = summoned
+				? '<span class="summoned-badge">召喚中</span>'
+				: "";
+			const badges = summonedBadge
+				? `<span class="unit-btn-badges">${summonedBadge}</span>`
+				: "";
+			return `<div class="roster-unit-btn is-manifestation${summoned ? " is-summoned" : ""}"
+				role="button"
+				tabindex="0"
+				data-unit-id="${unit.id}"
+				data-unit-name="${escapeAttr(unit.name)}"
+				data-unit-keywords="${escapeAttr(unit.keywords || "")}">
+				<span class="unit-btn-thumb">${unitThumbHtml(unit)}</span>
+				<span class="unit-btn-info">
+					<span class="unit-btn-name">${escapeHtml(unit.name)}</span>
+				</span>
+				${banishToggleHtml(unit, slot, canToggle, summoned)}
+				${badges}
+			</div>`;
+		}
+
 		return `<div class="roster-unit-btn is-manifestation${destroyed ? " is-destroyed" : ""}"
 			role="button"
 			tabindex="0"
@@ -277,6 +337,39 @@ document.addEventListener("DOMContentLoaded", () => {
 			});
 	}
 
+	function toggleManifestationSummoned(playerSlot, unitKey) {
+		if (toggling || !matchId || !token) return;
+		toggling = true;
+
+		fetch(baseUrl + "match/toggleManifestationSummoned", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				token,
+				matchId,
+				playerSlot,
+				unitKey,
+			}),
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				if (!data.success) {
+					alert(data.message || "更新に失敗しました。");
+					return;
+				}
+				if (window.MatchStateManager?.applyServerState) {
+					MatchStateManager.applyServerState(data.state);
+				} else {
+					matchState = data.state;
+					refreshPanel();
+				}
+			})
+			.catch(() => alert("通信エラーが発生しました。"))
+			.finally(() => {
+				toggling = false;
+			});
+	}
+
 	function escapeHtml(str) {
 		const div = document.createElement("div");
 		div.textContent = str || "";
@@ -297,14 +390,16 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 
-	if (btnCopyP2Url) {
-		btnCopyP2Url.addEventListener("click", () => {
-			const urlEl = document.getElementById("p2ShareUrl");
-			const text = urlEl?.textContent || "";
-			if (!text) return;
-			window.location.href = text;
+	function bindPlayerSwitch(btn) {
+		if (!btn) return;
+		btn.addEventListener("click", () => {
+			const href = btn.dataset.href || "";
+			if (!href) return;
+			window.location.href = href;
 		});
 	}
+	bindPlayerSwitch(btnGoPlayer2);
+	bindPlayerSwitch(btnGoPlayer1);
 
 	function closeRosterMemoModal() {
 		if (!rosterMemoModal) return;
