@@ -3,12 +3,15 @@
 
 .match-fullscreen-wrapper {
 	display: block;
-	min-height: 100vh;
+	// html/body の 100dvh に合わせる（iPad PWA で 100vh だと下端に余白が出る）
+	height: 100%;
+	min-height: 100%;
 	background: $color-background;
 }
 
 .match-fullscreen-content {
-	max-height: 100vh;
+	height: 100%;
+	max-height: 100%;
 	overflow: hidden;
 	padding: 0;
 

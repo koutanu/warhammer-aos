@@ -4,8 +4,9 @@
 .match.scoreboard {
 	display: flex;
 	flex-direction: column;
-	height: 100vh;
-	max-height: 100vh;
+	// 親（match-fullscreen）が 100dvh 基準なので % で埋める
+	height: 100%;
+	max-height: 100%;
 	background: $color-background;
 	color: $color-text;
 	overflow: hidden;

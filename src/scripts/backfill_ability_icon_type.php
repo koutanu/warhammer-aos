@@ -70,7 +70,7 @@ fclose($fh);
 echo 'CSV abilities: ' . count($nameToIcon) . "\n";
 
 // 3) DB 側の英語名で突合する。
-//    名称は translate_abilities.php で「日本語 (English)」に置換され、原文は name_en に退避済み。
+//    名称は translate_abilities.php で日本語に置換され、原文は name_en に退避済み。
 //    また import 時の重複回避で "name — UnitName" のサフィックスが付く場合がある。
 $dbCols = $pdo->query('DESCRIBE m_ability_master')->fetchAll(PDO::FETCH_COLUMN);
 $hasNameEn = in_array('name_en', $dbCols, true);

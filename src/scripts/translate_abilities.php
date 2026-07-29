@@ -5,7 +5,7 @@
  * - 未訳(日本語を含まない)行のみ処理＝冪等。
  * - 元の英語は *_en 列へ退避。
  * - 翻訳マップは「英語原文 => 日本語」（重複自動対応）。
- *   名称は「日本語 (English)」、effect は純日本語に置換。
+ *   ability name / effect は純日本語に置換。weapon name は「日本語 (English)」。
  *
  * 実行: php scripts/translate_abilities.php
  * 復元:
@@ -58,7 +58,7 @@ foreach ($abilityRows as $r) {
         if (isset($abilityNameMap[$en])) {
             $updAbName->execute([
                 'name_en' => $en,
-                'name'    => $abilityNameMap[$en] . ' (' . $en . ')',
+                'name'    => $abilityNameMap[$en],
                 'id'      => $id,
             ]);
             $nameDone += $updAbName->rowCount();

@@ -2,8 +2,8 @@
 // --- 左側サイドナビのスタイル（タブレット横持ち・PC想定） ---
 .side-nav {
 	width: 220px;
-	// ★追記: 外枠自体を「画面全体の高さ」にして、スクロール領域の基準を作ります
-	height: 100vh;
+	// html/body の 100dvh に合わせる（iPad PWA で 100vh だと下端に余白が出る）
+	height: 100%;
 	background-color: $color-base;
 	border-right: 2px solid $color-main;
 	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.4);
@@ -12,7 +12,7 @@
 	.nav-sticky-container {
 		position: sticky;
 		top: 0;
-		height: 100vh; // ここで画面いっぱいに固定されます
+		height: 100%; // ここで画面いっぱいに固定されます
 		display: flex;
 		flex-direction: column;
 		// セーフエリア対応（iPad スタンドアロンの丸角/ホームインジケータ/ノッチ）

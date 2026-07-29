@@ -166,7 +166,7 @@ button {
 }
 .side-nav {
   width: 220px;
-  height: 100vh;
+  height: 100%;
   background-color: #1a2626;
   border-right: 2px solid #2f4f4f;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.4);
@@ -175,7 +175,7 @@ button {
 .side-nav .nav-sticky-container {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   padding: calc(1.5rem + env(safe-area-inset-top)) 1rem calc(1.5rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
@@ -352,7 +352,7 @@ button {
   }
 }
 .login {
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column; /* ★ 縦並びにする（これで綺麗にセンターになります） */
   align-items: center; /* 左右のセンター揃え */
@@ -3445,12 +3445,14 @@ button {
 
 .match-fullscreen-wrapper {
   display: block;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 100%;
   background: #131c1c;
 }
 
 .match-fullscreen-content {
-  max-height: 100vh;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
   padding: 0;
 }
@@ -3574,8 +3576,8 @@ button {
 .match.scoreboard {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  max-height: 100vh;
+  height: 100%;
+  max-height: 100%;
   background: #131c1c;
   color: #f0ead6;
   overflow: hidden;

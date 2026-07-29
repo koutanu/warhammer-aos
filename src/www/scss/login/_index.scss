@@ -1,6 +1,6 @@
 @use "../fundamental" as *;
 .login {
-	height: 100vh;
+	height: 100dvh;
 	display: flex;
 	flex-direction: column; /* ★ 縦並びにする（これで綺麗にセンターになります） */
 	align-items: center; /* 左右のセンター揃え */
