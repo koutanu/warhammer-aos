@@ -409,7 +409,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	function livingRosterUnits(roster, game) {
-		return collectRosterUnits(roster, getDestroyedMapForViewer(game));
+		return collectOpponentRosterUnits(
+			roster,
+			getDestroyedMapForViewer(game),
+			game?.summonedUnits?.[viewerSlot] || {},
+		);
 	}
 
 	function isAbilityAvailable(ab, livingUnits) {
@@ -505,6 +509,15 @@ document.addEventListener("DOMContentLoaded", () => {
 		return names.map((name) => byName.get(name)).filter(Boolean);
 	}
 
+	function resolveManifestUnit(ab, roster) {
+		const key = String(ab?.manifestUnitKey || "").trim();
+		if (!key || !roster) return null;
+		const list = roster.manifestations || [];
+		return (
+			list.find((m) => String(m.instanceKey || "").trim() === key) || null
+		);
+	}
+
 	function unitThumbImageHtml(unit) {
 		const image = unit.image || "";
 		if (image) {
@@ -516,12 +529,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	function buildUnitThumbsHtml(units, category) {
 		if (!units.length) return "";
-		const labelBases = labelBasesForCategory(category);
+		// category === null は顕現本体など「キーワードラベル不要・名前表示」の用途。
+		const labelBases =
+			category === null ? null : labelBasesForCategory(category);
 		const buttons = units
 			.map((unit) => {
 				const label = labelBases
 					? findKeywordToken(unit, ...labelBases)
-					: "";
+					: category === null
+						? String(unit.name || "")
+						: "";
 				const labelHtml = label
 					? `<span class="ability-unit-thumb-label">${escapeHtml(label)}</span>`
 					: "";
@@ -535,6 +552,15 @@ document.addEventListener("DOMContentLoaded", () => {
 			})
 			.join("");
 		return `<div class="ability-unit-thumbs" role="list">${buttons}</div>`;
+	}
+
+	function buildThumbsSectionHtml(label, units, category) {
+		const thumbs = buildUnitThumbsHtml(units, category);
+		if (!thumbs) return "";
+		return `<div class="ability-unit-thumbs-section">
+			<div class="ability-unit-thumbs-label">${escapeHtml(label)}</div>
+			${thumbs}
+		</div>`;
 	}
 
 	function openUnitDetailFromThumb(thumb) {
@@ -553,6 +579,14 @@ document.addEventListener("DOMContentLoaded", () => {
 		const str = String(value).trim();
 		if (str === "") return "-";
 		return /"$/.test(str) ? str : `${str}"`;
+	}
+
+	function hasMovement(unit) {
+		const value = unit?.movement;
+		if (value === null || value === undefined) return false;
+		const str = String(value).trim();
+		if (str === "" || str === "-" || str === "–" || str === "—") return false;
+		return true;
 	}
 
 	function buildMovementStripHtml(units) {
@@ -588,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		const units = livingRosterUnits(roster, game)
-			.filter((u) => u.id)
+			.filter((u) => u.id && hasMovement(u))
 			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
 		if (!units.length) {
@@ -998,7 +1032,34 @@ document.addEventListener("DOMContentLoaded", () => {
 			const abilityUnits = hasEffect
 				? resolveAbilityUnits(ab, livingUnits)
 				: [];
-			const unitThumbsHtml = buildUnitThumbsHtml(abilityUnits, ab.category);
+			let unitThumbsHtml = "";
+			if (hasEffect && ab.category === "manifestation") {
+				const myPlayer =
+					MatchStateManager.getPlayer?.(viewerSlot) ||
+					(state.players || []).find((p) => p.slot === viewerSlot) ||
+					null;
+				const manifest = resolveManifestUnit(ab, myPlayer?.roster || null);
+				const sections = [];
+				if (manifest) {
+					sections.push(
+						buildThumbsSectionHtml("召喚する顕現", [manifest], null),
+					);
+				}
+				if (abilityUnits.length) {
+					sections.push(
+						buildThumbsSectionHtml(
+							"詠唱可能な魔術師",
+							abilityUnits,
+							ab.category,
+						),
+					);
+				}
+				unitThumbsHtml = sections.length
+					? `<div class="ability-unit-thumbs-row">${sections.join("")}</div>`
+					: "";
+			} else if (hasEffect) {
+				unitThumbsHtml = buildUnitThumbsHtml(abilityUnits, ab.category);
+			}
 
 			card.innerHTML = `
 				<div class="ability-card-head">

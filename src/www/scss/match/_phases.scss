@@ -887,6 +887,39 @@
 			white-space: pre-wrap;
 		}
 
+		.ability-unit-thumbs-row {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: flex-start;
+			gap: 0.75rem;
+			margin-top: 0.5rem;
+			padding-top: 0.5rem;
+			border-top: 1px solid rgba($color-main, 0.25);
+			overflow-x: auto;
+			overflow-y: hidden;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.ability-unit-thumbs-section {
+			flex: 0 0 auto;
+			min-width: 0;
+
+			.ability-unit-thumbs-label {
+				margin: 0 0 0.35rem;
+				font-size: 0.72rem;
+				font-weight: bold;
+				letter-spacing: 0.02em;
+				color: rgba($color-text, 0.7);
+				white-space: nowrap;
+			}
+
+			.ability-unit-thumbs {
+				margin-top: 0;
+				padding-top: 0;
+				border-top: none;
+			}
+		}
+
 		.ability-unit-thumbs {
 			display: flex;
 			flex-wrap: nowrap;

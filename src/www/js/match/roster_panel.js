@@ -1,6 +1,6 @@
 /**
  * マッチプレイ中のロスター参照（メイン表示）
- * - 自分 / 相手 のロスターをトグルで切替
+ * - 自分 / 相手 のロスターを上部タブで切替
  * - ユニットをタップで詳細モーダル
  * - 撃破トグル（自分のロスターのみ）
  */
@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	const app = document.getElementById("scoreboardApp");
 	const view = document.getElementById("rosterView");
 	const panelBody = document.getElementById("rosterPanelBody");
-	const panelTitle = document.getElementById("rosterViewTitle");
-	const btnViewOpponent = document.getElementById("btnViewOpponentRoster");
+	const tabMine = document.getElementById("rosterTabMine");
+	const tabOpponent = document.getElementById("rosterTabOpponent");
 	const btnGoPlayer2 = document.getElementById("btnGoPlayer2");
 	const btnGoPlayer1 = document.getElementById("btnGoPlayer1");
 	const btnRosterMemo = document.getElementById("btnRosterMemo");
@@ -177,15 +177,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	function destroyToggleHtml(unit, slot, canToggle, destroyed) {
 		const key = unit.instanceKey || "";
-		if (!key) return "";
-		const disabled = canToggle ? "" : " disabled";
+		if (!key || !canToggle) return "";
 		const ariaPressed = destroyed ? "true" : "false";
 		return `<button type="button"
 			class="unit-btn-destroyed-toggle${destroyed ? " is-destroyed" : ""}"
 			data-instance-key="${escapeAttr(key)}"
 			data-player-slot="${slot}"
 			aria-pressed="${ariaPressed}"
-			aria-label="${escapeAttr(unit.name || "ユニット")}を${destroyed ? "生存に戻す" : "撃破にする"}"${disabled}>撃破</button>`;
+			aria-label="${escapeAttr(unit.name || "ユニット")}を${destroyed ? "生存に戻す" : "撃破にする"}">撃破</button>`;
 	}
 
 	function banishToggleHtml(unit, slot, canToggle, summoned) {
@@ -242,27 +241,22 @@ document.addEventListener("DOMContentLoaded", () => {
 		</div>`;
 	}
 
-	function updatePanelTitle() {
-		if (!panelTitle) return;
-		if (viewingOpponent) {
-			const opponent = getPlayer(opponentSlot);
-			const name = opponent?.name || `Player ${opponentSlot}`;
-			panelTitle.textContent = `相手ロスター (${name})`;
-		} else {
-			panelTitle.textContent = "自分のロスター";
+	function updateTabs() {
+		if (tabMine) {
+			tabMine.classList.toggle("active", !viewingOpponent);
+			tabMine.setAttribute("aria-selected", viewingOpponent ? "false" : "true");
+		}
+		if (tabOpponent) {
+			tabOpponent.classList.toggle("active", viewingOpponent);
+			tabOpponent.setAttribute(
+				"aria-selected",
+				viewingOpponent ? "true" : "false",
+			);
 		}
 	}
 
-	function updateOpponentButton() {
-		if (!btnViewOpponent) return;
-		btnViewOpponent.textContent = viewingOpponent
-			? "自分のロスターに戻る"
-			: "相手ロスターを確認";
-	}
-
 	function refreshPanel() {
-		updatePanelTitle();
-		updateOpponentButton();
+		updateTabs();
 		const slot = viewingOpponent ? opponentSlot : viewerSlot;
 		renderRoster(getPlayer(slot), viewingOpponent);
 	}
@@ -383,9 +377,17 @@ document.addEventListener("DOMContentLoaded", () => {
 			.replace(/</g, "&lt;");
 	}
 
-	if (btnViewOpponent) {
-		btnViewOpponent.addEventListener("click", () => {
-			viewingOpponent = !viewingOpponent;
+	if (tabMine) {
+		tabMine.addEventListener("click", () => {
+			if (!viewingOpponent) return;
+			viewingOpponent = false;
+			refreshPanel();
+		});
+	}
+	if (tabOpponent) {
+		tabOpponent.addEventListener("click", () => {
+			if (viewingOpponent) return;
+			viewingOpponent = true;
 			refreshPanel();
 		});
 	}

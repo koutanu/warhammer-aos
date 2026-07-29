@@ -63,7 +63,6 @@ $p2Url = $playBaseUrl . '?slot=2';
 			</div>
 
 			<div class="sidebar-actions">
-				<button type="button" id="btnViewOpponentRoster" class="btn-view-opponent-roster">相手ロスターを確認</button>
 				<div class="sidebar-round">
 					<span class="sidebar-round-label">ラウンド</span>
 					<strong id="currentRoundValue">1</strong> / <span id="maxRoundValue">5</span>
@@ -85,6 +84,7 @@ $p2Url = $playBaseUrl . '?slot=2';
 			<?php else: ?>
 				<div id="p2ShareBanner" class="match-p2-share-banner">
 					<button type="button" id="btnGoPlayer1" class="btn-go-player" data-href="<?= $this->h($p1Url); ?>">Player 1へ</button>
+					<button type="button" id="btnRosterMemo" class="btn-roster-memo">メモ</button>
 				</div>
 			<?php endif; ?>
 		</aside>
@@ -113,7 +113,10 @@ $p2Url = $playBaseUrl . '?slot=2';
 
 			<section id="rosterView" class="match-roster-view" style="display:none;">
 				<div class="roster-view-header">
-					<h3 id="rosterViewTitle">自分のロスター</h3>
+					<div class="roster-panel-tabs" role="tablist">
+						<button type="button" id="rosterTabMine" class="roster-tab active" role="tab" aria-selected="true">自分のロスター</button>
+						<button type="button" id="rosterTabOpponent" class="roster-tab" role="tab" aria-selected="false">相手のロスター</button>
+					</div>
 				</div>
 				<div class="roster-view-body" id="rosterPanelBody">
 					<p class="roster-panel-empty">ロスターが選択されていません。</p>

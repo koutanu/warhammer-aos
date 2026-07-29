@@ -7,7 +7,7 @@ $phaseJaMap = [
 	'movement' => '移動',
 	'shooting' => '射撃',
 	'charge' => '突撃',
-	'combat' => '戦闘',
+	'combat' => '近接',
 	'end' => 'ターン終了',
 	'any' => '全般',
 ];

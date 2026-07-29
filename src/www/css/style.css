@@ -33,11 +33,19 @@ a {
 
 html {
   -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-       text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
+  height: 100%;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: #131c1c;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
@@ -101,8 +109,7 @@ button {
   border: none;
   cursor: pointer;
   outline: none;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none;
 }
 
@@ -136,7 +143,9 @@ button {
 
 .wrapper {
   display: flex;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
   background-color: #131c1c;
 }
 
@@ -144,8 +153,10 @@ button {
   flex-grow: 1;
   padding: calc(2rem + env(safe-area-inset-top)) calc(2rem + env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom)) 2rem;
   box-sizing: border-box;
-  max-height: 100vh;
+  max-height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 768px) {
@@ -427,8 +438,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   border-radius: 12px;
   z-index: 1;
   transform-origin: center;
@@ -571,8 +581,7 @@ button {
 #unitDetailModal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -951,8 +960,7 @@ button {
 .unit.faction-units .unit-card-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .unit.faction-units .unit-card-name {
@@ -1529,9 +1537,6 @@ button {
   background: rgba(19, 28, 28, 0.9);
   color: #f0ead6;
 }
-.unit.unit-edit .keyword-param-input:-moz-read-only {
-  opacity: 0.45;
-}
 .unit.unit-edit .keyword-param-input:read-only {
   opacity: 0.45;
 }
@@ -1618,8 +1623,7 @@ button {
   border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none; /* iOS/Safariのデフォルト形状をリセット */
 }
 .roster.index .form-group input[type=text]:focus,
@@ -1630,9 +1634,6 @@ button {
 }
 .roster.index .form-group {
   /* プレースホルダーの色調整 */
-}
-.roster.index .form-group input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
 }
 .roster.index .form-group input::placeholder {
   color: rgba(240, 234, 214, 0.4);
@@ -2050,9 +2051,7 @@ button {
   font-weight: bold;
 }
 .roster.detail .detail-open-btn {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   background: none;
   border: none;
   padding: 0;
@@ -2210,9 +2209,7 @@ button {
   justify-content: flex-end;
 }
 .roster-ability-modal .btn-close-detail {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   border: 1px solid #2f4f4f;
   background: rgba(19, 28, 28, 0.8);
   color: #f0ead6;
@@ -2228,9 +2225,7 @@ button {
   position: absolute;
   top: 0.55rem;
   right: 0.7rem;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   border: none;
   background: transparent;
   color: rgba(240, 234, 214, 0.7);
@@ -2348,11 +2343,6 @@ button {
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
 }
-.roster.create_roster .roster-title-display .roster-name-input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
-  font-weight: 400;
-  text-shadow: none;
-}
 .roster.create_roster .roster-title-display .roster-name-input::placeholder {
   color: rgba(240, 234, 214, 0.4);
   font-weight: 400;
@@ -2382,9 +2372,6 @@ button {
 .roster.create_roster .roster-memo-input:focus {
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
-}
-.roster.create_roster .roster-memo-input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
 }
 .roster.create_roster .roster-memo-input::placeholder {
   color: rgba(240, 234, 214, 0.4);
@@ -2608,9 +2595,7 @@ button {
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .form-group select:focus,
 .roster.create_roster .form-group input[type=text]:focus {
@@ -3046,9 +3031,7 @@ button {
   font-size: 0.95rem;
   outline: none;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .unit-slot-row .select-wrapper .unit-select:focus {
   border-color: #d4af37;
@@ -3213,9 +3196,6 @@ button {
 }
 .roster.create_roster .modal-content .modal-search-input:focus {
   border-color: var(--color-accent, #ffcc00);
-}
-.roster.create_roster .modal-content .modal-search-input::-moz-placeholder {
-  color: #aaa;
 }
 .roster.create_roster .modal-content .modal-search-input::placeholder {
   color: #aaa;
@@ -3669,21 +3649,6 @@ button {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-.match.scoreboard .scoreboard-sidebar .sidebar-actions .btn-view-opponent-roster {
-  width: 100%;
-  min-height: 48px;
-  padding: 0.6rem 0.85rem;
-  border: 1px solid rgba(47, 79, 79, 0.6);
-  background: rgba(47, 79, 79, 0.2);
-  color: rgba(240, 234, 214, 0.9);
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  cursor: pointer;
-}
-.match.scoreboard .scoreboard-sidebar .sidebar-actions .btn-view-opponent-roster:active {
-  transform: scale(0.97);
 }
 .match.scoreboard .scoreboard-sidebar .sidebar-actions .sidebar-round {
   display: flex;
@@ -4784,39 +4749,12 @@ button {
   background: #131c1c;
 }
 .match.scoreboard .match-roster-view .roster-view-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.85rem 1.25rem;
-  border-bottom: 1px solid rgba(47, 79, 79, 0.4);
   position: sticky;
   top: 0;
   background: #1a2626;
   z-index: 1;
-}
-.match.scoreboard .match-roster-view .roster-view-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: #d4af37;
-  flex: 1;
-  min-width: 0;
-}
-.match.scoreboard .match-roster-view .roster-view-header .btn-view-opponent-roster {
-  padding: 0.5rem 0.85rem;
-  min-height: 44px;
-  border: 1px solid rgba(47, 79, 79, 0.5);
-  background: transparent;
-  color: rgba(240, 234, 214, 0.85);
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.match.scoreboard .match-roster-view .roster-view-header .btn-view-opponent-roster:active {
-  transform: scale(0.97);
+  border-bottom: 1px solid rgba(47, 79, 79, 0.4);
+  padding: 0;
 }
 .match.scoreboard .match-roster-view .roster-panel-readonly-note {
   margin: 0 0 0.75rem;
@@ -4825,21 +4763,26 @@ button {
 }
 .match.scoreboard .match-roster-view .roster-panel-tabs {
   display: flex;
-  border-bottom: 1px solid rgba(47, 79, 79, 0.3);
+  width: 100%;
 }
 .match.scoreboard .match-roster-view .roster-panel-tabs .roster-tab {
   flex: 1;
-  padding: 0.75rem;
+  padding: 0.85rem 1rem;
+  min-height: 48px;
   background: transparent;
   border: none;
   color: rgba(240, 234, 214, 0.6);
   font-weight: bold;
+  font-size: 0.9rem;
   cursor: pointer;
   border-bottom: 2px solid transparent;
 }
 .match.scoreboard .match-roster-view .roster-panel-tabs .roster-tab.active {
   color: #d4af37;
   border-bottom-color: #d4af37;
+}
+.match.scoreboard .match-roster-view .roster-panel-tabs .roster-tab:active {
+  transform: scale(0.98);
 }
 .match.scoreboard .match-roster-view .roster-view-body {
   flex: 1;
@@ -4935,8 +4878,7 @@ button {
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb-placeholder {
@@ -5094,8 +5036,7 @@ button {
 .match.scoreboard .match-unit-detail-modal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -5384,8 +5325,7 @@ button {
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-placeholder {
@@ -5464,8 +5404,7 @@ button {
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-placeholder {
@@ -5534,8 +5473,7 @@ button {
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-placeholder {
@@ -5610,8 +5548,7 @@ button {
 .match.scoreboard .phase-opponent-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-opponent-unit .ability-unit-thumb-placeholder {
@@ -5712,9 +5649,7 @@ button {
   cursor: pointer;
   min-height: 48px;
   -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  user-select: none;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 .match.scoreboard .phase-ability-card.is-expandable:hover {
@@ -5729,9 +5664,7 @@ button {
 }
 .match.scoreboard .phase-ability-card .ability-effect-box,
 .match.scoreboard .phase-ability-card .ability-effect-box * {
-  -webkit-user-select: text;
-     -moz-user-select: text;
-          user-select: text;
+  user-select: text;
 }
 .match.scoreboard .phase-ability-card.is-open {
   border-left-color: #d4af37;
@@ -5964,6 +5897,35 @@ button {
   margin: 0;
   white-space: pre-wrap;
 }
+.match.scoreboard .ability-effect-box .ability-unit-thumbs-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(47, 79, 79, 0.25);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.match.scoreboard .ability-effect-box .ability-unit-thumbs-section {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.match.scoreboard .ability-effect-box .ability-unit-thumbs-section .ability-unit-thumbs-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  color: rgba(240, 234, 214, 0.7);
+  white-space: nowrap;
+}
+.match.scoreboard .ability-effect-box .ability-unit-thumbs-section .ability-unit-thumbs {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
 .match.scoreboard .ability-effect-box .ability-unit-thumbs {
   display: flex;
   flex-wrap: nowrap;
@@ -6006,8 +5968,7 @@ button {
 .match.scoreboard .ability-effect-box .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .ability-effect-box .ability-unit-thumb-placeholder {
@@ -6164,8 +6125,7 @@ button {
 .match.scoreboard .deployment-unit-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .deployment-unit-thumb-placeholder {
@@ -7208,4 +7168,6 @@ button {
     display: block;
     padding: 0.5rem 0;
   }
-}/*# sourceMappingURL=style.css.map */
+}
+
+/*# sourceMappingURL=style.css.map */

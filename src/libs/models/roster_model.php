@@ -1118,6 +1118,7 @@ class Roster_Model extends Model
 	 * 各召喚呪文行の m_manifestation_lores.unit_id を辿り、対応するウォースクロール
 	 * (m_units) の基本情報を返す。unit_id 未設定の呪文はスキップ。マッチプレイ中の
 	 * ロスターパネルでウォースクロール詳細を開くために使う。
+	 * movement / hasRangedWeapon / hasWeapon はフェイズ上部ストリップ表示用。
 	 */
 	private function getManifestationUnitsForLore(int $loreRowId): array
 	{
@@ -1144,7 +1145,7 @@ class Roster_Model extends Model
 			]
 		);
 
-		$manifestations = [];
+		$pending = [];
 		$seen = [];
 		foreach ($rows as $row) {
 			$unitId = (int)($row['unit_id'] ?? 0);
@@ -1153,7 +1154,7 @@ class Roster_Model extends Model
 			}
 
 			$unit = $this->db->select(
-				'SELECT u.id, u.name, u.points, u.image,
+				'SELECT u.id, u.name, u.points, u.image, u.movement,
 				        ' . KeywordSql::displayExprBasic('u') . ' AS keywords
 				 FROM m_units u
 				 WHERE u.id = :id LIMIT 1;',
@@ -1162,17 +1163,34 @@ class Roster_Model extends Model
 			if (empty($unit)) {
 				continue;
 			}
-			$unit = $unit[0];
 			$seen[$unitId] = true;
+			$pending[] = [
+				'unit' => $unit[0],
+				'spellName' => $row['manifestation_name'] ?? null,
+			];
+		}
 
+		$unitIds = array_map(function ($item) {
+			return (int)$item['unit']['id'];
+		}, $pending);
+		$rangedSet = array_flip($this->getUnitIdsWithRangedWeapons($unitIds));
+		$weaponSet = array_flip($this->getUnitIdsWithWeapons($unitIds));
+
+		$manifestations = [];
+		foreach ($pending as $item) {
+			$unit = $item['unit'];
+			$unitId = (int)$unit['id'];
 			$manifestations[] = [
-				'id'          => (int)$unit['id'],
-				'instanceKey' => 'manifest:' . (int)$unit['id'],
-				'name'        => $unit['name'],
-				'points'      => (int)($unit['points'] ?? 0),
-				'image'       => $unit['image'] ?? null,
-				'keywords'    => $unit['keywords'] ?? '',
-				'spellName'   => $row['manifestation_name'] ?? null,
+				'id'              => $unitId,
+				'instanceKey'     => 'manifest:' . $unitId,
+				'name'            => $unit['name'],
+				'points'          => (int)($unit['points'] ?? 0),
+				'image'           => $unit['image'] ?? null,
+				'keywords'        => $unit['keywords'] ?? '',
+				'spellName'       => $item['spellName'],
+				'movement'        => $unit['movement'] ?? null,
+				'hasRangedWeapon' => isset($rangedSet[$unitId]),
+				'hasWeapon'       => isset($weaponSet[$unitId]),
 			];
 		}
 

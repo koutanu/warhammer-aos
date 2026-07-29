@@ -86,23 +86,6 @@
 			flex-direction: column;
 			gap: 0.5rem;
 
-			.btn-view-opponent-roster {
-				width: 100%;
-				min-height: 48px;
-				padding: 0.6rem 0.85rem;
-				border: 1px solid rgba($color-main, 0.6);
-				background: rgba($color-main, 0.2);
-				color: rgba($color-text, 0.9);
-				border-radius: 4px;
-				font-size: 0.85rem;
-				font-weight: bold;
-				cursor: pointer;
-
-				&:active {
-					transform: scale(0.97);
-				}
-			}
-
 			.sidebar-round {
 				display: flex;
 				align-items: baseline;
@@ -1412,42 +1395,12 @@
 		background: $color-background;
 
 		.roster-view-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			gap: 0.5rem;
-			padding: 0.85rem 1.25rem;
-			border-bottom: 1px solid rgba($color-main, 0.4);
 			position: sticky;
 			top: 0;
 			background: $color-base;
 			z-index: 1;
-
-			h3 {
-				margin: 0;
-				font-size: 1rem;
-				color: $color-accent;
-				flex: 1;
-				min-width: 0;
-			}
-
-			.btn-view-opponent-roster {
-				padding: 0.5rem 0.85rem;
-				min-height: 44px;
-				border: 1px solid rgba($color-main, 0.5);
-				background: transparent;
-				color: rgba($color-text, 0.85);
-				border-radius: 4px;
-				font-size: 0.8rem;
-				font-weight: bold;
-				cursor: pointer;
-				white-space: nowrap;
-				flex-shrink: 0;
-
-				&:active {
-					transform: scale(0.97);
-				}
-			}
+			border-bottom: 1px solid rgba($color-main, 0.4);
+			padding: 0;
 		}
 
 		.roster-panel-readonly-note {
@@ -1458,21 +1411,27 @@
 
 		.roster-panel-tabs {
 			display: flex;
-			border-bottom: 1px solid rgba($color-main, 0.3);
+			width: 100%;
 
 			.roster-tab {
 				flex: 1;
-				padding: 0.75rem;
+				padding: 0.85rem 1rem;
+				min-height: 48px;
 				background: transparent;
 				border: none;
 				color: rgba($color-text, 0.6);
 				font-weight: bold;
+				font-size: 0.9rem;
 				cursor: pointer;
 				border-bottom: 2px solid transparent;
 
 				&.active {
 					color: $color-accent;
 					border-bottom-color: $color-accent;
+				}
+
+				&:active {
+					transform: scale(0.98);
 				}
 			}
 		}
