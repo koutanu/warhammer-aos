@@ -62,14 +62,20 @@ document.addEventListener("DOMContentLoaded", () => {
 			startPoll();
 		} else {
 			stopPoll();
-			// 配置から抜けた瞬間のみ通常レイアウト（ロスタービュー表示）へ戻す。
-			// フェーズ表示中などは ability_panel のモード管理に委ね、上書きしない。
-			if (
-				wasDeploymentActive &&
-				els.rosterView &&
-				els.rosterView.style.display === "none"
-			) {
-				els.rosterView.style.display = "";
+			// 配置から抜けた瞬間のみ通常レイアウト（フェイズ表示）へ戻す。
+			if (wasDeploymentActive) {
+				if (window.MatchAbilityPanel?.setMode) {
+					window.MatchAbilityPanel.setMode("phase");
+				} else {
+					if (els.rosterView) els.rosterView.style.display = "none";
+					if (els.phasePanel) els.phasePanel.style.display = "flex";
+					document
+						.getElementById("tabModeRoster")
+						?.classList.remove("active");
+					document
+						.getElementById("tabModePhase")
+						?.classList.add("active");
+				}
 			}
 		}
 

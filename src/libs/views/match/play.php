@@ -18,8 +18,8 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 			</div>
 
 			<div class="match-mode-tabs">
-				<button type="button" id="tabModeRoster" class="match-mode-tab active">ロスター</button>
-				<button type="button" id="tabModePhase" class="match-mode-tab">フェイズ</button>
+				<button type="button" id="tabModeRoster" class="match-mode-tab">ロスター</button>
+				<button type="button" id="tabModePhase" class="match-mode-tab active">フェイズ</button>
 			</div>
 
 			<div class="vp-bar" id="vpBar">
@@ -69,6 +69,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 				<div class="sidebar-turn" id="sidebarTurn">
 					<span class="sidebar-turn-label" id="activeTurnLabel">PLAYER 1 のターン</span>
 					<button type="button" id="btnSwitchTurn" class="btn-switch-turn">相手のターンへ</button>
+					<button type="button" id="btnReselectFirstPlayer" class="btn-reselect-first-player" style="display:none;">先攻を選び直す</button>
 				</div>
 				<button type="button" id="btnNextRound" class="btn-next-round">次のラウンドへ</button>
 				<button type="button" id="btnCompleteMatch" class="btn-header-end">試合終了</button>
@@ -78,7 +79,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 				<div id="p2ShareBanner" class="match-p2-share-banner">
 					<span>Player 2 用 URL:</span>
 					<code id="p2ShareUrl"><?= $this->h($p2ShareUrl); ?></code>
-					<button type="button" id="btnCopyP2Url" class="btn-copy-p2-url">コピー</button>
+					<button type="button" id="btnCopyP2Url" class="btn-copy-p2-url">Player 2へ</button>
 					<button type="button" id="btnRosterMemo" class="btn-roster-memo">メモ</button>
 				</div>
 			<?php endif; ?>
@@ -106,7 +107,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 				</footer>
 			</section>
 
-			<section id="rosterView" class="match-roster-view">
+			<section id="rosterView" class="match-roster-view" style="display:none;">
 				<div class="roster-view-header">
 					<h3 id="rosterViewTitle">自分のロスター</h3>
 				</div>
@@ -115,12 +116,12 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 				</div>
 			</section>
 
-			<div id="phasePanel" class="match-phase-panel" style="display:none;">
+			<div id="phasePanel" class="match-phase-panel" style="display:flex;">
 				<div class="phase-panel-header">
 					<div class="phase-turn-tabs">
 						<button type="button" id="phaseTurnMy" class="phase-turn-tab active">自分のターン</button>
 						<button type="button" id="phaseTurnOpponent" class="phase-turn-tab">相手のターン</button>
-						<button type="button" id="btnShowRoundStart" class="btn-show-round-start" style="display:none;">ラウンド開始字に使えるアビリティ</button>
+						<button type="button" id="btnShowRoundStart" class="btn-show-round-start" style="display:none;">ラウンド開始時に使えるアビリティ</button>
 					</div>
 					<p id="phaseStatusLine" class="phase-status-line">-</p>
 					<div id="phaseStepper" class="phase-stepper"></div>
@@ -133,6 +134,7 @@ $p2ShareUrl = URL . 'match/play/' . (int)($match_id ?? 0) . '?slot=2';
 					<p id="phaseAbilityEmpty" class="phase-ability-empty" style="display:none;"></p>
 					<div id="phaseAbilityList" class="phase-ability-list"></div>
 				</div>
+				<footer id="phaseOpponentRosterStrip" class="phase-opponent-roster-strip" hidden></footer>
 			</div>
 		</main>
 	</div>

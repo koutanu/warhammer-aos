@@ -288,6 +288,27 @@ class Matchplay extends Controller
         });
     }
 
+    public function setRoundFirstPlayer()
+    {
+        $this->jsonResponse(function () {
+            $body = $this->getJsonBody();
+            $this->requireTokenFromBody($body);
+            $matchId = (int)($body['matchId'] ?? 0);
+            $firstPlayerSlot = (int)($body['firstPlayerSlot'] ?? 0);
+
+            if ($matchId <= 0 || !in_array($firstPlayerSlot, [1, 2], true)) {
+                $this->jsonError('無効なパラメータです。', 400);
+            }
+
+            $ok = $this->model->setRoundFirstPlayer($matchId, $firstPlayerSlot);
+            if (!$ok) {
+                $this->jsonError('先攻を変更できません。', 400);
+            }
+
+            return ['success' => true, 'state' => $this->model->buildMatchState($matchId)];
+        });
+    }
+
     public function setRound()
     {
         $this->jsonResponse(function () {

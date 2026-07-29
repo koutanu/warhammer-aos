@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		phaseMovementStrip: document.getElementById("phaseMovementStrip"),
 		phaseShootingStrip: document.getElementById("phaseShootingStrip"),
 		phaseCombatStrip: document.getElementById("phaseCombatStrip"),
+		opponentRosterStrip: document.getElementById("phaseOpponentRosterStrip"),
 		turnMy: document.getElementById("phaseTurnMy"),
 		turnOpponent: document.getElementById("phaseTurnOpponent"),
 	};
@@ -59,6 +60,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	renderPhasePanel();
+
+	const isDeployment = (initialState?.game?.phase || "") === "deployment";
+	if (!isDeployment) {
+		setMode("phase");
+	}
+
+	window.MatchAbilityPanel = { setMode };
 
 	window.addEventListener("matchStateUpdated", () => {
 		renderPhasePanel();
@@ -198,6 +206,13 @@ document.addEventListener("DOMContentLoaded", () => {
 			openUnitDetailFromThumb(thumb);
 		});
 
+		els.opponentRosterStrip?.addEventListener("click", (e) => {
+			const thumb = e.target.closest(".ability-unit-thumb");
+			if (!thumb) return;
+			e.stopPropagation();
+			openUnitDetailFromThumb(thumb);
+		});
+
 		els.abilityList?.addEventListener("keydown", (e) => {
 			if (e.key !== "Enter" && e.key !== " ") return;
 			const card = e.target.closest(".phase-ability-card.is-expandable");
@@ -257,6 +272,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		};
 
 		const myPlayer = state.players?.find((p) => p.slot === viewerSlot);
+		const opponentSlot = viewerSlot === 1 ? 2 : 1;
+		const opponentPlayer = state.players?.find((p) => p.slot === opponentSlot);
 		const rosterName =
 			myPlayer?.roster?.name || myPlayer?.name || `Player ${viewerSlot}`;
 		const isMyTurn = viewTurn === "my";
@@ -275,6 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		renderMovementStrip(viewPhase, myPlayer?.roster || null, game);
 		renderShootingStrip(viewPhase, myPlayer?.roster || null, game);
 		renderCombatStrip(viewPhase, myPlayer?.roster || null, game);
+		renderOpponentRosterStrip(opponentPlayer, game, opponentSlot);
 		renderAbilities(state, game, myPlayer, isMyTurn);
 	}
 
@@ -484,11 +502,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	function openUnitDetailFromThumb(thumb) {
 		if (!thumb?.dataset?.unitId || !window.RosterUnitDetail) return;
+		const slot = parseInt(thumb.dataset.playerSlot, 10);
 		window.RosterUnitDetail.show({
 			id: parseInt(thumb.dataset.unitId, 10),
 			name: thumb.dataset.unitName,
 			keywords: thumb.dataset.unitKeywords,
-			playerSlot: viewerSlot,
+			playerSlot: Number.isFinite(slot) && slot > 0 ? slot : viewerSlot,
 		});
 	}
 
@@ -638,6 +657,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		strip.innerHTML = buildCombatStripHtml(units);
 		strip.style.display = "";
+		strip.hidden = false;
+	}
+
+	function buildOpponentRosterStripHtml(units, playerSlot) {
+		if (!units.length) return "";
+		const buttons = units
+			.map(
+				(unit) =>
+					`<button type="button" class="phase-opponent-unit ability-unit-thumb"
+						data-unit-id="${unit.id}"
+						data-unit-name="${escapeAttr(unit.name || "")}"
+						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
+						data-player-slot="${playerSlot}"
+						aria-label="${escapeAttr(unit.name || "ユニット")}">
+						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
+					</button>`,
+			)
+			.join("");
+		return `<section class="phase-opponent-roster-section">
+			<h4 class="phase-opponent-roster-title">相手ロスター</h4>
+			<div class="phase-opponent-units" role="list">${buttons}</div>
+		</section>`;
+	}
+
+	function renderOpponentRosterStrip(opponentPlayer, game, opponentSlot) {
+		const strip = els.opponentRosterStrip;
+		if (!strip) return;
+
+		const roster = opponentPlayer?.roster || null;
+		if (!roster) {
+			strip.innerHTML = "";
+			strip.hidden = true;
+			return;
+		}
+
+		const destroyedMap = game?.destroyedUnits?.[opponentSlot] || {};
+		const units = collectRosterUnits(roster, destroyedMap)
+			.filter((u) => u.id)
+			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+		if (!units.length) {
+			strip.innerHTML = "";
+			strip.hidden = true;
+			return;
+		}
+
+		strip.innerHTML = buildOpponentRosterStripHtml(units, opponentSlot);
 		strip.hidden = false;
 	}
 

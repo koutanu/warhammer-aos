@@ -71,7 +71,7 @@ class Auth
 				header('location: ' . URL . 'login');
 				return false;
 			} else {
-				$_SESSION['lastreq'] = $now;
+				$_SESSION['last_request_time'] = $now;
 			}
 		}
 		return true;

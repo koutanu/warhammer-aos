@@ -713,6 +713,46 @@ class Match_Model extends Model
     }
 
     /**
+     * 現ラウンドの先攻だけを選び直す（ラウンド進行・turn_counter は変更しない）。
+     * 先攻ターン中の押し間違い修正用。deployment / 完了試合は拒否。
+     */
+    public function setRoundFirstPlayer(int $matchId, int $firstPlayerSlot): bool
+    {
+        if (!in_array($firstPlayerSlot, [1, 2], true)) {
+            return false;
+        }
+
+        $match = $this->getMatchById($matchId);
+        if (!$match || $match['status'] === 'completed') {
+            return false;
+        }
+        if (($match['game_phase'] ?? '') === 'deployment') {
+            return false;
+        }
+
+        $round = (int)($match['game_battle_round'] ?? 1);
+        if ($round < 2) {
+            return false;
+        }
+
+        $result = $this->db->executesql(
+            'UPDATE t_matches SET active_player_slot = :slot, game_phase = :phase, updated_at = :updated_at WHERE id = :id;',
+            [
+                'slot'       => $firstPlayerSlot,
+                'phase'      => 'hero',
+                'updated_at' => date('Y-m-d H:i:s'),
+                'id'         => $matchId,
+            ]
+        );
+        if (!$result[0]) {
+            return false;
+        }
+
+        $this->recordRoundFirstPlayer($matchId, $round, $firstPlayerSlot);
+        return true;
+    }
+
+    /**
      * 指定ラウンドの先攻プレイヤーを記録し、Seizing the Initiative を判定する。
      * - first_player_slot はそのラウンドの両 slot 行に同値を保存。
      * - ダブルターン自体は first_player_slot の入れ替わりで表現する（専用フラグなし）。

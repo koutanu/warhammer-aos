@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		player2TotalVp: document.getElementById("player2TotalVp"),
 		vpBar: document.getElementById("vpBar"),
 		btnSwitchTurn: document.getElementById("btnSwitchTurn"),
+		btnReselectFirstPlayer: document.getElementById("btnReselectFirstPlayer"),
 		activeTurnLabel: document.getElementById("activeTurnLabel"),
 		sidebarTurn: document.getElementById("sidebarTurn"),
 		btnNextRound: document.getElementById("btnNextRound"),
@@ -89,6 +90,59 @@ document.addEventListener("DOMContentLoaded", function () {
 		}
 	});
 
+	let turnPollTimer = null;
+	let turnPollInFlight = false;
+
+	function pollTurnState() {
+		if (turnPollInFlight || MatchStateManager.isDirty()) return;
+
+		turnPollInFlight = true;
+		fetch(baseUrl + "match/getState/" + matchId)
+			.then((res) => res.json())
+			.then((data) => {
+				if (!data.success || !data.state?.game) return;
+				if (MatchStateManager.isDirty()) return;
+
+				const local = MatchStateManager.getState()?.game || {};
+				const remote = data.state.game;
+				const turnChanged =
+					local.activePlayer !== remote.activePlayer ||
+					local.battleRound !== remote.battleRound ||
+					local.firstPlayer !== remote.firstPlayer;
+
+				if (!turnChanged) return;
+
+				MatchStateManager.applyServerGameSync(
+					remote,
+					data.state.updatedAt,
+				);
+			})
+			.catch(() => {})
+			.finally(() => {
+				turnPollInFlight = false;
+			});
+	}
+
+	function startTurnPoll() {
+		stopTurnPoll();
+		turnPollTimer = setInterval(pollTurnState, 3000);
+	}
+
+	function stopTurnPoll() {
+		if (turnPollTimer) {
+			clearInterval(turnPollTimer);
+			turnPollTimer = null;
+		}
+	}
+
+	startTurnPoll();
+
+	document.addEventListener("visibilitychange", function () {
+		if (document.visibilityState === "visible") {
+			pollTurnState();
+		}
+	});
+
 	function bindEvents() {
 		els.vpBar?.querySelectorAll(".vp-step").forEach((btn) => {
 			btn.addEventListener("click", function () {
@@ -137,6 +191,31 @@ document.addEventListener("DOMContentLoaded", function () {
 					},
 				);
 			});
+		});
+
+		els.btnReselectFirstPlayer?.addEventListener("click", function () {
+			if (els.btnReselectFirstPlayer.disabled) return;
+			const state = MatchStateManager.getState();
+			const phase = getRoundActionPhase(state);
+			if (
+				phase.isDeployment ||
+				!phase.isFirstPlayerTurn ||
+				phase.round < 2
+			) {
+				return;
+			}
+
+			const p1 = MatchStateManager.getPlayer(1) || {};
+			const p2 = MatchStateManager.getPlayer(2) || {};
+			openFirstPlayerModal(
+				"先攻を選び直す",
+				"このラウンドで先に手番を行うプレイヤーを選び直してください。",
+				p1.name || "Player 1",
+				p2.name || "Player 2",
+				function (slot) {
+					setRoundFirstPlayer(slot);
+				},
+			);
 		});
 
 		els.btnCompleteMatch.addEventListener("click", function () {
@@ -243,17 +322,24 @@ document.addEventListener("DOMContentLoaded", function () {
 			els.sidebarTurn.style.display = phase.isDeployment ? "none" : "";
 		}
 
-		if (!els.btnSwitchTurn) return;
+		const showFirstPlayerActions =
+			!phase.isDeployment && phase.isFirstPlayerTurn;
 
-		// 先攻のターン中のみターン切替ボタン。文言は viewer と先攻/後攻から決定。
-		const showSwitch = !phase.isDeployment && phase.isFirstPlayerTurn;
-		els.btnSwitchTurn.style.display = showSwitch ? "" : "none";
-		els.btnSwitchTurn.disabled = !showSwitch;
+		if (els.btnSwitchTurn) {
+			els.btnSwitchTurn.style.display = showFirstPlayerActions ? "" : "none";
+			els.btnSwitchTurn.disabled = !showFirstPlayerActions;
 
-		if (showSwitch) {
-			// 先攻ターン終了 → 後攻へ。viewer が先攻なら「相手のターンへ」、後攻なら「自分のターンへ」
-			els.btnSwitchTurn.textContent =
-				phase.active === viewerSlot ? "相手のターンへ" : "自分のターンへ";
+			if (showFirstPlayerActions) {
+				// 先攻ターン終了 → 後攻へ。viewer が先攻なら「相手のターンへ」、後攻なら「自分のターンへ」
+				els.btnSwitchTurn.textContent =
+					phase.active === viewerSlot ? "相手のターンへ" : "自分のターンへ";
+			}
+		}
+
+		if (els.btnReselectFirstPlayer) {
+			const showReselect = showFirstPlayerActions && phase.round >= 2;
+			els.btnReselectFirstPlayer.style.display = showReselect ? "" : "none";
+			els.btnReselectFirstPlayer.disabled = !showReselect;
 		}
 	}
 
@@ -353,6 +439,22 @@ document.addEventListener("DOMContentLoaded", function () {
 		} catch (e) {
 			console.error("Advance round failed", e);
 			alert("ラウンドを進行できませんでした。時間をおいて再度お試しください。");
+		}
+	}
+
+	async function setRoundFirstPlayer(firstPlayerSlot) {
+		try {
+			const res = await apiPost("match/setRoundFirstPlayer", {
+				token,
+				matchId,
+				firstPlayerSlot,
+			});
+			if (res.success) {
+				MatchStateManager.applyServerState(res.state);
+			}
+		} catch (e) {
+			console.error("Set round first player failed", e);
+			alert("先攻を変更できませんでした。時間をおいて再度お試しください。");
 		}
 	}
 

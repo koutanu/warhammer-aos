@@ -302,10 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			const urlEl = document.getElementById("p2ShareUrl");
 			const text = urlEl?.textContent || "";
 			if (!text) return;
-			navigator.clipboard
-				?.writeText(text)
-				.then(() => alert("Player 2 用 URL をコピーしました。"))
-				.catch(() => prompt("URL をコピーしてください:", text));
+			window.location.href = text;
 		});
 	}
 
