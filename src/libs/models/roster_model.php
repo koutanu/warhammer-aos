@@ -548,6 +548,71 @@ class Roster_Model extends Model
 	}
 
 	/**
+	 * ユニット詳細モーダル用: キーワード行（display_name + effect）
+	 * KeywordSql::displayExpr と同様に大同盟・軍勢英語名を末尾へ付与する。
+	 *
+	 * @return list<array{id:?int,name:string,display_name:string,effect:?string,keyword_type:string,sort_order:int}>
+	 */
+	public function getUnitKeywordDetails($unit_id)
+	{
+		$unitId = (int)$unit_id;
+		$sql = "SELECT km.id, km.name, km.keyword_type, km.effect, km.sort_order, uk.param_value
+                FROM m_unit_keywords AS uk
+                JOIN m_keywords_master AS km ON uk.keyword_id = km.id
+                WHERE uk.unit_id = :unit_id
+                ORDER BY km.keyword_type ASC, km.sort_order ASC, km.name ASC, km.id ASC;";
+		$rows = $this->db->select($sql, ['unit_id' => $unitId]) ?: [];
+
+		$out = [];
+		foreach ($rows as $row) {
+			$effect = isset($row['effect']) ? trim((string)$row['effect']) : '';
+			$out[] = [
+				'id' => (int)$row['id'],
+				'name' => (string)$row['name'],
+				'display_name' => KeywordDisplay::format(
+					(string)$row['name'],
+					$row['param_value'] ?? null
+				),
+				'effect' => $effect !== '' ? $effect : null,
+				'keyword_type' => (string)$row['keyword_type'],
+				'sort_order' => (int)$row['sort_order'],
+			];
+		}
+
+		$factionSql = "SELECT f.grand_alliance, f.name_en
+                       FROM m_units u
+                       JOIN m_factions f ON f.id = u.faction_id
+                       WHERE u.id = :id LIMIT 1;";
+		$factionRows = $this->db->select($factionSql, ['id' => $unitId]);
+		if (!empty($factionRows)) {
+			$ga = strtoupper(trim((string)($factionRows[0]['grand_alliance'] ?? '')));
+			$nameEn = strtoupper(trim((string)($factionRows[0]['name_en'] ?? '')));
+			if ($ga !== '') {
+				$out[] = [
+					'id' => null,
+					'name' => $ga,
+					'display_name' => $ga,
+					'effect' => null,
+					'keyword_type' => 'faction',
+					'sort_order' => 9990,
+				];
+			}
+			if ($nameEn !== '') {
+				$out[] = [
+					'id' => null,
+					'name' => $nameEn,
+					'display_name' => $nameEn,
+					'effect' => null,
+					'keyword_type' => 'faction',
+					'sort_order' => 9991,
+				];
+			}
+		}
+
+		return $out;
+	}
+
+	/**
 	 * ユニットに紐づく武器（射撃・近接）プロファイル一覧を取得
 	 */
 	public function getUnitWeapons($unit_id)

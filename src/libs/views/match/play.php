@@ -243,7 +243,8 @@ $p2Url = $playBaseUrl . '?slot=2';
 					<div class="detail-top-keywords">
 						<div class="detail-description-section">
 							<h4>KEYWORDS / キーワード</h4>
-							<p id="detailUnitKeywords" class="detail-keywords-text">-</p>
+							<div id="detailUnitKeywords" class="detail-keywords detail-keywords-text">-</div>
+							<div id="detailKeywordEffect" class="detail-keyword-effect" style="display:none;" hidden></div>
 						</div>
 						<div id="detailUnitEnhancements" class="detail-unit-enhancements" style="display:none;"></div>
 					</div>

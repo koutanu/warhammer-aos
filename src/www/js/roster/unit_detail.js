@@ -50,6 +50,108 @@ window.RosterUnitDetail = (function () {
 			.replace(/"/g, "&quot;");
 	}
 
+	function clearKeywordEffect() {
+		const effectEl = getEl("detailKeywordEffect");
+		if (!effectEl) return;
+		effectEl.textContent = "";
+		effectEl.style.display = "none";
+		effectEl.hidden = true;
+		effectEl.removeAttribute("data-keyword-id");
+	}
+
+	function setKeywordEffect(keywordId, effectText) {
+		const effectEl = getEl("detailKeywordEffect");
+		if (!effectEl) return;
+		const openId = effectEl.getAttribute("data-keyword-id");
+		if (openId === String(keywordId) && effectEl.style.display !== "none") {
+			clearKeywordEffect();
+			return;
+		}
+		effectEl.textContent = effectText;
+		effectEl.setAttribute("data-keyword-id", String(keywordId));
+		effectEl.hidden = false;
+		effectEl.style.display = "";
+	}
+
+	/**
+	 * キーワード一覧を描画。effect があるものはクリックで効果文を展開。
+	 * @param {HTMLElement} keywordsEl
+	 * @param {Array} details
+	 * @param {string} [extraPlain] ヒーロー連隊適格名など effect なしの追記
+	 */
+	function renderKeywords(keywordsEl, details, extraPlain) {
+		if (!keywordsEl) return;
+		clearKeywordEffect();
+		keywordsEl.innerHTML = "";
+
+		const items = Array.isArray(details) ? details.slice() : [];
+		const extra = (extraPlain || "").trim();
+		if (extra) {
+			extra.split(",").forEach((part) => {
+				const name = part.trim();
+				if (!name) return;
+				items.push({
+					id: null,
+					display_name: name,
+					effect: null,
+				});
+			});
+		}
+
+		if (!items.length) {
+			keywordsEl.textContent = "-";
+			return;
+		}
+
+		items.forEach((kw, index) => {
+			if (index > 0) {
+				keywordsEl.appendChild(document.createTextNode(", "));
+			}
+			const label = kw.display_name || kw.name || "";
+			const effect = (kw.effect || "").trim();
+			if (effect) {
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.className = "detail-keyword detail-keyword--has-effect";
+				btn.textContent = label;
+				const kid = kw.id != null ? kw.id : `idx-${index}`;
+				btn.setAttribute("data-keyword-id", String(kid));
+				btn.setAttribute("aria-expanded", "false");
+				btn.title = "効果を表示";
+				btn.addEventListener("click", () => {
+					const effectEl = getEl("detailKeywordEffect");
+					const wasOpen =
+						effectEl &&
+						effectEl.getAttribute("data-keyword-id") ===
+							String(kid) &&
+						effectEl.style.display !== "none";
+					keywordsEl
+						.querySelectorAll(".detail-keyword--has-effect")
+						.forEach((el) =>
+							el.setAttribute("aria-expanded", "false"),
+						);
+					setKeywordEffect(kid, effect);
+					btn.setAttribute(
+						"aria-expanded",
+						wasOpen ? "false" : "true",
+					);
+				});
+				keywordsEl.appendChild(btn);
+			} else {
+				const span = document.createElement("span");
+				span.className = "detail-keyword";
+				span.textContent = label;
+				keywordsEl.appendChild(span);
+			}
+		});
+	}
+
+	function renderKeywordsPlain(keywordsEl, text) {
+		if (!keywordsEl) return;
+		clearKeywordEffect();
+		keywordsEl.textContent = text || "-";
+	}
+
 	/**
 	 * マッチ状態などから、このユニットに割当された神器・英雄特性・追加能力を解決する。
 	 * @returns {{trait:?object, artefact:?object, season:?object}|null}
@@ -213,7 +315,7 @@ window.RosterUnitDetail = (function () {
 			getEl("detailSaveLabel").textContent = "防御力";
 		if (getEl("detailUnitControl"))
 			getEl("detailUnitControl").textContent = "...";
-		if (keywordsEl) keywordsEl.textContent = unit.keywords || "...";
+		if (keywordsEl) renderKeywordsPlain(keywordsEl, unit.keywords || "...");
 		if (flavorTextEl) flavorTextEl.textContent = unit.flavor_text || "...";
 		if (regimentSection) regimentSection.style.display = "none";
 		if (regimentOptionsEl) regimentOptionsEl.innerHTML = "";
@@ -295,13 +397,21 @@ window.RosterUnitDetail = (function () {
 						: `${ctrl}`;
 			}
 			if (keywordsEl) {
-				let kw = info.keywords || unit.keywords || "-";
 				const isHero = Number(info.is_hero);
-				const regNames = info.regiment_eligibility_names;
-				if (isHero && regNames) {
-					kw = kw && kw !== "-" ? `${kw}, ${regNames}` : regNames;
+				const regNames =
+					isHero && info.regiment_eligibility_names
+						? info.regiment_eligibility_names
+						: "";
+				const details = detailData.keyword_details;
+				if (Array.isArray(details) && details.length > 0) {
+					renderKeywords(keywordsEl, details, regNames);
+				} else {
+					let kw = info.keywords || unit.keywords || "-";
+					if (regNames) {
+						kw = kw && kw !== "-" ? `${kw}, ${regNames}` : regNames;
+					}
+					renderKeywordsPlain(keywordsEl, kw);
 				}
-				keywordsEl.textContent = kw;
 			}
 			if (flavorTextEl) {
 				flavorTextEl.textContent = info.flavor_text || "-";
@@ -460,6 +570,7 @@ window.RosterUnitDetail = (function () {
 	function close() {
 		const unitDetailModal = getEl(modalId);
 		if (unitDetailModal) unitDetailModal.style.display = "none";
+		clearKeywordEffect();
 		window.ModalScroll?.unlock(modalId);
 	}
 

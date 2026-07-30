@@ -3,7 +3,7 @@
  * キーワード正規化マイグレーション
  * php scripts/migrate_keywords_master.php
  *
- * - m_core_abilities → m_keywords_master（存在する場合）
+ * - 旧 m_core_abilities があれば m_keywords_master へリネーム、両方あれば旧表を削除
  * - m_unit_keywords 中間テーブル作成
  * - m_units.unit_keywords / faction_keywords からバックフィル
  */
@@ -81,10 +81,13 @@ function findOrCreateKeyword(PDO $pdo, string $name, string $type): int
     return (int)$pdo->lastInsertId();
 }
 
-// --- 1. RENAME m_core_abilities → m_keywords_master ---
+// --- 1. 旧 m_core_abilities の片付け ---
 if (tableExists($pdo, 'm_core_abilities') && !tableExists($pdo, 'm_keywords_master')) {
     $pdo->exec('RENAME TABLE m_core_abilities TO m_keywords_master');
     echo "OK: RENAME TABLE m_core_abilities TO m_keywords_master\n";
+} elseif (tableExists($pdo, 'm_core_abilities') && tableExists($pdo, 'm_keywords_master')) {
+    $pdo->exec('DROP TABLE m_core_abilities');
+    echo "OK: DROP TABLE m_core_abilities (m_keywords_master already exists)\n";
 } elseif (tableExists($pdo, 'm_keywords_master')) {
     echo "Skip: m_keywords_master already exists\n";
 } else {

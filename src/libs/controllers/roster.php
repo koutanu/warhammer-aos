@@ -637,11 +637,18 @@ class Roster extends Controller
 				$abilities = $this->model->getUnitAbilities($unit_id) ?: [];
 			}
 
+			// 4. キーワード詳細（effect 付き）
+			$keywordDetails = [];
+			if (method_exists($this->model, 'getUnitKeywordDetails')) {
+				$keywordDetails = $this->model->getUnitKeywordDetails($unit_id) ?: [];
+			}
+
 			// すべてを一つの器にまとめてフロントへ返却
 			echo json_encode([
-				'info'      => $unitinfo,
-				'weapons'   => $weapons,
-				'abilities' => $abilities
+				'info'             => $unitinfo,
+				'weapons'          => $weapons,
+				'abilities'        => $abilities,
+				'keyword_details'  => $keywordDetails,
 			], JSON_UNESCAPED_UNICODE);
 			exit;
 		} catch (\Exception $e) {

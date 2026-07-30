@@ -655,6 +655,36 @@ button {
   line-height: 1.5;
   font-size: 0.9rem;
 }
+#unitDetailModal .detail-keywords .detail-keyword {
+  display: inline;
+}
+#unitDetailModal .detail-keywords .detail-keyword--has-effect {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: #ffcc00;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+#unitDetailModal .detail-keywords .detail-keyword--has-effect:hover,
+#unitDetailModal .detail-keywords .detail-keyword--has-effect[aria-expanded=true] {
+  color: #ffe066;
+}
+#unitDetailModal .detail-keyword-effect {
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  background: #2a2a32;
+  border-left: 3px solid rgba(255, 204, 0, 0.45);
+  border-radius: 0 6px 6px 0;
+  color: #eee;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
 #unitDetailModal .detail-unit-enhancements {
   display: flex;
   flex-direction: column;

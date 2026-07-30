@@ -1,6 +1,6 @@
--- m_core_abilities を m_keywords_master にリネームし、ユニット↔キーワード中間テーブルを追加。
--- ※ RENAME は m_core_abilities が存在する場合のみ migrate_keywords_master.php が実行する。
--- ※ 以下の ALTER / CREATE は冪等に実行可能。
+-- キーワードマスタとユニット↔キーワード中間テーブル。
+-- ※ 旧 m_core_abilities のリネーム／削除は migrate_keywords_master.php が実行する。
+-- ※ 以下の CREATE は冪等に実行可能。
 
 CREATE TABLE IF NOT EXISTS m_keywords_master (
   id           INT AUTO_INCREMENT PRIMARY KEY,
