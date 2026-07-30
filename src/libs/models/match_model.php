@@ -294,6 +294,10 @@ class Match_Model extends Model
             ['match_id' => $matchId]
         );
         $this->db->executesql(
+            'DELETE FROM t_match_ability_target_units WHERE match_id = :match_id;',
+            ['match_id' => $matchId]
+        );
+        $this->db->executesql(
             'DELETE FROM t_match_unit_status WHERE match_id = :match_id;',
             ['match_id' => $matchId]
         );
@@ -348,6 +352,7 @@ class Match_Model extends Model
 
         $players = $this->buildPlayersFromMatch($match, $factionMap, $rounds);
         $usedAbilities = $this->buildUsedAbilitiesMap($matchId);
+        $abilityTargetUnits = $this->buildAbilityTargetUnitsMap($matchId);
         $destroyedUnits = $this->buildDestroyedUnitsMap($matchId);
         $summonedUnits = $this->buildSummonedUnitsMap($matchId);
         $btProgress = $this->getBattleTacticProgressMap($matchId);
@@ -382,9 +387,10 @@ class Match_Model extends Model
                 'firstPlayer'     => $firstPlayer,
                 'phase'           => $match['game_phase'] ?? 'hero',
                 'turnCounter'     => (int)($match['game_turn_counter'] ?? 1),
-                'usedAbilities'   => $usedAbilities,
-                'destroyedUnits'  => $destroyedUnits,
-                'summonedUnits'   => $summonedUnits,
+                'usedAbilities'      => $usedAbilities,
+                'abilityTargetUnits' => $abilityTargetUnits,
+                'destroyedUnits'     => $destroyedUnits,
+                'summonedUnits'      => $summonedUnits,
             ],
             'updatedAt'      => $match['updated_at'],
         ];
@@ -600,9 +606,38 @@ class Match_Model extends Model
                 'usedAtPhase'      => $row['used_at_phase'] ?? '',
                 'activeThisTurn'   => $activeThisTurn,
                 'battleScoped'     => $battleScoped,
+                'targetUnitKey'    => $row['target_unit_key'] ?? null,
             ];
         }
 
+        return $map;
+    }
+
+    /**
+     * @return array<int, array<string, list<string>>> player_slot => [ ability_key => [unit_key, ...] ]
+     */
+    public function buildAbilityTargetUnitsMap(int $matchId): array
+    {
+        $rows = $this->db->select(
+            'SELECT player_slot, ability_key, unit_key
+             FROM t_match_ability_target_units
+             WHERE match_id = :match_id
+             ORDER BY id ASC;',
+            ['match_id' => $matchId]
+        );
+        $map = [];
+        foreach ($rows as $row) {
+            $slot = (int)$row['player_slot'];
+            $abilityKey = (string)$row['ability_key'];
+            $unitKey = (string)$row['unit_key'];
+            if ($abilityKey === '' || $unitKey === '') {
+                continue;
+            }
+            if (!isset($map[$slot][$abilityKey])) {
+                $map[$slot][$abilityKey] = [];
+            }
+            $map[$slot][$abilityKey][] = $unitKey;
+        }
         return $map;
     }
 
@@ -1063,20 +1098,32 @@ class Match_Model extends Model
         return (bool)$result[0];
     }
 
-    public function toggleAbility(int $matchId, int $playerSlot, string $abilityKey, string $phase, ?string $triggerTurn = null): bool
-    {
+    /**
+     * アビリティ使用トグル。
+     * @return array{ok:bool, error?:string}
+     */
+    public function toggleAbility(
+        int $matchId,
+        int $playerSlot,
+        string $abilityKey,
+        string $phase,
+        ?string $triggerTurn = null,
+        ?string $unitKey = null
+    ): array {
         if (!in_array($playerSlot, [1, 2], true) || $abilityKey === '') {
-            return false;
+            return ['ok' => false, 'error' => '無効なパラメータです。'];
         }
 
         $match = $this->getMatchById($matchId);
         if (!$match || $match['status'] === 'completed') {
-            return false;
+            return ['ok' => false, 'error' => 'アビリティの更新に失敗しました。'];
         }
 
         $turnCounter = (int)($match['game_turn_counter'] ?? 1);
         $gameRound = (int)($match['game_battle_round'] ?? 1);
         $now = date('Y-m-d H:i:s');
+        $unitKey = $unitKey !== null ? trim($unitKey) : '';
+        $requiresTarget = $this->abilityRequiresTargetUnit($abilityKey, $playerSlot, $matchId);
 
         $rows = $this->db->select(
             'SELECT * FROM t_match_ability_usage
@@ -1099,47 +1146,208 @@ class Match_Model extends Model
             $isActiveThisRound = $isRoundScoped && (int)$row['used_in_game_round'] === $gameRound;
             // battle/round スコープは過去ターンに使用済みでも、対象期間内なら再タップで使用取り消し（DELETE）できる
             if ($isActive || $isBattleScoped || $isActiveThisRound) {
+                $prevTarget = trim((string)($row['target_unit_key'] ?? ''));
                 $this->db->executesql(
                     'DELETE FROM t_match_ability_usage WHERE id = :id;',
                     ['id' => $row['id']]
                 );
-            } else {
-                $this->db->executesql(
-                    'UPDATE t_match_ability_usage SET
-                        used_in_game_round = :game_round,
-                        used_in_turn = :turn_counter,
-                        used_at_phase = :phase,
-                        updated_at = :updated_at
-                     WHERE id = :id;',
-                    [
-                        'game_round'    => $gameRound,
-                        'turn_counter'  => $turnCounter,
-                        'phase'         => $phase,
-                        'updated_at'    => $now,
-                        'id'            => $row['id'],
-                    ]
-                );
+                if ($prevTarget !== '') {
+                    $this->removeAbilityTargetUnit($matchId, $playerSlot, $abilityKey, $prevTarget);
+                }
+                return ['ok' => true];
             }
-            return true;
+
+            // 過去ターンの usage 行を今ターン用に再アクティブ化
+            if ($requiresTarget && $unitKey === '') {
+                return ['ok' => false, 'error' => '対象ユニットを選んでください。'];
+            }
+            if ($unitKey !== '') {
+                $reserve = $this->reserveAbilityTargetUnit(
+                    $matchId,
+                    $playerSlot,
+                    $abilityKey,
+                    $unitKey,
+                    $turnCounter,
+                    $now
+                );
+                if (!$reserve['ok']) {
+                    return $reserve;
+                }
+            }
+
+            $this->db->executesql(
+                'UPDATE t_match_ability_usage SET
+                    used_in_game_round = :game_round,
+                    used_in_turn = :turn_counter,
+                    used_at_phase = :phase,
+                    target_unit_key = :target_unit_key,
+                    updated_at = :updated_at
+                 WHERE id = :id;',
+                [
+                    'game_round'       => $gameRound,
+                    'turn_counter'     => $turnCounter,
+                    'phase'            => $phase,
+                    'target_unit_key'  => $unitKey !== '' ? $unitKey : null,
+                    'updated_at'       => $now,
+                    'id'               => $row['id'],
+                ]
+            );
+            return ['ok' => true];
+        }
+
+        if ($requiresTarget && $unitKey === '') {
+            return ['ok' => false, 'error' => '対象ユニットを選んでください。'];
+        }
+        if ($unitKey !== '') {
+            $reserve = $this->reserveAbilityTargetUnit(
+                $matchId,
+                $playerSlot,
+                $abilityKey,
+                $unitKey,
+                $turnCounter,
+                $now
+            );
+            if (!$reserve['ok']) {
+                return $reserve;
+            }
         }
 
         $result = $this->db->executesql(
             'INSERT INTO t_match_ability_usage
-                (match_id, player_slot, ability_key, used_in_game_round, used_in_turn, used_at_phase, updated_at)
+                (match_id, player_slot, ability_key, used_in_game_round, used_in_turn, used_at_phase, target_unit_key, updated_at)
              VALUES
-                (:match_id, :player_slot, :ability_key, :game_round, :turn_counter, :phase, :updated_at);',
+                (:match_id, :player_slot, :ability_key, :game_round, :turn_counter, :phase, :target_unit_key, :updated_at);',
+            [
+                'match_id'         => $matchId,
+                'player_slot'      => $playerSlot,
+                'ability_key'      => $abilityKey,
+                'game_round'       => $gameRound,
+                'turn_counter'     => $turnCounter,
+                'phase'            => $phase,
+                'target_unit_key'  => $unitKey !== '' ? $unitKey : null,
+                'updated_at'       => $now,
+            ]
+        );
+
+        return ['ok' => (bool)$result[0]];
+    }
+
+    /**
+     * @return array{ok:bool, error?:string}
+     */
+    private function reserveAbilityTargetUnit(
+        int $matchId,
+        int $playerSlot,
+        string $abilityKey,
+        string $unitKey,
+        int $turnCounter,
+        string $now
+    ): array {
+        $existing = $this->db->select(
+            'SELECT id FROM t_match_ability_target_units
+             WHERE match_id = :match_id AND player_slot = :player_slot
+               AND ability_key = :ability_key AND unit_key = :unit_key
+             LIMIT 1;',
+            [
+                'match_id'     => $matchId,
+                'player_slot'  => $playerSlot,
+                'ability_key'  => $abilityKey,
+                'unit_key'     => $unitKey,
+            ]
+        );
+        if (!empty($existing)) {
+            return ['ok' => false, 'error' => 'このユニットは既にこのバトルで使用済みです。'];
+        }
+
+        $result = $this->db->executesql(
+            'INSERT INTO t_match_ability_target_units
+                (match_id, player_slot, ability_key, unit_key, used_in_turn, updated_at)
+             VALUES
+                (:match_id, :player_slot, :ability_key, :unit_key, :used_in_turn, :updated_at);',
             [
                 'match_id'      => $matchId,
                 'player_slot'   => $playerSlot,
                 'ability_key'   => $abilityKey,
-                'game_round'    => $gameRound,
-                'turn_counter'  => $turnCounter,
-                'phase'         => $phase,
+                'unit_key'      => $unitKey,
+                'used_in_turn'  => $turnCounter,
                 'updated_at'    => $now,
             ]
         );
 
-        return (bool)$result[0];
+        return ['ok' => (bool)$result[0]];
+    }
+
+    private function removeAbilityTargetUnit(
+        int $matchId,
+        int $playerSlot,
+        string $abilityKey,
+        string $unitKey
+    ): void {
+        $this->db->executesql(
+            'DELETE FROM t_match_ability_target_units
+             WHERE match_id = :match_id AND player_slot = :player_slot
+               AND ability_key = :ability_key AND unit_key = :unit_key;',
+            [
+                'match_id'     => $matchId,
+                'player_slot'  => $playerSlot,
+                'ability_key'  => $abilityKey,
+                'unit_key'     => $unitKey,
+            ]
+        );
+    }
+
+    private function abilityRequiresTargetUnit(string $abilityKey, int $playerSlot, int $matchId): bool
+    {
+        return $this->getAbilityBehaviorId($abilityKey, $playerSlot, $matchId) === 'pick_unit_once_per_battle';
+    }
+
+    private function getAbilityBehaviorId(string $abilityKey, int $playerSlot, int $matchId): ?string
+    {
+        $map = $this->getAbilityBehaviorMap($playerSlot, $matchId);
+        $behavior = $map[$abilityKey] ?? null;
+        return $behavior !== null && $behavior !== '' ? $behavior : null;
+    }
+
+    /** [matchId][slot] => [abilityKey => behaviorId] */
+    private $abilityBehaviorCache = [];
+
+    private function getAbilityBehaviorMap(int $playerSlot, int $matchId): array
+    {
+        if (isset($this->abilityBehaviorCache[$matchId][$playerSlot])) {
+            return $this->abilityBehaviorCache[$matchId][$playerSlot];
+        }
+
+        $map = [];
+        $match = $this->getMatchById($matchId);
+        $rosterId = 0;
+        $battleplanId = 0;
+        if ($match) {
+            $rosterId = $playerSlot === 1
+                ? (int)($match['player_a_roster_id'] ?? 0)
+                : (int)($match['player_b_roster_id'] ?? 0);
+            $battleplanId = (int)($match['battleplan_id'] ?? 0);
+        }
+
+        require_once MODELS . 'roster_model.php';
+        $rosterModel = new Roster_Model();
+        $deck = [];
+        if ($battleplanId > 0) {
+            $deck = array_merge($deck, $rosterModel->getBattleplanAbilityDeckForMatch($battleplanId));
+        }
+        if ($rosterId > 0) {
+            $deck = array_merge($deck, $rosterModel->getRosterAbilityDeckForMatch($rosterId));
+        }
+
+        foreach ($deck as $entry) {
+            $key = (string)($entry['key'] ?? '');
+            $behavior = trim((string)($entry['behaviorId'] ?? ''));
+            if ($key !== '' && $behavior !== '') {
+                $map[$key] = $behavior;
+            }
+        }
+
+        $this->abilityBehaviorCache[$matchId][$playerSlot] = $map;
+        return $map;
     }
 
     private function clearTurnScopedAbilities(int $matchId, int $playerSlot, int $turnCounter): void
@@ -1157,6 +1365,7 @@ class Match_Model extends Model
         foreach ($rows as $row) {
             // battle/round スコープはターン終了では消さない。
             // round はラウンド進行時に used_in_game_round の不一致で未使用扱いになる。
+            // 対象ユニット履歴(t_match_ability_target_units)はバトル中保持するため消さない。
             $scope = $this->getAbilityScopeFromKey($row['ability_key'], $playerSlot, $matchId);
             if ($scope !== 'battle' && $scope !== 'round') {
                 $this->db->executesql(

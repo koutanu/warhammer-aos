@@ -1429,7 +1429,7 @@ class Roster_Model extends Model
 					continue;
 				}
 				$key = 'army:battletrait:' . $btId;
-				$deck[] = $this->buildDeckEntry(
+				$entry = $this->buildDeckEntry(
 					$key,
 					$bt['name'] ?? '',
 					$bt['effect'] ?? '',
@@ -1445,6 +1445,15 @@ class Roster_Model extends Model
 					$bt['usage_per'] ?? 'unit',
 					trim((string)($bt['trigger_condition_ja'] ?? ''))
 				);
+				$btName = trim((string)($bt['name'] ?? ''));
+				if (
+					$btName === '宿命の時'
+					|| str_contains($btName, '宿命の時')
+					|| stripos($btName, 'Their Finest Hour') !== false
+				) {
+					$entry['behaviorId'] = 'pick_unit_once_per_battle';
+				}
+				$deck[] = $entry;
 			}
 
 			// 陣営地形(ファクションテレイン)のアビリティを軍勢レベルで合流させる。
@@ -1693,6 +1702,9 @@ class Roster_Model extends Model
 			}
 			if (!empty($entry['unitName']) && !in_array($entry['unitName'], $existing['unitNames'], true)) {
 				$existing['unitNames'][] = $entry['unitName'];
+			}
+			if (!empty($entry['behaviorId']) && empty($existing['behaviorId'])) {
+				$existing['behaviorId'] = $entry['behaviorId'];
 			}
 			unset($existing);
 		}

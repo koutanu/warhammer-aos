@@ -497,14 +497,22 @@ class Matchplay extends Controller
             $abilityKey = trim($body['abilityKey'] ?? '');
             $phase = trim($body['phase'] ?? '');
             $triggerTurn = $body['triggerTurn'] ?? null;
+            $unitKey = isset($body['unitKey']) ? trim((string)$body['unitKey']) : null;
 
             if ($matchId <= 0 || !in_array($playerSlot, [1, 2], true) || $abilityKey === '') {
                 $this->jsonError('無効なパラメータです。', 400);
             }
 
-            $ok = $this->model->toggleAbility($matchId, $playerSlot, $abilityKey, $phase, $triggerTurn);
-            if (!$ok) {
-                $this->jsonError('アビリティの更新に失敗しました。', 500);
+            $result = $this->model->toggleAbility(
+                $matchId,
+                $playerSlot,
+                $abilityKey,
+                $phase,
+                $triggerTurn,
+                $unitKey
+            );
+            if (empty($result['ok'])) {
+                $this->jsonError($result['error'] ?? 'アビリティの更新に失敗しました。', 400);
             }
 
             return ['success' => true, 'state' => $this->model->buildMatchState($matchId)];

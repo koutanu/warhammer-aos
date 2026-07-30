@@ -217,6 +217,20 @@ $p2Url = $playBaseUrl . '?slot=2';
 		</div>
 	</div>
 
+	<div id="abilityTargetPickerModal" class="modal-overlay" style="display:none;">
+		<div class="modal-content ability-target-picker-modal-content">
+			<h3>対象ユニットを選択</h3>
+			<p class="ability-target-picker-lead">このバトルでまだ使用していないユニットを選んでください。</p>
+			<div id="abilityTargetPickerList" class="ability-target-picker-list"></div>
+			<p id="abilityTargetPickerEmpty" class="ability-target-picker-empty" style="display:none;">
+				選択できるユニットがありません。
+			</p>
+			<div class="confirm-modal-actions">
+				<button type="button" id="abilityTargetPickerCancel" class="btn-secondary">キャンセル</button>
+			</div>
+		</div>
+	</div>
+
 	<div id="rosterMemoModal" class="modal-overlay" style="display:none;">
 		<div class="modal-content confirm-modal-content roster-memo-modal-content">
 			<h3>メモ</h3>
