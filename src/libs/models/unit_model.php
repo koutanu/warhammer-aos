@@ -128,7 +128,7 @@ class Unit_Model extends Model
 	 */
 	public function getUnitAbilities($unitId)
 	{
-		$sql = "SELECT m.id, m.name, m.command_point, m.casting_value, m.casting_type, m.trigger_phase, m.trigger_turn, m.activation, m.usage_scope, m.usage_per, m.trigger_condition_en, m.trigger_condition_ja, m.icon_type, m.effect, m.flavor_text, m.keywords
+		$sql = "SELECT m.id, m.name, m.command_point, m.casting_value, m.casting_type, m.trigger_phase, m.trigger_turn, m.activation, m.usage_scope, m.usage_per, m.trigger_condition_ja, m.icon_type, m.effect, m.flavor_text, m.keywords
                 FROM m_unit_abilities AS ua
                 JOIN m_ability_master AS m ON ua.ability_id = m.id
                 WHERE ua.unit_id = :unit_id
@@ -209,7 +209,7 @@ class Unit_Model extends Model
 	 */
 	public function getAllAbilities()
 	{
-		$sql = "SELECT id, name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_en, trigger_condition_ja, icon_type, effect, flavor_text, keywords
+		$sql = "SELECT id, name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, icon_type, effect, flavor_text, keywords
                 FROM m_ability_master
                 ORDER BY name ASC, id ASC;";
 		return $this->db->select($sql);

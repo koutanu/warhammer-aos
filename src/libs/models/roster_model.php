@@ -644,7 +644,6 @@ class Roster_Model extends Model
                     m.activation,
                     m.usage_scope,
                     m.usage_per,
-                    m.trigger_condition_en,
                     m.trigger_condition_ja,
                     m.icon_type, 
                     m.effect, 
