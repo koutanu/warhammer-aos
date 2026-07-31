@@ -164,6 +164,7 @@ button {
 	height: 100%;
 	min-height: 100%;
 	overflow: hidden;
+	overscroll-behavior: none;
 	background-color: $color-background;
 }
 
@@ -178,12 +179,17 @@ button {
 	// スコープを壊さないよう、コンテンツが溢れたらスクロールさせる
 	max-height: 100%;
 	overflow-y: auto;
-	overscroll-behavior: contain;
+	// iPad/PC: 端での上下引っ張りによる画面ぶれを抑止
+	overscroll-behavior: none;
 	-webkit-overflow-scrolling: touch;
 }
 // --- 📱 スマホ（縦画面）レイアウト ---
 @media (max-width: 768px) {
 	.wrapper {
 		flex-direction: column; // 縦並びに変更
+		// スマホ: メインは overflow visible のため、wrapper をスクロール容器にする
+		overflow-y: auto;
+		overscroll-behavior-y: contain;
+		-webkit-overflow-scrolling: touch;
 	}
 }

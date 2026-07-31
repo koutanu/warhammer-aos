@@ -146,6 +146,7 @@ button {
   height: 100%;
   min-height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
   background-color: #131c1c;
 }
 
@@ -155,13 +156,16 @@ button {
   box-sizing: border-box;
   max-height: 100%;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 768px) {
   .wrapper {
     flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
   }
 }
 .side-nav {
@@ -3614,14 +3618,6 @@ button {
   }
 }
 
-/* ロスター作成時のみモバイルでメイン領域を確実にスクロール可能に */
-@media (max-width: 768px) {
-  .main-content:has(.roster.create_roster) {
-    max-height: 100%;
-    min-height: 0;
-    overflow-y: auto;
-  }
-}
 .hero-enhancement-actions {
   display: flex;
   flex-wrap: wrap;
