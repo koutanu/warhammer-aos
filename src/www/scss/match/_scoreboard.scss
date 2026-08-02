@@ -1243,6 +1243,166 @@
 			}
 		}
 
+		.ability-target-picker-modal-content {
+			display: flex;
+			flex-direction: column;
+			width: min(94vw, 520px);
+			max-height: min(85dvh, 680px);
+			background: $color-base;
+			border: 2px solid rgba($color-accent, 0.45);
+			border-radius: 12px;
+			box-shadow:
+				0 24px 48px rgba(0, 0, 0, 0.45),
+				0 0 0 1px rgba($color-accent, 0.08) inset;
+			overflow: hidden;
+			text-align: left;
+			color: $color-text;
+
+			h3 {
+				margin: 0;
+				padding: 1.15rem 1.25rem 0.4rem;
+				font-size: 1.05rem;
+				line-height: 1.4;
+				color: $color-accent;
+			}
+
+			.ability-target-picker-lead {
+				margin: 0;
+				padding: 0 1.25rem 0.9rem;
+				font-size: 0.85rem;
+				line-height: 1.5;
+				color: rgba($color-text, 0.7);
+				border-bottom: 1px solid rgba($color-main, 0.4);
+			}
+
+			.ability-target-picker-list {
+				flex: 1;
+				min-height: 0;
+				overflow-y: auto;
+				overscroll-behavior: contain;
+				-webkit-overflow-scrolling: touch;
+				padding: 1rem 1.15rem;
+				background: rgba($color-background, 0.35);
+
+				.ability-unit-thumbs {
+					display: grid;
+					grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+					gap: 0.55rem;
+					margin: 0;
+					padding: 0;
+					border: none;
+					overflow: visible;
+				}
+
+				.ability-unit-thumb {
+					display: flex;
+					flex-direction: column;
+					width: 100%;
+					padding: 0;
+					border: 1px solid rgba($color-main, 0.5);
+					border-radius: 6px;
+					background: rgba($color-base, 0.95);
+					color: $color-text;
+					cursor: pointer;
+					overflow: hidden;
+					transition:
+						border-color 0.12s ease,
+						transform 0.12s ease,
+						box-shadow 0.12s ease;
+
+					&.is-selectable:hover {
+						border-color: rgba($color-accent, 0.75);
+						box-shadow: 0 0 0 1px rgba($color-accent, 0.25);
+					}
+
+					&:focus-visible {
+						outline: 2px solid $color-accent;
+						outline-offset: 2px;
+					}
+
+					&:active {
+						transform: scale(0.98);
+					}
+				}
+
+				.ability-unit-thumb-image {
+					display: block;
+					width: 100%;
+					aspect-ratio: 4 / 3;
+					overflow: hidden;
+					background: rgba($color-base, 0.9);
+
+					img {
+						width: 100%;
+						height: 100%;
+						object-fit: cover;
+						display: block;
+					}
+				}
+
+				.ability-unit-thumb-placeholder {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					width: 100%;
+					height: 100%;
+					font-size: 0.95rem;
+					font-weight: bold;
+					color: rgba($color-text, 0.35);
+				}
+
+				.ability-unit-thumb-label {
+					display: -webkit-box;
+					-webkit-box-orient: vertical;
+					-webkit-line-clamp: 2;
+					line-clamp: 2;
+					padding: 0.35rem 0.3rem;
+					min-height: 2.4em;
+					font-size: 0.7rem;
+					font-weight: bold;
+					line-height: 1.25;
+					text-align: center;
+					color: rgba($color-text, 0.92);
+					background: rgba($color-background, 0.8);
+					overflow: hidden;
+					word-break: break-word;
+				}
+			}
+
+			.ability-target-picker-empty {
+				flex: 1;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin: 0;
+				padding: 2rem 1.25rem;
+				text-align: center;
+				font-size: 0.9rem;
+				color: rgba($color-text, 0.6);
+				background: rgba($color-background, 0.35);
+			}
+
+			.ability-target-picker-actions {
+				flex-shrink: 0;
+				display: flex;
+				justify-content: flex-end;
+				padding: 0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+				border-top: 1px solid rgba($color-main, 0.5);
+				background: rgba(color.adjust($color-base, $lightness: -2%), 0.98);
+
+				.btn-secondary {
+					min-height: 44px;
+					padding: 0.5rem 1.35rem;
+					border-radius: 4px;
+					cursor: pointer;
+					background: transparent;
+					border: 1px solid $color-main;
+					color: $color-text;
+					font-weight: bold;
+				}
+			}
+		}
+
 		.round-start-modal-content {
 			display: flex;
 			flex-direction: column;
@@ -1365,7 +1525,8 @@
 		}
 	}
 
-	#roundStartModal.modal-overlay {
+	#roundStartModal.modal-overlay,
+	#abilityTargetPickerModal.modal-overlay {
 		background: rgba(0, 0, 0, 0.78);
 		backdrop-filter: blur(4px);
 		align-items: center;
@@ -1378,7 +1539,8 @@
 			padding-right: 0;
 			padding-bottom: 0;
 
-			.round-start-modal-content {
+			.round-start-modal-content,
+			.ability-target-picker-modal-content {
 				width: 100%;
 				max-height: min(92dvh, 820px);
 				border-radius: 16px 16px 0 0;
@@ -1535,6 +1697,10 @@
 				}
 			}
 
+			&.is-replaced:not(.is-destroyed) {
+				border-color: rgba($color-accent, 0.55);
+			}
+
 			.unit-btn-thumb {
 				display: block;
 				width: 100%;
@@ -1576,12 +1742,20 @@
 				word-break: break-word;
 			}
 
-			.unit-btn-destroyed-toggle {
-				display: block;
+			.unit-btn-status-actions {
+				display: flex;
+				gap: 0.3rem;
 				width: 100%;
 				margin-top: auto;
-				padding: 0.35rem 0.45rem;
-				font-size: 0.7rem;
+			}
+
+			.unit-btn-destroyed-toggle,
+			.unit-btn-replaced-toggle {
+				display: block;
+				flex: 1 1 0;
+				min-width: 0;
+				padding: 0.35rem 0.25rem;
+				font-size: 0.68rem;
 				font-weight: bold;
 				line-height: 1.2;
 				text-align: center;
@@ -1597,16 +1771,22 @@
 					color: $color-accent;
 				}
 
-				&.is-destroyed {
-					color: #fff;
-					background: rgba($color-brick, 0.85);
-					border-color: $color-brick;
-				}
-
 				&:disabled {
 					cursor: default;
 					opacity: 0.85;
 				}
+			}
+
+			.unit-btn-destroyed-toggle.is-destroyed {
+				color: #fff;
+				background: rgba($color-brick, 0.85);
+				border-color: $color-brick;
+			}
+
+			.unit-btn-replaced-toggle.is-replaced {
+				color: $color-background;
+				background: rgba($color-accent, 0.9);
+				border-color: $color-accent;
 			}
 
 			.unit-btn-banish-toggle {
@@ -1665,6 +1845,15 @@
 				font-size: 0.6rem;
 				color: #fff;
 				background: rgba($color-accent, 0.95);
+				padding: 0.1rem 0.3rem;
+				border-radius: 3px;
+			}
+
+			.replaced-badge {
+				font-size: 0.6rem;
+				color: $color-background;
+				background: rgba($color-accent, 0.95);
+				font-weight: bold;
 				padding: 0.1rem 0.3rem;
 				border-radius: 3px;
 			}

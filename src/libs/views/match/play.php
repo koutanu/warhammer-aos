@@ -225,7 +225,7 @@ $p2Url = $playBaseUrl . '?slot=2';
 			<p id="abilityTargetPickerEmpty" class="ability-target-picker-empty" style="display:none;">
 				選択できるユニットがありません。
 			</p>
-			<div class="confirm-modal-actions">
+			<div class="ability-target-picker-actions">
 				<button type="button" id="abilityTargetPickerCancel" class="btn-secondary">キャンセル</button>
 			</div>
 		</div>

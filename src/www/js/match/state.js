@@ -25,11 +25,13 @@ const MatchStateManager = {
 			abilityTargetUnits: {},
 			destroyedUnits: {},
 			summonedUnits: {},
+			replacedUnits: {},
 		};
 		state.game.usedAbilities = state.game.usedAbilities || {};
 		state.game.abilityTargetUnits = state.game.abilityTargetUnits || {};
 		state.game.destroyedUnits = state.game.destroyedUnits || {};
 		state.game.summonedUnits = state.game.summonedUnits || {};
+		state.game.replacedUnits = state.game.replacedUnits || {};
 		if (state.game.firstPlayer === undefined) {
 			state.game.firstPlayer = null;
 		}
@@ -77,6 +79,7 @@ const MatchStateManager = {
 				abilityTargetUnits: {},
 				destroyedUnits: {},
 				summonedUnits: {},
+				replacedUnits: {},
 			};
 		}
 		const localPhase = this.state.game.phase;
@@ -94,6 +97,7 @@ const MatchStateManager = {
 		this.state.game.abilityTargetUnits = game.abilityTargetUnits || {};
 		this.state.game.destroyedUnits = game.destroyedUnits || {};
 		this.state.game.summonedUnits = game.summonedUnits || {};
+		this.state.game.replacedUnits = game.replacedUnits || {};
 		this.state.game.phase = localPhase;
 		if (updatedAt) {
 			this.state.updatedAt = updatedAt;

@@ -998,6 +998,28 @@
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
+
+		.ability-unit-thumb.is-ability-target-used {
+			opacity: 0.72;
+			border-color: rgba(180, 90, 90, 0.55);
+		}
+
+		.ability-unit-thumb-used-badge {
+			display: block;
+			padding: 0.12rem 0.1rem 0.18rem;
+			font-size: 0.65rem;
+			font-weight: bold;
+			line-height: 1.2;
+			text-align: center;
+			color: #f0e6e6;
+			background: rgba(140, 48, 48, 0.85);
+		}
+
+		.ability-target-none {
+			margin: 0.15rem 0 0;
+			font-size: 0.75rem;
+			color: rgba($color-text, 0.55);
+		}
 	}
 
 	.phase-panel-footer {

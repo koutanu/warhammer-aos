@@ -378,7 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (els.targetPickerEmpty) {
 			els.targetPickerEmpty.style.display = candidates.length
 				? "none"
-				: "block";
+				: "flex";
 		}
 		if (els.targetPickerModal) {
 			els.targetPickerModal.style.display = "flex";

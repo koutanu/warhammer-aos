@@ -355,6 +355,7 @@ class Match_Model extends Model
         $abilityTargetUnits = $this->buildAbilityTargetUnitsMap($matchId);
         $destroyedUnits = $this->buildDestroyedUnitsMap($matchId);
         $summonedUnits = $this->buildSummonedUnitsMap($matchId);
+        $replacedUnits = $this->buildReplacedUnitsMap($matchId);
         $btProgress = $this->getBattleTacticProgressMap($matchId);
 
         $currentGameRound = (int)($match['game_battle_round'] ?? 1);
@@ -391,6 +392,7 @@ class Match_Model extends Model
                 'abilityTargetUnits' => $abilityTargetUnits,
                 'destroyedUnits'     => $destroyedUnits,
                 'summonedUnits'      => $summonedUnits,
+                'replacedUnits'      => $replacedUnits,
             ],
             'updatedAt'      => $match['updated_at'],
         ];
@@ -660,9 +662,17 @@ class Match_Model extends Model
     /**
      * @return array<int, array<string, true>> player_slot => [ unit_key => true ]
      */
+    public function buildReplacedUnitsMap(int $matchId): array
+    {
+        return $this->buildUnitStatusFlagMap($matchId, 'is_replaced');
+    }
+
+    /**
+     * @return array<int, array<string, true>> player_slot => [ unit_key => true ]
+     */
     private function buildUnitStatusFlagMap(int $matchId, string $flagColumn): array
     {
-        if (!in_array($flagColumn, ['is_destroyed', 'is_summoned'], true)) {
+        if (!in_array($flagColumn, ['is_destroyed', 'is_summoned', 'is_replaced'], true)) {
             return [];
         }
 
@@ -688,6 +698,11 @@ class Match_Model extends Model
         return $this->toggleUnitStatusFlag($matchId, $playerSlot, $unitKey, 'is_destroyed');
     }
 
+    public function toggleUnitReplaced(int $matchId, int $playerSlot, string $unitKey): bool
+    {
+        return $this->toggleUnitStatusFlag($matchId, $playerSlot, $unitKey, 'is_replaced');
+    }
+
     public function toggleManifestationSummoned(int $matchId, int $playerSlot, string $unitKey): bool
     {
         $unitKey = trim($unitKey);
@@ -706,7 +721,7 @@ class Match_Model extends Model
 
         $now = date('Y-m-d H:i:s');
         $rows = $this->db->select(
-            'SELECT id, is_destroyed, is_summoned FROM t_match_unit_status
+            'SELECT id, is_destroyed, is_summoned, is_replaced FROM t_match_unit_status
              WHERE match_id = :match_id AND player_slot = :player_slot AND unit_key = :unit_key
              LIMIT 1;',
             [
@@ -721,9 +736,9 @@ class Match_Model extends Model
         if (empty($rows)) {
             $result = $this->db->executesql(
                 'INSERT INTO t_match_unit_status
-                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, updated_at)
+                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, is_replaced, updated_at)
                  VALUES
-                    (:match_id, :player_slot, :unit_key, 0, 1, :updated_at);',
+                    (:match_id, :player_slot, :unit_key, 0, 1, 0, :updated_at);',
                 [
                     'match_id'    => $matchId,
                     'player_slot' => $playerSlot,
@@ -769,8 +784,8 @@ class Match_Model extends Model
     }
 
     /**
-     * is_destroyed / is_summoned をトグルする。
-     * 両方 0 になった行は削除し、片方だけ残る場合は行を維持する。
+     * is_destroyed / is_summoned / is_replaced をトグルする。
+     * すべて 0 になった行は削除し、いずれか残る場合は行を維持する。
      */
     private function toggleUnitStatusFlag(
         int $matchId,
@@ -782,7 +797,7 @@ class Match_Model extends Model
         if (
             !in_array($playerSlot, [1, 2], true)
             || $unitKey === ''
-            || !in_array($flagColumn, ['is_destroyed', 'is_summoned'], true)
+            || !in_array($flagColumn, ['is_destroyed', 'is_summoned', 'is_replaced'], true)
         ) {
             return false;
         }
@@ -794,7 +809,7 @@ class Match_Model extends Model
 
         $now = date('Y-m-d H:i:s');
         $rows = $this->db->select(
-            'SELECT id, is_destroyed, is_summoned FROM t_match_unit_status
+            'SELECT id, is_destroyed, is_summoned, is_replaced FROM t_match_unit_status
              WHERE match_id = :match_id AND player_slot = :player_slot AND unit_key = :unit_key
              LIMIT 1;',
             [
@@ -807,17 +822,19 @@ class Match_Model extends Model
         if (empty($rows)) {
             $isDestroyed = $flagColumn === 'is_destroyed' ? 1 : 0;
             $isSummoned = $flagColumn === 'is_summoned' ? 1 : 0;
+            $isReplaced = $flagColumn === 'is_replaced' ? 1 : 0;
             $result = $this->db->executesql(
                 'INSERT INTO t_match_unit_status
-                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, updated_at)
+                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, is_replaced, updated_at)
                  VALUES
-                    (:match_id, :player_slot, :unit_key, :is_destroyed, :is_summoned, :updated_at);',
+                    (:match_id, :player_slot, :unit_key, :is_destroyed, :is_summoned, :is_replaced, :updated_at);',
                 [
                     'match_id'     => $matchId,
                     'player_slot'  => $playerSlot,
                     'unit_key'     => $unitKey,
                     'is_destroyed' => $isDestroyed,
                     'is_summoned'  => $isSummoned,
+                    'is_replaced'  => $isReplaced,
                     'updated_at'   => $now,
                 ]
             );
@@ -828,14 +845,17 @@ class Match_Model extends Model
             $row = $rows[0];
             $isDestroyed = (int)($row['is_destroyed'] ?? 0);
             $isSummoned = (int)($row['is_summoned'] ?? 0);
+            $isReplaced = (int)($row['is_replaced'] ?? 0);
 
             if ($flagColumn === 'is_destroyed') {
                 $isDestroyed = $isDestroyed ? 0 : 1;
-            } else {
+            } elseif ($flagColumn === 'is_summoned') {
                 $isSummoned = $isSummoned ? 0 : 1;
+            } else {
+                $isReplaced = $isReplaced ? 0 : 1;
             }
 
-            if ($isDestroyed === 0 && $isSummoned === 0) {
+            if ($isDestroyed === 0 && $isSummoned === 0 && $isReplaced === 0) {
                 $result = $this->db->executesql(
                     'DELETE FROM t_match_unit_status WHERE id = :id;',
                     ['id' => (int)$row['id']]
@@ -845,11 +865,13 @@ class Match_Model extends Model
                     'UPDATE t_match_unit_status
                      SET is_destroyed = :is_destroyed,
                          is_summoned = :is_summoned,
+                         is_replaced = :is_replaced,
                          updated_at = :updated_at
                      WHERE id = :id;',
                     [
                         'is_destroyed' => $isDestroyed,
                         'is_summoned'  => $isSummoned,
+                        'is_replaced'  => $isReplaced,
                         'updated_at'   => $now,
                         'id'           => (int)$row['id'],
                     ]

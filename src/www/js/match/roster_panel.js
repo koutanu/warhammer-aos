@@ -2,7 +2,7 @@
  * マッチプレイ中のロスター参照（メイン表示）
  * - 自分 / 相手 のロスターを上部タブで切替
  * - ユニットをタップで詳細モーダル
- * - 撃破トグル（自分のロスターのみ）
+ * - 撃破 / 代替トグル（自分のロスターのみ）
  */
 document.addEventListener("DOMContentLoaded", () => {
 	const app = document.getElementById("scoreboardApp");
@@ -70,6 +70,16 @@ document.addEventListener("DOMContentLoaded", () => {
 	function isSummoned(slot, instanceKey) {
 		if (!instanceKey) return false;
 		return !!getSummonedMap(slot)[instanceKey];
+	}
+
+	function getReplacedMap(slot) {
+		const state = getState();
+		return state?.game?.replacedUnits?.[slot] || {};
+	}
+
+	function isReplaced(slot, instanceKey) {
+		if (!instanceKey) return false;
+		return !!getReplacedMap(slot)[instanceKey];
 	}
 
 	function renderRoster(player, isOpponent) {
@@ -142,11 +152,15 @@ document.addEventListener("DOMContentLoaded", () => {
 			};
 			btn.addEventListener("click", (e) => {
 				if (e.target.closest(".unit-btn-destroyed-toggle")) return;
+				if (e.target.closest(".unit-btn-replaced-toggle")) return;
+				if (e.target.closest(".unit-btn-banish-toggle")) return;
 				openDetail();
 			});
 			btn.addEventListener("keydown", (e) => {
 				if (e.key !== "Enter" && e.key !== " ") return;
 				if (e.target.closest(".unit-btn-destroyed-toggle")) return;
+				if (e.target.closest(".unit-btn-replaced-toggle")) return;
+				if (e.target.closest(".unit-btn-banish-toggle")) return;
 				e.preventDefault();
 				openDetail();
 			});
@@ -163,6 +177,17 @@ document.addEventListener("DOMContentLoaded", () => {
 			});
 		});
 
+		panelBody.querySelectorAll(".unit-btn-replaced-toggle").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				const unitKey = btn.dataset.instanceKey;
+				const slotNum = parseInt(btn.dataset.playerSlot, 10);
+				if (!unitKey || !slotNum) return;
+				toggleReplaced(slotNum, unitKey);
+			});
+		});
+
 		panelBody.querySelectorAll(".unit-btn-banish-toggle").forEach((btn) => {
 			btn.addEventListener("click", (e) => {
 				e.preventDefault();
@@ -175,9 +200,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 
-	function destroyToggleHtml(unit, slot, canToggle, destroyed) {
+	function destroyToggleHtml(unit, slot, destroyed) {
 		const key = unit.instanceKey || "";
-		if (!key || !canToggle) return "";
+		if (!key) return "";
 		const ariaPressed = destroyed ? "true" : "false";
 		return `<button type="button"
 			class="unit-btn-destroyed-toggle${destroyed ? " is-destroyed" : ""}"
@@ -185,6 +210,26 @@ document.addEventListener("DOMContentLoaded", () => {
 			data-player-slot="${slot}"
 			aria-pressed="${ariaPressed}"
 			aria-label="${escapeAttr(unit.name || "ユニット")}を${destroyed ? "生存に戻す" : "撃破にする"}">撃破</button>`;
+	}
+
+	function replaceToggleHtml(unit, slot, replaced) {
+		const key = unit.instanceKey || "";
+		if (!key) return "";
+		const ariaPressed = replaced ? "true" : "false";
+		return `<button type="button"
+			class="unit-btn-replaced-toggle${replaced ? " is-replaced" : ""}"
+			data-instance-key="${escapeAttr(key)}"
+			data-player-slot="${slot}"
+			aria-pressed="${ariaPressed}"
+			aria-label="${escapeAttr(unit.name || "ユニット")}を${replaced ? "代替解除する" : "代替にする"}">代替</button>`;
+	}
+
+	function statusActionsHtml(unit, slot, canToggle, destroyed, replaced) {
+		if (!canToggle) return "";
+		return `<div class="unit-btn-status-actions">
+			${destroyToggleHtml(unit, slot, destroyed)}
+			${replaceToggleHtml(unit, slot, replaced)}
+		</div>`;
 	}
 
 	function banishToggleHtml(unit, slot, canToggle, summoned) {
@@ -203,6 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const key = unit.instanceKey || "";
 		const isManifestation = key.indexOf("manifest:") === 0;
 		const destroyed = isDestroyed(slot, key);
+		const replaced = isReplaced(slot, key);
 		const summoned = isManifestation && isSummoned(slot, key);
 
 		if (isManifestation) {
@@ -227,7 +273,14 @@ document.addEventListener("DOMContentLoaded", () => {
 			</div>`;
 		}
 
-		return `<div class="roster-unit-btn is-manifestation${destroyed ? " is-destroyed" : ""}"
+		const replacedBadge = replaced
+			? '<span class="replaced-badge">代替</span>'
+			: "";
+		const badges = replacedBadge
+			? `<span class="unit-btn-badges">${replacedBadge}</span>`
+			: "";
+
+		return `<div class="roster-unit-btn is-manifestation${destroyed ? " is-destroyed" : ""}${replaced ? " is-replaced" : ""}"
 			role="button"
 			tabindex="0"
 			data-unit-id="${unit.id}"
@@ -237,7 +290,8 @@ document.addEventListener("DOMContentLoaded", () => {
 			<span class="unit-btn-info">
 				<span class="unit-btn-name">${escapeHtml(unit.name)}</span>
 			</span>
-			${destroyToggleHtml(unit, slot, canToggle, destroyed)}
+			${statusActionsHtml(unit, slot, canToggle, destroyed, replaced)}
+			${badges}
 		</div>`;
 	}
 
@@ -269,12 +323,16 @@ document.addEventListener("DOMContentLoaded", () => {
 		const role = isHero
 			? '<span class="hero-badge">HERO</span>'
 			: "";
+		const replaced = isReplaced(slot, unit.instanceKey);
+		const replacedBadge = replaced
+			? '<span class="replaced-badge">代替</span>'
+			: "";
 		const badges =
-			role || reinforced
-				? `<span class="unit-btn-badges">${role}${reinforced}</span>`
+			role || reinforced || replacedBadge
+				? `<span class="unit-btn-badges">${role}${reinforced}${replacedBadge}</span>`
 				: "";
 		const destroyed = isDestroyed(slot, unit.instanceKey);
-		return `<div class="roster-unit-btn${isHero ? " is-hero" : ""}${destroyed ? " is-destroyed" : ""}"
+		return `<div class="roster-unit-btn${isHero ? " is-hero" : ""}${destroyed ? " is-destroyed" : ""}${replaced ? " is-replaced" : ""}"
 			role="button"
 			tabindex="0"
 			data-unit-id="${unit.id}"
@@ -284,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			<span class="unit-btn-info">
 				<span class="unit-btn-name">${escapeHtml(unit.name)}</span>
 			</span>
-			${destroyToggleHtml(unit, slot, canToggle, destroyed)}
+			${statusActionsHtml(unit, slot, canToggle, destroyed, replaced)}
 			${badges}
 		</div>`;
 	}
@@ -298,11 +356,11 @@ document.addEventListener("DOMContentLoaded", () => {
 		return `<span class="unit-btn-thumb-placeholder">${escapeHtml(initial)}</span>`;
 	}
 
-	function toggleDestroyed(playerSlot, unitKey) {
+	function postUnitStatusToggle(path, playerSlot, unitKey) {
 		if (toggling || !matchId || !token) return;
 		toggling = true;
 
-		fetch(baseUrl + "match/toggleUnitDestroyed", {
+		fetch(baseUrl + path, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -331,37 +389,20 @@ document.addEventListener("DOMContentLoaded", () => {
 			});
 	}
 
-	function toggleManifestationSummoned(playerSlot, unitKey) {
-		if (toggling || !matchId || !token) return;
-		toggling = true;
+	function toggleDestroyed(playerSlot, unitKey) {
+		postUnitStatusToggle("match/toggleUnitDestroyed", playerSlot, unitKey);
+	}
 
-		fetch(baseUrl + "match/toggleManifestationSummoned", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				token,
-				matchId,
-				playerSlot,
-				unitKey,
-			}),
-		})
-			.then((res) => res.json())
-			.then((data) => {
-				if (!data.success) {
-					alert(data.message || "更新に失敗しました。");
-					return;
-				}
-				if (window.MatchStateManager?.applyServerState) {
-					MatchStateManager.applyServerState(data.state);
-				} else {
-					matchState = data.state;
-					refreshPanel();
-				}
-			})
-			.catch(() => alert("通信エラーが発生しました。"))
-			.finally(() => {
-				toggling = false;
-			});
+	function toggleReplaced(playerSlot, unitKey) {
+		postUnitStatusToggle("match/toggleUnitReplaced", playerSlot, unitKey);
+	}
+
+	function toggleManifestationSummoned(playerSlot, unitKey) {
+		postUnitStatusToggle(
+			"match/toggleManifestationSummoned",
+			playerSlot,
+			unitKey,
+		);
 	}
 
 	function escapeHtml(str) {
