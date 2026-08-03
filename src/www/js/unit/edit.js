@@ -48,8 +48,10 @@
 		);
 		if (manifestationCb) {
 			manifestationCb.addEventListener("change", syncControlLabel);
+			manifestationCb.addEventListener("change", syncTargetsUnitOnSummon);
 		}
 		syncControlLabel();
+		syncTargetsUnitOnSummon();
 		initHeroRegimentToggle();
 		initKeywordParamInputs();
 		initKeywordFactionFilter();
@@ -149,6 +151,19 @@
 		label.textContent = cb.checked
 			? label.dataset.labelBanishment
 			: label.dataset.labelControl;
+	}
+
+	function syncTargetsUnitOnSummon() {
+		const cb = document.querySelector('input[name="is_manifestation"]');
+		const group = document.getElementById("targetsUnitOnSummonGroup");
+		const targetCb = document.querySelector(
+			'input[name="targets_unit_on_summon"]',
+		);
+		if (!cb || !group) return;
+		group.style.display = cb.checked ? "" : "none";
+		if (!cb.checked && targetCb) {
+			targetCb.checked = false;
+		}
 	}
 
 	function addWeaponRow() {

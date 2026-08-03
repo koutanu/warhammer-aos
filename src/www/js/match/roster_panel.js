@@ -144,6 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					id: parseInt(btn.dataset.unitId, 10),
 					name: btn.dataset.unitName,
 					keywords: btn.dataset.unitKeywords,
+					instanceKey: btn.dataset.instanceKey || "",
 					playerSlot: viewingOpponent ? opponentSlot : viewerSlot,
 				};
 				if (window.RosterUnitDetail) {
@@ -336,6 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			role="button"
 			tabindex="0"
 			data-unit-id="${unit.id}"
+			data-instance-key="${escapeAttr(unit.instanceKey || "")}"
 			data-unit-name="${escapeAttr(unit.name)}"
 			data-unit-keywords="${escapeAttr(unit.keywords || "")}">
 			<span class="unit-btn-thumb">${unitThumbHtml(unit)}</span>

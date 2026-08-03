@@ -30,6 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		targetPickerList: document.getElementById("abilityTargetPickerList"),
 		targetPickerEmpty: document.getElementById("abilityTargetPickerEmpty"),
 		targetPickerCancel: document.getElementById("abilityTargetPickerCancel"),
+		targetPickerLead: document.querySelector(
+			"#abilityTargetPickerModal .ability-target-picker-lead",
+		),
 	};
 
 	let gameSyncing = false;
@@ -167,8 +170,19 @@ document.addEventListener("DOMContentLoaded", () => {
 		els.abilityList?.addEventListener("click", (e) => {
 			const summonBtn = e.target.closest(".ability-summon-toggle");
 			if (summonBtn) {
+				const card = summonBtn.closest(".phase-ability-card");
 				const unitKey = summonBtn.dataset.manifestUnitKey || "";
 				if (!unitKey) return;
+				const summoned =
+					summonBtn.getAttribute("aria-pressed") === "true";
+				const needsTarget =
+					!summoned &&
+					(card?.dataset.targetsUnitOnSummon === "1" ||
+						card?.dataset.targetsUnitOnSummon === "true");
+				if (needsTarget) {
+					openManifestationTargetPicker(unitKey);
+					return;
+				}
 				postGameAction("match/toggleManifestationSummoned", {
 					playerSlot: viewerSlot,
 					unitKey,
@@ -219,6 +233,19 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (!thumb || !pendingTargetPick) return;
 			const unitKey = thumb.dataset.unitKey || "";
 			if (!unitKey) return;
+
+			if (pendingTargetPick.mode === "manifestationSummon") {
+				const manifestUnitKey = pendingTargetPick.manifestUnitKey || "";
+				closeAbilityTargetPicker();
+				if (!manifestUnitKey) return;
+				postGameAction("match/toggleManifestationSummoned", {
+					playerSlot: viewerSlot,
+					unitKey: manifestUnitKey,
+					targetUnitKey: unitKey,
+				});
+				return;
+			}
+
 			const payload = {
 				playerSlot: viewerSlot,
 				abilityKey: pendingTargetPick.abilityKey,
@@ -342,6 +369,13 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 
+	function collectSummonTargetUnits(roster, game) {
+		return livingRosterUnits(roster, game).filter((unit) => {
+			const key = unitInstanceKey(unit);
+			return key && isRosterCombatUnitKey(key);
+		});
+	}
+
 	function resolveUnitsByKeys(roster, keys) {
 		if (!keys?.length) return [];
 		const byKey = new Map();
@@ -350,6 +384,12 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (key) byKey.set(key, unit);
 		});
 		return keys.map((key) => byKey.get(String(key))).filter(Boolean);
+	}
+
+	function setTargetPickerLead(text) {
+		if (els.targetPickerLead) {
+			els.targetPickerLead.textContent = text;
+		}
 	}
 
 	function openAbilityTargetPicker({ abilityKey, triggerTurn, phase }) {
@@ -365,8 +405,34 @@ document.addEventListener("DOMContentLoaded", () => {
 			abilityKey,
 		);
 
-		pendingTargetPick = { abilityKey, triggerTurn, phase };
+		pendingTargetPick = { mode: "ability", abilityKey, triggerTurn, phase };
+		setTargetPickerLead(
+			"このバトルでまだ使用していないユニットを選んでください。",
+		);
+		showTargetPicker(candidates);
+	}
 
+	function openManifestationTargetPicker(manifestUnitKey) {
+		const state = MatchStateManager.getState();
+		const game = state.game || {};
+		const myPlayer =
+			MatchStateManager.getPlayer?.(viewerSlot) ||
+			(state.players || []).find((p) => p.slot === viewerSlot) ||
+			null;
+		const candidates = collectSummonTargetUnits(
+			myPlayer?.roster || null,
+			game,
+		);
+
+		pendingTargetPick = {
+			mode: "manifestationSummon",
+			manifestUnitKey,
+		};
+		setTargetPickerLead("効果を与えるユニットを選んでください。");
+		showTargetPicker(candidates);
+	}
+
+	function showTargetPicker(candidates) {
 		if (els.targetPickerList) {
 			els.targetPickerList.innerHTML = candidates.length
 				? buildUnitThumbsHtml(candidates, null, {
@@ -393,6 +459,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (els.targetPickerList) {
 			els.targetPickerList.innerHTML = "";
 		}
+		setTargetPickerLead(
+			"このバトルでまだ使用していないユニットを選んでください。",
+		);
 	}
 
 	function renderPhasePanel() {
@@ -706,6 +775,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			id: parseInt(thumb.dataset.unitId, 10),
 			name: thumb.dataset.unitName,
 			keywords: thumb.dataset.unitKeywords,
+			instanceKey: thumb.dataset.unitKey || "",
 			playerSlot: Number.isFinite(slot) && slot > 0 ? slot : viewerSlot,
 		});
 	}
@@ -732,6 +802,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				(unit) =>
 					`<button type="button" class="phase-movement-unit ability-unit-thumb"
 						data-unit-id="${unit.id}"
+						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
 						data-unit-name="${escapeAttr(unit.name || "")}"
 						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
 						aria-label="${escapeAttr((unit.name || "ユニット") + " 移動力 " + formatMovement(unit.movement))}">
@@ -780,6 +851,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				(unit) =>
 					`<button type="button" class="phase-shooting-unit ability-unit-thumb"
 						data-unit-id="${unit.id}"
+						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
 						data-unit-name="${escapeAttr(unit.name || "")}"
 						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
 						aria-label="${escapeAttr(unit.name || "ユニット")}">
@@ -827,6 +899,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				(unit) =>
 					`<button type="button" class="phase-combat-unit ability-unit-thumb"
 						data-unit-id="${unit.id}"
+						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
 						data-unit-name="${escapeAttr(unit.name || "")}"
 						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
 						aria-label="${escapeAttr(unit.name || "ユニット")}">
@@ -874,6 +947,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				(unit) =>
 					`<button type="button" class="phase-opponent-unit ability-unit-thumb"
 						data-unit-id="${unit.id}"
+						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
 						data-unit-name="${escapeAttr(unit.name || "")}"
 						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
 						data-player-slot="${playerSlot}"
@@ -1068,6 +1142,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			const used = tracked && !!usedMap[ab.key]?.used;
 			const behaviorId = String(ab.behaviorId || "").trim();
 			const manifestUnitKey = String(ab.manifestUnitKey || "").trim();
+			const targetsUnitOnSummon = !!ab.targetsUnitOnSummon;
 			const summoned =
 				ab.category === "manifestation" &&
 				manifestUnitKey !== "" &&
@@ -1089,6 +1164,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 			if (manifestUnitKey) {
 				card.dataset.manifestUnitKey = manifestUnitKey;
+			}
+			if (targetsUnitOnSummon) {
+				card.dataset.targetsUnitOnSummon = "1";
 			}
 			// 効果説明があるカードのみアコーディオン開閉のタップ対象にする。
 			if (hasEffect) {
@@ -1197,6 +1275,27 @@ document.addEventListener("DOMContentLoaded", () => {
 							ab.category,
 						),
 					);
+				}
+				if (summoned && targetsUnitOnSummon && manifestUnitKey) {
+					const targetKey =
+						game.manifestationTargets?.[viewerSlot]?.[
+							manifestUnitKey
+						] || "";
+					const targetUnits = targetKey
+						? resolveUnitsByKeys(myPlayer?.roster || null, [
+								targetKey,
+							])
+						: [];
+					if (targetUnits.length) {
+						sections.push(
+							buildThumbsSectionHtml(
+								"効果対象",
+								targetUnits,
+								null,
+								{ showName: true },
+							),
+						);
+					}
 				}
 				unitThumbsHtml = sections.length
 					? `<div class="ability-unit-thumbs-row">${sections.join("")}</div>`

@@ -204,6 +204,13 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 					顕現（マニフェステーション/エンドレススペル。連隊編成の対象外。図鑑・対戦デッキで顕現として扱う。通常はロスター非表示も併用）
 				</label>
 			</div>
+
+			<div class="form-group form-check" id="targetsUnitOnSummonGroup" style="<?= !empty($u['is_manifestation']) ? '' : 'display:none;'; ?>">
+				<label>
+					<input type="checkbox" name="targets_unit_on_summon" value="1" <?= !empty($u['targets_unit_on_summon']) ? 'checked' : ''; ?>>
+					召喚時にユニット選択（効果を特定ユニットに付与し、そのユニット詳細に表示する）
+				</label>
+			</div>
 		</section>
 
 		<!-- ============ 武器プロファイル ============ -->

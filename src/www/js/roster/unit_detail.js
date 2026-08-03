@@ -193,6 +193,74 @@ window.RosterUnitDetail = (function () {
 		return null;
 	}
 
+	/**
+	 * 召喚済み顕現から、このユニットを効果対象にしているバフを解決する。
+	 * 効果文は顕現呪文(伝承)ではなく、顕現ユニット(m_units)に紐づくアビリティを使う。
+	 * @returns {list<{label:string,name:string,effect:?string,kind:string}>}
+	 */
+	function resolveManifestationBuffs(unit) {
+		const state =
+			(typeof MatchStateManager !== "undefined" &&
+				MatchStateManager.getState?.()) ||
+			null;
+		if (!state?.game?.manifestationTargets) return [];
+
+		const slot = Number(unit?.playerSlot || 0);
+		const instanceKey = String(unit?.instanceKey || "").trim();
+		if (!slot || !instanceKey) return [];
+
+		const targetMap = state.game.manifestationTargets[slot] || {};
+		const manifestKeys = Object.keys(targetMap).filter(
+			(manifestKey) => String(targetMap[manifestKey]) === instanceKey,
+		);
+		if (!manifestKeys.length) return [];
+
+		const player =
+			(typeof MatchStateManager.getPlayer === "function" &&
+				MatchStateManager.getPlayer(slot)) ||
+			(state.players || []).find((p) => Number(p.slot) === slot) ||
+			null;
+		const rosterManifests = player?.roster?.manifestations || [];
+		const byKey = new Map();
+		rosterManifests.forEach((m) => {
+			const key = String(m.instanceKey || "").trim();
+			if (key) byKey.set(key, m);
+		});
+
+		const items = [];
+		manifestKeys.forEach((manifestKey) => {
+			const manifest = byKey.get(manifestKey);
+			const abilities = Array.isArray(manifest?.abilities)
+				? manifest.abilities
+				: [];
+			const manifestName = manifest?.name || manifest?.spellName || "";
+
+			if (abilities.length) {
+				abilities.forEach((ab) => {
+					const effect = String(ab?.effect || "").trim();
+					items.push({
+						label: "顕現",
+						name: ab?.name || manifestName || manifestKey,
+						effect: effect !== "" ? effect : null,
+						kind: "manifestation",
+					});
+				});
+				return;
+			}
+
+			// abilities 未ロード時のフォールバック（名前のみ）
+			if (manifestName) {
+				items.push({
+					label: "顕現",
+					name: manifestName,
+					effect: null,
+					kind: "manifestation",
+				});
+			}
+		});
+		return items;
+	}
+
 	function renderUnitEnhancements(unit) {
 		const container = getEl("detailUnitEnhancements");
 		if (!container) return;
@@ -223,6 +291,7 @@ window.RosterUnitDetail = (function () {
 				kind: "season",
 			});
 		}
+		resolveManifestationBuffs(unit).forEach((buff) => items.push(buff));
 
 		if (!items.length) {
 			container.innerHTML = "";

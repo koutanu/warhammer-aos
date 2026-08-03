@@ -446,6 +446,7 @@ class Unit_Model extends Model
 			'is_unique'     => $keywordFlags['is_unique'],
 			'is_terrain'    => !empty($data['is_terrain']) ? 1 : 0,
 			'is_manifestation' => !empty($data['is_manifestation']) ? 1 : 0,
+			'targets_unit_on_summon' => (!empty($data['is_manifestation']) && !empty($data['targets_unit_on_summon'])) ? 1 : 0,
 		];
 
 		try {

@@ -571,12 +571,18 @@ class Matchplay extends Controller
             $matchId = (int)($body['matchId'] ?? 0);
             $playerSlot = (int)($body['playerSlot'] ?? 0);
             $unitKey = trim($body['unitKey'] ?? '');
+            $targetUnitKey = trim($body['targetUnitKey'] ?? '');
 
             if ($matchId <= 0 || !in_array($playerSlot, [1, 2], true) || $unitKey === '') {
                 $this->jsonError('無効なパラメータです。', 400);
             }
 
-            $ok = $this->model->toggleManifestationSummoned($matchId, $playerSlot, $unitKey);
+            $ok = $this->model->toggleManifestationSummoned(
+                $matchId,
+                $playerSlot,
+                $unitKey,
+                $targetUnitKey !== '' ? $targetUnitKey : null
+            );
             if (!$ok) {
                 $this->jsonError('顕現の召喚状態の更新に失敗しました。', 500);
             }

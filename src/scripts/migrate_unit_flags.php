@@ -29,4 +29,12 @@ if (!in_array('is_manifestation', $cols, true)) {
     echo "SKIP: is_manifestation already exists\n";
 }
 
+$cols = $pdo->query('DESCRIBE m_units')->fetchAll(PDO::FETCH_COLUMN);
+if (!in_array('targets_unit_on_summon', $cols, true)) {
+    $pdo->exec('ALTER TABLE m_units ADD COLUMN targets_unit_on_summon TINYINT(1) NOT NULL DEFAULT 0 AFTER is_manifestation');
+    echo "ALTER: added targets_unit_on_summon to m_units\n";
+} else {
+    echo "SKIP: targets_unit_on_summon already exists\n";
+}
+
 echo "Unit flags migration complete.\n";

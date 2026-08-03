@@ -706,6 +706,9 @@ button {
 #unitDetailModal .detail-enhancement-box.detail-enhancement-box--season {
   border-left-color: rgba(220, 80, 60, 0.55);
 }
+#unitDetailModal .detail-enhancement-box.detail-enhancement-box--manifestation {
+  border-left-color: rgba(64, 160, 200, 0.65);
+}
 #unitDetailModal .detail-enhancement-box .detail-enhancement-head {
   display: flex;
   flex-wrap: wrap;
@@ -734,6 +737,11 @@ button {
   background: rgba(220, 80, 60, 0.18);
   color: #f0a090;
   border-color: rgba(220, 80, 60, 0.4);
+}
+#unitDetailModal .detail-enhancement-box .detail-enhancement-badge.detail-enhancement-badge--manifestation {
+  background: rgba(64, 160, 200, 0.18);
+  color: #8fd0ea;
+  border-color: rgba(64, 160, 200, 0.45);
 }
 #unitDetailModal .detail-enhancement-box .detail-enhancement-name {
   font-weight: bold;
@@ -5582,6 +5590,9 @@ button {
 .match.scoreboard .match-unit-detail-modal .detail-enhancement-box.detail-enhancement-box--season {
   border-left-color: rgba(220, 80, 60, 0.55);
 }
+.match.scoreboard .match-unit-detail-modal .detail-enhancement-box.detail-enhancement-box--manifestation {
+  border-left-color: rgba(64, 160, 200, 0.65);
+}
 .match.scoreboard .match-unit-detail-modal .detail-enhancement-box .detail-enhancement-head {
   display: flex;
   flex-wrap: wrap;
@@ -5610,6 +5621,11 @@ button {
   background: rgba(220, 80, 60, 0.18);
   color: #f0a090;
   border-color: rgba(220, 80, 60, 0.4);
+}
+.match.scoreboard .match-unit-detail-modal .detail-enhancement-box .detail-enhancement-badge.detail-enhancement-badge--manifestation {
+  background: rgba(64, 160, 200, 0.18);
+  color: #8fd0ea;
+  border-color: rgba(64, 160, 200, 0.45);
 }
 .match.scoreboard .match-unit-detail-modal .detail-enhancement-box .detail-enhancement-name {
   font-weight: bold;

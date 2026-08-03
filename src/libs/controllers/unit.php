@@ -172,6 +172,7 @@ class Unit extends Controller
 			'can_reinforce' => !empty($_POST['can_reinforce']) ? 1 : 0,
 			'is_terrain'    => !empty($_POST['is_terrain']) ? 1 : 0,
 			'is_manifestation' => !empty($_POST['is_manifestation']) ? 1 : 0,
+			'targets_unit_on_summon' => !empty($_POST['targets_unit_on_summon']) ? 1 : 0,
 			'weapons'    => $this->normalizePostArray($_POST['weapons'] ?? []),
 			'abilities'  => $this->normalizePostArray($_POST['abilities'] ?? []),
 			'regiment_eligibility'  => is_array($_POST['regiment_eligibility'] ?? null) ? $_POST['regiment_eligibility'] : [],

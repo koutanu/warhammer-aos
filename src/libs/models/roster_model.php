@@ -1218,7 +1218,7 @@ class Roster_Model extends Model
 			}
 
 			$unit = $this->db->select(
-				'SELECT u.id, u.name, u.points, u.image, u.movement,
+				'SELECT u.id, u.name, u.points, u.image, u.movement, u.targets_unit_on_summon,
 				        ' . KeywordSql::displayExprBasic('u') . ' AS keywords
 				 FROM m_units u
 				 WHERE u.id = :id LIMIT 1;',
@@ -1244,6 +1244,7 @@ class Roster_Model extends Model
 		foreach ($pending as $item) {
 			$unit = $item['unit'];
 			$unitId = (int)$unit['id'];
+			$abilities = $this->getUnitAbilities($unitId);
 			$manifestations[] = [
 				'id'              => $unitId,
 				'instanceKey'     => 'manifest:' . $unitId,
@@ -1255,6 +1256,14 @@ class Roster_Model extends Model
 				'movement'        => $unit['movement'] ?? null,
 				'hasRangedWeapon' => isset($rangedSet[$unitId]),
 				'hasWeapon'       => isset($weaponSet[$unitId]),
+				'targetsUnitOnSummon' => (int)($unit['targets_unit_on_summon'] ?? 0) === 1,
+				'abilities'       => array_map(function ($ab) {
+					return [
+						'id'     => (int)($ab['id'] ?? 0),
+						'name'   => $ab['name'] ?? '',
+						'effect' => $ab['effect'] ?? null,
+					];
+				}, $abilities ?: []),
 			];
 		}
 
@@ -1728,7 +1737,8 @@ class Roster_Model extends Model
 		?string $triggerCondition = '',
 		?string $castingValue = null,
 		?string $castingType = null,
-		?string $manifestUnitKey = null
+		?string $manifestUnitKey = null,
+		bool $targetsUnitOnSummon = false
 	): array {
 		$dedupeKey = $dedupeKey ?? $key;
 		$unitNames = $unitName ? [$unitName] : [];
@@ -1765,6 +1775,9 @@ class Roster_Model extends Model
 		];
 		if ($manifestUnitKey !== '') {
 			$entry['manifestUnitKey'] = $manifestUnitKey;
+		}
+		if ($targetsUnitOnSummon) {
+			$entry['targetsUnitOnSummon'] = true;
 		}
 		return $entry;
 	}
@@ -1837,10 +1850,17 @@ class Roster_Model extends Model
 		$entries = [];
 		foreach ($rows as $row) {
 			$manifestUnitKey = null;
+			$targetsUnitOnSummon = false;
 			if ($category === 'manifestation') {
 				$unitId = (int)($row['unit_id'] ?? 0);
 				if ($unitId > 0) {
 					$manifestUnitKey = 'manifest:' . $unitId;
+					$unitFlag = $this->db->select(
+						'SELECT targets_unit_on_summon FROM m_units WHERE id = :id LIMIT 1;',
+						['id' => $unitId]
+					);
+					$targetsUnitOnSummon = !empty($unitFlag)
+						&& (int)($unitFlag[0]['targets_unit_on_summon'] ?? 0) === 1;
 				}
 			}
 			$entries[] = $this->buildDeckEntry(
@@ -1860,7 +1880,8 @@ class Roster_Model extends Model
 				trim((string)($row['trigger_condition_ja'] ?? '')),
 				$row[$valueColumn] ?? null,
 				null,
-				$manifestUnitKey
+				$manifestUnitKey,
+				$targetsUnitOnSummon
 			);
 		}
 		return $entries;

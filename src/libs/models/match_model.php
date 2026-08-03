@@ -356,6 +356,7 @@ class Match_Model extends Model
         $destroyedUnits = $this->buildDestroyedUnitsMap($matchId);
         $summonedUnits = $this->buildSummonedUnitsMap($matchId);
         $replacedUnits = $this->buildReplacedUnitsMap($matchId);
+        $manifestationTargets = $this->buildManifestationTargetsMap($matchId);
         $btProgress = $this->getBattleTacticProgressMap($matchId);
 
         $currentGameRound = (int)($match['game_battle_round'] ?? 1);
@@ -390,9 +391,10 @@ class Match_Model extends Model
                 'turnCounter'     => (int)($match['game_turn_counter'] ?? 1),
                 'usedAbilities'      => $usedAbilities,
                 'abilityTargetUnits' => $abilityTargetUnits,
-                'destroyedUnits'     => $destroyedUnits,
-                'summonedUnits'      => $summonedUnits,
-                'replacedUnits'      => $replacedUnits,
+                'destroyedUnits'         => $destroyedUnits,
+                'summonedUnits'          => $summonedUnits,
+                'replacedUnits'          => $replacedUnits,
+                'manifestationTargets'   => $manifestationTargets,
             ],
             'updatedAt'      => $match['updated_at'],
         ];
@@ -660,6 +662,37 @@ class Match_Model extends Model
     }
 
     /**
+     * 召喚済み顕現の効果対象マップ。
+     * @return array<int, array<string, string>> player_slot => [ manifest_unit_key => target_unit_key ]
+     */
+    public function buildManifestationTargetsMap(int $matchId): array
+    {
+        $rows = $this->db->select(
+            'SELECT player_slot, unit_key, buff_target_unit_key FROM t_match_unit_status
+             WHERE match_id = :match_id
+               AND is_summoned = 1
+               AND unit_key LIKE \'manifest:%\'
+               AND buff_target_unit_key IS NOT NULL
+               AND buff_target_unit_key <> \'\';',
+            ['match_id' => $matchId]
+        );
+        $map = [];
+        foreach ($rows as $row) {
+            $slot = (int)$row['player_slot'];
+            $manifestKey = (string)$row['unit_key'];
+            $targetKey = trim((string)$row['buff_target_unit_key']);
+            if ($manifestKey === '' || $targetKey === '') {
+                continue;
+            }
+            if (!isset($map[$slot])) {
+                $map[$slot] = [];
+            }
+            $map[$slot][$manifestKey] = $targetKey;
+        }
+        return $map;
+    }
+
+    /**
      * @return array<int, array<string, true>> player_slot => [ unit_key => true ]
      */
     public function buildReplacedUnitsMap(int $matchId): array
@@ -703,9 +736,14 @@ class Match_Model extends Model
         return $this->toggleUnitStatusFlag($matchId, $playerSlot, $unitKey, 'is_replaced');
     }
 
-    public function toggleManifestationSummoned(int $matchId, int $playerSlot, string $unitKey): bool
-    {
+    public function toggleManifestationSummoned(
+        int $matchId,
+        int $playerSlot,
+        string $unitKey,
+        ?string $targetUnitKey = null
+    ): bool {
         $unitKey = trim($unitKey);
+        $targetUnitKey = $targetUnitKey !== null ? trim($targetUnitKey) : '';
         if (
             !in_array($playerSlot, [1, 2], true)
             || $unitKey === ''
@@ -719,9 +757,11 @@ class Match_Model extends Model
             return false;
         }
 
+        $requiresTarget = $this->manifestationRequiresUnitTarget($unitKey);
+
         $now = date('Y-m-d H:i:s');
         $rows = $this->db->select(
-            'SELECT id, is_destroyed, is_summoned, is_replaced FROM t_match_unit_status
+            'SELECT id, is_destroyed, is_summoned, is_replaced, buff_target_unit_key FROM t_match_unit_status
              WHERE match_id = :match_id AND player_slot = :player_slot AND unit_key = :unit_key
              LIMIT 1;',
             [
@@ -731,19 +771,37 @@ class Match_Model extends Model
             ]
         );
 
+        $currentlySummoned = !empty($rows) && (int)($rows[0]['is_summoned'] ?? 0) === 1;
+
+        // 召喚 ON 時: targets_unit_on_summon なら対象キー必須・形式チェック。
+        // 召喚 OFF（追放）時は対象不要で行削除。
+        if (!$currentlySummoned) {
+            if ($requiresTarget) {
+                if (
+                    $targetUnitKey === ''
+                    || (strpos($targetUnitKey, 'hero:') !== 0 && strpos($targetUnitKey, 'unit:') !== 0)
+                ) {
+                    return false;
+                }
+            } else {
+                $targetUnitKey = '';
+            }
+        }
+
         // 顕現は再召喚可能なので、召喚 ON 時は撃破フラグも必ず落とす。
         // 召喚 OFF（追放）時は行を削除して未召喚状態に戻す。
         if (empty($rows)) {
             $result = $this->db->executesql(
                 'INSERT INTO t_match_unit_status
-                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, is_replaced, updated_at)
+                    (match_id, player_slot, unit_key, is_destroyed, is_summoned, is_replaced, buff_target_unit_key, updated_at)
                  VALUES
-                    (:match_id, :player_slot, :unit_key, 0, 1, 0, :updated_at);',
+                    (:match_id, :player_slot, :unit_key, 0, 1, 0, :buff_target_unit_key, :updated_at);',
                 [
-                    'match_id'    => $matchId,
-                    'player_slot' => $playerSlot,
-                    'unit_key'    => $unitKey,
-                    'updated_at'  => $now,
+                    'match_id'             => $matchId,
+                    'player_slot'          => $playerSlot,
+                    'unit_key'             => $unitKey,
+                    'buff_target_unit_key' => $targetUnitKey !== '' ? $targetUnitKey : null,
+                    'updated_at'           => $now,
                 ]
             );
             if (!(bool)$result[0]) {
@@ -763,11 +821,13 @@ class Match_Model extends Model
                     'UPDATE t_match_unit_status
                      SET is_destroyed = 0,
                          is_summoned = 1,
+                         buff_target_unit_key = :buff_target_unit_key,
                          updated_at = :updated_at
                      WHERE id = :id;',
                     [
-                        'updated_at' => $now,
-                        'id'         => (int)$row['id'],
+                        'buff_target_unit_key' => $targetUnitKey !== '' ? $targetUnitKey : null,
+                        'updated_at'           => $now,
+                        'id'                   => (int)$row['id'],
                     ]
                 );
             }
@@ -781,6 +841,28 @@ class Match_Model extends Model
             ['updated_at' => $now, 'id' => $matchId]
         );
         return true;
+    }
+
+    /**
+     * manifest:{unitId} が targets_unit_on_summon=1 かどうかを返す。
+     */
+    private function manifestationRequiresUnitTarget(string $manifestUnitKey): bool
+    {
+        if (!preg_match('/^manifest:(\d+)$/', $manifestUnitKey, $m)) {
+            return false;
+        }
+        $unitId = (int)$m[1];
+        if ($unitId <= 0) {
+            return false;
+        }
+        $rows = $this->db->select(
+            'SELECT targets_unit_on_summon FROM m_units WHERE id = :id LIMIT 1;',
+            ['id' => $unitId]
+        );
+        if (empty($rows)) {
+            return false;
+        }
+        return (int)($rows[0]['targets_unit_on_summon'] ?? 0) === 1;
     }
 
     /**
