@@ -76,7 +76,7 @@ class Roster_Model extends Model
 	{
 		$sql = "SELECT u.id, u.name, u.points,
                        " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
-                       u.unit_size, u.is_hero, u.can_reinforce FROM m_units u
+                       u.unit_size, u.is_hero, u.can_reinforce, u.image FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.faction_id = :id AND (u.is_hidden = 0 OR u.is_hidden IS NULL)
                   AND (u.is_terrain = 0 OR u.is_terrain IS NULL)
@@ -138,7 +138,7 @@ class Roster_Model extends Model
 		$regimentText = $this->regimentOptionsTextSubquery('u');
 		$sql = "SELECT u.id, u.name, u.points,
                        " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
-                       u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique,
+                       u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique, u.image,
                        {$regimentText} AS regiment_options
                 FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
@@ -197,7 +197,8 @@ class Roster_Model extends Model
 	{
 		$sql = "SELECT u.id, u.name, u.points,
                        " . KeywordSql::displayExpr('u', 'f') . " AS keywords,
-                       u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique                 FROM m_units u
+                       u.unit_size, u.is_hero, u.can_reinforce, u.is_general, u.is_unique, u.image
+                FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.faction_id = :id AND (u.is_hero = 0 OR u.is_hero IS NULL)
                   AND (u.is_hidden = 0 OR u.is_hidden IS NULL)

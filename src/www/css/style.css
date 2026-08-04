@@ -2866,10 +2866,15 @@ button {
 }
 .roster.create_roster .hero-name-wrap {
   flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
   font-size: 0.9rem;
 }
 .roster.create_roster .hero-name-wrap .hero-name-display {
   color: rgba(240, 234, 214, 0.6);
+  min-width: 0;
 }
 .roster.create_roster .hero-name-wrap .hero-name-display.js-open-unit {
   color: #f0ead6;
@@ -2878,6 +2883,33 @@ button {
 .roster.create_roster .hero-name-wrap .hero-name-display.js-open-unit:hover {
   color: #d4af37;
   text-decoration: underline;
+}
+.roster.create_roster .unit-slot-thumb {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(26, 38, 38, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.roster.create_roster .unit-slot-thumb.has-thumb {
+  display: flex;
+}
+.roster.create_roster .unit-slot-thumb img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  display: block;
+}
+.roster.create_roster .unit-slot-thumb .unit-slot-thumb-placeholder {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: rgba(240, 234, 214, 0.35);
+  line-height: 1;
 }
 .roster.create_roster .btn-select-hero {
   padding: 0.5rem 1rem;
@@ -3182,11 +3214,16 @@ button {
 }
 .roster.create_roster .unit-slot-row .unit-name-wrap {
   flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
   font-size: 0.9rem;
   color: #fff;
 }
 .roster.create_roster .unit-slot-row .unit-name-wrap .unit-name-display {
   color: #aaa;
+  min-width: 0;
 }
 .roster.create_roster .unit-slot-row .unit-name-wrap .unit-name-display.js-open-unit {
   cursor: pointer;

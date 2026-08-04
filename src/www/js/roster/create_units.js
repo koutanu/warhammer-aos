@@ -9,6 +9,47 @@ function buildHeroBadgeHtml() {
 }
 window.buildHeroBadgeHtml = buildHeroBadgeHtml;
 
+function escapeHtmlAttr(text) {
+	const div = document.createElement("div");
+	div.textContent = text == null ? "" : String(text);
+	return div.innerHTML;
+}
+
+/**
+ * ユニット名横のサムネを更新。画像が無ければ頭文字プレースホルダ。
+ * @param {HTMLElement|null} wrapEl - .hero-name-wrap / .unit-name-wrap
+ * @param {{image?: string, name?: string}|null} unit
+ */
+function setUnitSlotThumb(wrapEl, unit) {
+	if (!wrapEl) return;
+	const thumb = wrapEl.querySelector(".unit-slot-thumb");
+	if (!thumb) return;
+
+	if (!unit) {
+		thumb.innerHTML = "";
+		thumb.classList.remove("has-thumb");
+		return;
+	}
+
+	const image = String(unit.image || "").trim();
+	const name = String(unit.name || "").trim();
+	const base =
+		typeof getBaseURL === "function"
+			? getBaseURL()
+			: document.getElementById("doc_root")?.value || "";
+
+	if (image) {
+		thumb.innerHTML = `<img src="${escapeHtmlAttr(base + image)}" alt="" loading="lazy">`;
+		thumb.classList.add("has-thumb");
+		return;
+	}
+
+	const initial = (name || "?").charAt(0).toUpperCase();
+	thumb.innerHTML = `<span class="unit-slot-thumb-placeholder">${escapeHtmlAttr(initial)}</span>`;
+	thumb.classList.add("has-thumb");
+}
+window.setUnitSlotThumb = setUnitSlotThumb;
+
 // 選択済みユニット名をクリックで詳細モーダルを開けるようにする
 function markUnitNameOpenable(el, unitId, unitName) {
 	if (!el || !unitId) return;
@@ -815,6 +856,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			heroDisplay.innerHTML = `${hero.name} <span style="color: #ffcc00; font-size: 0.85rem; margin-left: 0.5rem; font-weight: bold;">(${hero.points} pt)</span>`;
 			markUnitNameOpenable(heroDisplay, hero.id, hero.name);
 		}
+		if (typeof window.setUnitSlotThumb === "function") {
+			window.setUnitSlotThumb(card.querySelector(".hero-name-wrap"), hero);
+		}
 		if (selectBtn) selectBtn.textContent = "Heroを変更";
 		card.dataset.regimentOptionLimits = JSON.stringify(
 			hero.regiment_option_limits || [],
@@ -864,6 +908,9 @@ document.addEventListener("DOMContentLoaded", () => {
 					: "";
 			nameDisplay.innerHTML = `${heroBadge}${unit.name} <span style="color: #ffcc00; font-size: 0.85rem; margin-left: 0.5rem; font-weight: bold;">(${basePts} pt)</span>`;
 			markUnitNameOpenable(nameDisplay, unit.id, unit.name);
+		}
+		if (typeof window.setUnitSlotThumb === "function") {
+			window.setUnitSlotThumb(row.querySelector(".unit-name-wrap"), unit);
 		}
 		row.setAttribute("data-base-points", basePts);
 		row.setAttribute("data-points", pts);

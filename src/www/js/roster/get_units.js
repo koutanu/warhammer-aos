@@ -252,6 +252,12 @@ document.addEventListener("DOMContentLoaded", () => {
 				window.markUnitNameOpenable(heroDisplay, unit.id, unit.name);
 			}
 		}
+		if (typeof window.setUnitSlotThumb === "function") {
+			window.setUnitSlotThumb(
+				activeRegimentCard.querySelector(".hero-name-wrap"),
+				unit,
+			);
+		}
 		if (selectBtn) selectBtn.textContent = "Heroを変更";
 
 		activeRegimentCard.dataset.regimentOptionLimits = JSON.stringify(
@@ -325,6 +331,12 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (typeof window.markUnitNameOpenable === "function") {
 				window.markUnitNameOpenable(nameDisplay, unit.id, unit.name);
 			}
+		}
+		if (typeof window.setUnitSlotThumb === "function") {
+			window.setUnitSlotThumb(
+				activeUnitRow.querySelector(".unit-name-wrap"),
+				unit,
+			);
 		}
 
 		activeUnitRow.setAttribute("data-base-points", unit.points);

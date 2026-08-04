@@ -325,6 +325,7 @@
 								<input type="hidden" name="regiments[0][hero_id]" class="hero-id-input" value="">
 								<div class="hero-slot-row" data-unit-id="" data-keywords="">
 									<div class="hero-name-wrap">
+										<span class="unit-slot-thumb" aria-hidden="true"></span>
 										<span class="hero-name-display">未選択</span>
 									</div>
 									<button type="button" class="btn-select-hero" data-regiment-index="0">Heroを選択</button>
@@ -385,6 +386,7 @@
 				<input type="hidden" name="regiments[__REG_INDEX__][units][__unit_INDEX__][assigned_option_id]" class="assigned-option-input" value="">
 
 				<div class="unit-name-wrap">
+					<span class="unit-slot-thumb" aria-hidden="true"></span>
 					<span class="unit-name-display">未選択</span>
 				</div>
 
@@ -529,6 +531,7 @@
 						<input type="hidden" name="regiments[__REG_INDEX__][hero_id]" class="hero-id-input" value="">
 						<div class="hero-slot-row" data-unit-id="" data-keywords="">
 							<div class="hero-name-wrap">
+								<span class="unit-slot-thumb" aria-hidden="true"></span>
 								<span class="hero-name-display">未選択</span>
 							</div>
 							<button type="button" class="btn-select-hero" data-regiment-index="__REG_INDEX__">Heroを選択</button>
