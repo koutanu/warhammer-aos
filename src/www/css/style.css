@@ -33,7 +33,8 @@ a {
 
 html {
   -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+       text-size-adjust: 100%;
   height: 100%;
   height: 100dvh;
   overflow: hidden;
@@ -109,7 +110,8 @@ button {
   border: none;
   cursor: pointer;
   outline: none;
-  appearance: none;
+  -moz-appearance: none;
+       appearance: none;
   -webkit-appearance: none;
 }
 
@@ -442,7 +444,8 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   border-radius: 12px;
   z-index: 1;
   transform-origin: center;
@@ -585,7 +588,8 @@ button {
 #unitDetailModal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  object-fit: contain;
+  -o-object-fit: contain;
+     object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -663,7 +667,9 @@ button {
   display: inline;
 }
 #unitDetailModal .detail-keywords .detail-keyword--has-effect {
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   background: none;
   border: none;
   padding: 0;
@@ -706,9 +712,6 @@ button {
 #unitDetailModal .detail-enhancement-box.detail-enhancement-box--season {
   border-left-color: rgba(220, 80, 60, 0.55);
 }
-#unitDetailModal .detail-enhancement-box.detail-enhancement-box--manifestation {
-  border-left-color: rgba(64, 160, 200, 0.65);
-}
 #unitDetailModal .detail-enhancement-box .detail-enhancement-head {
   display: flex;
   flex-wrap: wrap;
@@ -737,11 +740,6 @@ button {
   background: rgba(220, 80, 60, 0.18);
   color: #f0a090;
   border-color: rgba(220, 80, 60, 0.4);
-}
-#unitDetailModal .detail-enhancement-box .detail-enhancement-badge.detail-enhancement-badge--manifestation {
-  background: rgba(64, 160, 200, 0.18);
-  color: #8fd0ea;
-  border-color: rgba(64, 160, 200, 0.45);
 }
 #unitDetailModal .detail-enhancement-box .detail-enhancement-name {
   font-weight: bold;
@@ -1029,7 +1027,8 @@ button {
 .unit.faction-units .unit-card-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .unit.faction-units .unit-card-name {
@@ -1606,6 +1605,9 @@ button {
   background: rgba(19, 28, 28, 0.9);
   color: #f0ead6;
 }
+.unit.unit-edit .keyword-param-input:-moz-read-only {
+  opacity: 0.45;
+}
 .unit.unit-edit .keyword-param-input:read-only {
   opacity: 0.45;
 }
@@ -1692,7 +1694,8 @@ button {
   border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
-  appearance: none;
+  -moz-appearance: none;
+       appearance: none;
   -webkit-appearance: none; /* iOS/Safariのデフォルト形状をリセット */
 }
 .roster.index .form-group input[type=text]:focus,
@@ -1703,6 +1706,9 @@ button {
 }
 .roster.index .form-group {
   /* プレースホルダーの色調整 */
+}
+.roster.index .form-group input::-moz-placeholder {
+  color: rgba(240, 234, 214, 0.4);
 }
 .roster.index .form-group input::placeholder {
   color: rgba(240, 234, 214, 0.4);
@@ -1818,20 +1824,17 @@ button {
 }
 
 .roster.list {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 2rem auto;
-  padding: 2rem;
-  background: #1a2626;
-  border: 1px solid #2f4f4f;
-  border-radius: 8px;
+  padding: 1.5rem 1rem;
 }
 .roster.list .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  padding: 0 0.25rem 0.75rem;
   border-bottom: 2px solid #2f4f4f;
-  padding-bottom: 0.75rem;
 }
 .roster.list .list-header h2 {
   margin: 0;
@@ -1863,47 +1866,84 @@ button {
   border: 1px solid rgba(139, 0, 0, 0.5);
   color: rgb(255, 11.5, 11.5);
 }
-.roster.list .roster-list-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+.roster.list .roster-list-by-faction {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  align-items: start;
 }
-.roster.list .roster-list-table th, .roster.list .roster-list-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(47, 79, 79, 0.3);
-  text-align: left;
+.roster.list .roster-faction-group {
+  background: #1a2626;
+  border-radius: 12px;
+  padding: 1.2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
 }
-.roster.list .roster-list-table th {
-  color: rgba(240, 234, 214, 0.6);
-  font-size: 0.8rem;
-  text-transform: uppercase;
+.roster.list .roster-faction-group .roster-faction-heading {
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #2f4f4f;
+  font-size: 1.15rem;
+  font-family: "Georgia", serif;
+  color: #d4af37;
+  letter-spacing: 0.08em;
 }
-.roster.list .roster-list-table .list-actions {
+.roster.list .roster-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: #2f4f4f;
+  color: #f0ead6;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 0.8rem;
+  box-sizing: border-box;
+}
+.roster.list .roster-list-item:last-child {
+  margin-bottom: 0;
+}
+.roster.list .roster-list-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.roster.list .roster-list-item-name {
+  font-size: 1.05rem;
+  font-weight: bold;
+  word-break: break-word;
+}
+.roster.list .roster-list-item-meta {
+  font-size: 0.85rem;
+  color: rgba(240, 234, 214, 0.7);
+}
+.roster.list .list-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.85rem;
 }
-.roster.list .roster-list-table .list-actions .btn-edit {
+.roster.list .list-actions .btn-edit {
   color: #d4af37;
   text-decoration: none;
   font-weight: bold;
 }
-.roster.list .roster-list-table .list-actions .btn-edit:hover {
+.roster.list .list-actions .btn-edit:hover {
   text-decoration: underline;
 }
-.roster.list .roster-list-table .list-actions .btn-detail {
+.roster.list .list-actions .btn-detail {
   color: rgba(240, 234, 214, 0.85);
   text-decoration: none;
   font-weight: bold;
 }
-.roster.list .roster-list-table .list-actions .btn-detail:hover {
+.roster.list .list-actions .btn-detail:hover {
   color: #d4af37;
   text-decoration: underline;
 }
-.roster.list .roster-list-table .list-actions .delete-roster-form {
+.roster.list .list-actions .delete-roster-form {
   margin: 0;
 }
-.roster.list .roster-list-table .list-actions .btn-delete {
+.roster.list .list-actions .btn-delete {
   background: none;
   border: none;
   padding: 0;
@@ -1913,7 +1953,7 @@ button {
   font-size: inherit;
   font-family: inherit;
 }
-.roster.list .roster-list-table .list-actions .btn-delete:hover {
+.roster.list .list-actions .btn-delete:hover {
   text-decoration: underline;
 }
 .roster.list .list-empty {
@@ -1921,10 +1961,10 @@ button {
   text-align: center;
   padding: 2rem 0;
 }
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .roster.list {
     margin: 0.5rem 0;
-    padding: 1.25rem 1rem;
+    padding: 1.25rem 0.75rem;
   }
   .roster.list .list-header {
     flex-direction: column;
@@ -1936,19 +1976,9 @@ button {
     width: 100%;
     box-sizing: border-box;
   }
-  .roster.list .roster-list-table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    font-size: 0.85rem;
-  }
-  .roster.list .roster-list-table th,
-  .roster.list .roster-list-table td {
-    padding: 0.65rem 0.75rem;
-    white-space: nowrap;
-  }
-  .roster.list .roster-list-table .list-actions {
-    gap: 0.75rem;
+  .roster.list .roster-list-by-faction {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
@@ -2120,7 +2150,9 @@ button {
   font-weight: bold;
 }
 .roster.detail .detail-open-btn {
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   background: none;
   border: none;
   padding: 0;
@@ -2278,7 +2310,9 @@ button {
   justify-content: flex-end;
 }
 .roster-ability-modal .btn-close-detail {
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   border: 1px solid #2f4f4f;
   background: rgba(19, 28, 28, 0.8);
   color: #f0ead6;
@@ -2294,7 +2328,9 @@ button {
   position: absolute;
   top: 0.55rem;
   right: 0.7rem;
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   border: none;
   background: transparent;
   color: rgba(240, 234, 214, 0.7);
@@ -2412,6 +2448,11 @@ button {
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
 }
+.roster.create_roster .roster-title-display .roster-name-input::-moz-placeholder {
+  color: rgba(240, 234, 214, 0.4);
+  font-weight: 400;
+  text-shadow: none;
+}
 .roster.create_roster .roster-title-display .roster-name-input::placeholder {
   color: rgba(240, 234, 214, 0.4);
   font-weight: 400;
@@ -2441,6 +2482,9 @@ button {
 .roster.create_roster .roster-memo-input:focus {
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+.roster.create_roster .roster-memo-input::-moz-placeholder {
+  color: rgba(240, 234, 214, 0.4);
 }
 .roster.create_roster .roster-memo-input::placeholder {
   color: rgba(240, 234, 214, 0.4);
@@ -2664,7 +2708,9 @@ button {
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
 }
 .roster.create_roster .form-group select:focus,
 .roster.create_roster .form-group input[type=text]:focus {
@@ -3100,7 +3146,9 @@ button {
   font-size: 0.95rem;
   outline: none;
   box-sizing: border-box;
-  appearance: none;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
 }
 .roster.create_roster .unit-slot-row .select-wrapper .unit-select:focus {
   border-color: #d4af37;
@@ -3173,6 +3221,25 @@ button {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
+}
+.roster.create_roster .btn-move-unit-up,
+.roster.create_roster .btn-move-unit-down {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.5rem;
+  background: #333;
+  border: 1px solid #555;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.roster.create_roster .btn-move-unit-up:disabled,
+.roster.create_roster .btn-move-unit-down:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 .roster.create_roster .btn-delete-unit {
   padding: 0.4rem 0.75rem;
@@ -3265,6 +3332,9 @@ button {
 }
 .roster.create_roster .modal-content .modal-search-input:focus {
   border-color: var(--color-accent, #ffcc00);
+}
+.roster.create_roster .modal-content .modal-search-input::-moz-placeholder {
+  color: #aaa;
 }
 .roster.create_roster .modal-content .modal-search-input::placeholder {
   color: #aaa;
@@ -3552,6 +3622,8 @@ button {
     min-width: 0;
   }
   .roster.create_roster .unit-slot-row .slot-main-content .btn-select-unit,
+  .roster.create_roster .unit-slot-row .slot-main-content .btn-move-unit-up,
+  .roster.create_roster .unit-slot-row .slot-main-content .btn-move-unit-down,
   .roster.create_roster .unit-slot-row .slot-main-content .btn-delete-unit {
     min-height: 44px;
     box-sizing: border-box;
@@ -5025,7 +5097,8 @@ button {
 .match.scoreboard .modal-overlay .ability-target-picker-modal-content .ability-target-picker-list .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .modal-overlay .ability-target-picker-modal-content .ability-target-picker-list .ability-unit-thumb-placeholder {
@@ -5347,7 +5420,8 @@ button {
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb-placeholder {
@@ -5527,7 +5601,8 @@ button {
 .match.scoreboard .match-unit-detail-modal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  object-fit: contain;
+  -o-object-fit: contain;
+     object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -5590,9 +5665,6 @@ button {
 .match.scoreboard .match-unit-detail-modal .detail-enhancement-box.detail-enhancement-box--season {
   border-left-color: rgba(220, 80, 60, 0.55);
 }
-.match.scoreboard .match-unit-detail-modal .detail-enhancement-box.detail-enhancement-box--manifestation {
-  border-left-color: rgba(64, 160, 200, 0.65);
-}
 .match.scoreboard .match-unit-detail-modal .detail-enhancement-box .detail-enhancement-head {
   display: flex;
   flex-wrap: wrap;
@@ -5621,11 +5693,6 @@ button {
   background: rgba(220, 80, 60, 0.18);
   color: #f0a090;
   border-color: rgba(220, 80, 60, 0.4);
-}
-.match.scoreboard .match-unit-detail-modal .detail-enhancement-box .detail-enhancement-badge.detail-enhancement-badge--manifestation {
-  background: rgba(64, 160, 200, 0.18);
-  color: #8fd0ea;
-  border-color: rgba(64, 160, 200, 0.45);
 }
 .match.scoreboard .match-unit-detail-modal .detail-enhancement-box .detail-enhancement-name {
   font-weight: bold;
@@ -5824,7 +5891,8 @@ button {
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-placeholder {
@@ -5903,7 +5971,8 @@ button {
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-placeholder {
@@ -5972,7 +6041,8 @@ button {
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-placeholder {
@@ -6047,7 +6117,8 @@ button {
 .match.scoreboard .phase-opponent-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-opponent-unit .ability-unit-thumb-placeholder {
@@ -6148,7 +6219,9 @@ button {
   cursor: pointer;
   min-height: 48px;
   -webkit-tap-highlight-color: transparent;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 .match.scoreboard .phase-ability-card.is-expandable:hover {
@@ -6163,7 +6236,9 @@ button {
 }
 .match.scoreboard .phase-ability-card .ability-effect-box,
 .match.scoreboard .phase-ability-card .ability-effect-box * {
-  user-select: text;
+  -webkit-user-select: text;
+     -moz-user-select: text;
+          user-select: text;
 }
 .match.scoreboard .phase-ability-card.is-open {
   border-left-color: #d4af37;
@@ -6467,7 +6542,8 @@ button {
 .match.scoreboard .ability-effect-box .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .ability-effect-box .ability-unit-thumb-placeholder {
@@ -6643,7 +6719,8 @@ button {
 .match.scoreboard .deployment-unit-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  -o-object-fit: cover;
+     object-fit: cover;
   display: block;
 }
 .match.scoreboard .deployment-unit-thumb-placeholder {
@@ -7686,4 +7763,4 @@ button {
     display: block;
     padding: 0.5rem 0;
   }
-}
+}/*# sourceMappingURL=style.css.map */

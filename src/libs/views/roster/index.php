@@ -51,6 +51,6 @@
 		</div>
 
 		<button type="submit" class="btn-submit">ロスターを作成する</button>
-		<p class="index-sub-link"><a href="<?= URL; ?>roster/list">保存済みロスター一覧へ</a></p>
+		<p class="index-sub-link"><a href="<?= URL; ?>roster/">保存済みロスター一覧へ</a></p>
 	</form>
 </div>

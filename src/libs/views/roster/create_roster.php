@@ -85,6 +85,29 @@
 		<input type="hidden" name="season_enhancement_regiment_index" id="seasonEnhancementRegimentIndexInput" value="">
 		<input type="hidden" name="season_enhancement_unit_slot" id="seasonEnhancementUnitSlotInput" value="">
 
+		<?php
+		// MatchPhases.PHASE_LABELS_JA に合わせたフェイズ表記（戦闘陣形セレクト用）
+		$formationPhaseJaMap = [
+			'deployment' => '初期配置フェイズ',
+			'round_start' => 'ラウンド開始時',
+			'hero' => 'ヒーローフェーズ',
+			'movement' => '移動フェイズ',
+			'shooting' => '射撃フェイズ',
+			'charge' => '突撃フェイズ',
+			'combat' => '近接フェイズ',
+			'end' => 'ターン終了フェイズ',
+			'any' => '全フェーズ',
+		];
+		$formationPhaseJa = static function ($csv) use ($formationPhaseJaMap) {
+			$parts = array_filter(array_map('trim', explode(',', (string)$csv)));
+			$labels = [];
+			foreach ($parts as $p) {
+				$key = strtolower($p);
+				$labels[] = $formationPhaseJaMap[$key] ?? $p;
+			}
+			return implode(' / ', array_unique($labels));
+		};
+		?>
 		<div class="army-options-section">
 			<h3>アーミーオプション / ARMY-WIDE OPTIONS</h3>
 
@@ -95,14 +118,21 @@
 						<option value="">-- フォーメーションを選択 --</option>
 						<?php if (!empty($battle_formations)): ?>
 							<?php foreach ($battle_formations as $formation): ?>
-								<?php $pts = $formation['points'] ?? 0; ?>
+								<?php
+								$pts = $formation['points'] ?? 0;
+								$conditionJa = trim((string)($formation['trigger_condition_ja'] ?? ''));
+								$phaseLabel = $conditionJa !== ''
+									? $conditionJa
+									: $formationPhaseJa($formation['trigger_phase'] ?? '');
+								?>
 								<option value="<?= $this->h($formation['id']); ?>"
 									data-points="<?= $this->h($pts); ?>"
 									data-ability-name="<?= $this->h($formation['ability_name']); ?>"
 									data-trigger="<?= $this->h($formation['trigger_phase']); ?>"
+									data-trigger-condition-ja="<?= $this->h($conditionJa); ?>"
 									data-effect="<?= $this->h($formation['effect']); ?>"
 									data-flavor="<?= $this->h($formation['flavor_text'] ?? ''); ?>">
-									<?= $this->h($formation['formation_name']); ?> (<?= $this->h($pts); ?> pt)
+									<?= $this->h($formation['formation_name']); ?> (<?= $this->h($pts); ?> pt)<?php if ($phaseLabel !== ''): ?><?php endif; ?>
 								</option>
 							<?php endforeach; ?>
 						<?php endif; ?>
@@ -361,6 +391,8 @@
 				<span class="unit-option-assign" style="display:none;"></span>
 
 				<button type="button" class="btn-select-unit" data-regiment-index="__REG_INDEX__" data-unit-index="__unit_INDEX__">ユニットを選択</button>
+				<button type="button" class="btn-move-unit-up" aria-label="上へ移動">▲</button>
+				<button type="button" class="btn-move-unit-down" aria-label="下へ移動">▼</button>
 				<button type="button" class="btn-delete-unit">削除</button>
 			</div>
 

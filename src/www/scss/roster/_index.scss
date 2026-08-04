@@ -204,20 +204,17 @@
 }
 
 .roster.list {
-	max-width: 960px;
+	max-width: 1100px;
 	margin: 2rem auto;
-	padding: 2rem;
-	background: $color-base;
-	border: 1px solid $color-main;
-	border-radius: 8px;
+	padding: 1.5rem 1rem;
 
 	.list-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 1.5rem;
+		padding: 0 0.25rem 0.75rem;
 		border-bottom: 2px solid $color-main;
-		padding-bottom: 0.75rem;
 
 		h2 {
 			margin: 0;
@@ -255,66 +252,108 @@
 		color: color.adjust($color-blood, $lightness: 25%);
 	}
 
-	.roster-list-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 0.9rem;
+	.roster-list-by-faction {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20px;
+		align-items: start;
+	}
 
-		th, td {
-			padding: 0.75rem 1rem;
-			border-bottom: 1px solid rgba($color-main, 0.3);
-			text-align: left;
+	.roster-faction-group {
+		background: $color-base;
+		border-radius: 12px;
+		padding: 1.2rem;
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+		box-sizing: border-box;
+
+		.roster-faction-heading {
+			margin: 0 0 1rem;
+			padding-bottom: 0.5rem;
+			border-bottom: 2px solid $color-main;
+			font-size: 1.15rem;
+			font-family: "Georgia", serif;
+			color: $color-accent;
+			letter-spacing: 0.08em;
+		}
+	}
+
+	.roster-list-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.65rem;
+		background: $color-main;
+		color: $color-text;
+		padding: 1rem 1.2rem;
+		border-radius: 8px;
+		margin-bottom: 0.8rem;
+		box-sizing: border-box;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	.roster-list-item-main {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		min-width: 0;
+	}
+
+	.roster-list-item-name {
+		font-size: 1.05rem;
+		font-weight: bold;
+		word-break: break-word;
+	}
+
+	.roster-list-item-meta {
+		font-size: 0.85rem;
+		color: rgba($color-text, 0.7);
+	}
+
+	.list-actions {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.85rem;
+
+		.btn-edit {
+			color: $color-accent;
+			text-decoration: none;
+			font-weight: bold;
+
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 
-		th {
-			color: rgba($color-text, 0.6);
-			font-size: 0.8rem;
-			text-transform: uppercase;
-		}
+		.btn-detail {
+			color: rgba($color-text, 0.85);
+			text-decoration: none;
+			font-weight: bold;
 
-		.list-actions {
-			display: flex;
-			align-items: center;
-			gap: 1rem;
-
-			.btn-edit {
+			&:hover {
 				color: $color-accent;
-				text-decoration: none;
-				font-weight: bold;
-
-				&:hover {
-					text-decoration: underline;
-				}
+				text-decoration: underline;
 			}
+		}
 
-			.btn-detail {
-				color: rgba($color-text, 0.85);
-				text-decoration: none;
-				font-weight: bold;
+		.delete-roster-form {
+			margin: 0;
+		}
 
-				&:hover {
-					color: $color-accent;
-					text-decoration: underline;
-				}
-			}
+		.btn-delete {
+			background: none;
+			border: none;
+			padding: 0;
+			cursor: pointer;
+			color: color.adjust($color-blood, $lightness: 25%);
+			font-weight: bold;
+			font-size: inherit;
+			font-family: inherit;
 
-			.delete-roster-form {
-				margin: 0;
-			}
-
-			.btn-delete {
-				background: none;
-				border: none;
-				padding: 0;
-				cursor: pointer;
-				color: color.adjust($color-blood, $lightness: 25%);
-				font-weight: bold;
-				font-size: inherit;
-				font-family: inherit;
-
-				&:hover {
-					text-decoration: underline;
-				}
+			&:hover {
+				text-decoration: underline;
 			}
 		}
 	}
@@ -325,9 +364,9 @@
 		padding: 2rem 0;
 	}
 
-	@media (max-width: 768px) {
+	@media (max-width: 767px) {
 		margin: 0.5rem 0;
-		padding: 1.25rem 1rem;
+		padding: 1.25rem 0.75rem;
 
 		.list-header {
 			flex-direction: column;
@@ -341,21 +380,9 @@
 			}
 		}
 
-		.roster-list-table {
-			display: block;
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
-			font-size: 0.85rem;
-
-			th,
-			td {
-				padding: 0.65rem 0.75rem;
-				white-space: nowrap;
-			}
-
-			.list-actions {
-				gap: 0.75rem;
-			}
+		.roster-list-by-faction {
+			grid-template-columns: 1fr;
+			gap: 16px;
 		}
 	}
 }
@@ -617,7 +644,8 @@
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 	box-sizing: border-box;
-	padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px;
+	padding: 16px calc(16px + env(safe-area-inset-right))
+		calc(16px + env(safe-area-inset-bottom)) 16px;
 
 	&[style*="display: flex"] {
 		display: flex !important;

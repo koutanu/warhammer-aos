@@ -25,6 +25,25 @@ document.addEventListener("DOMContentLoaded", () => {
 		const flavorEl = document.getElementById(selectors.flavorId);
 
 		/**
+		 * trigger_condition_ja 優先、なければ MatchPhases で日本語化
+		 * （enhancements.js / detail.js と同じルール）
+		 */
+		const formatOptionTrigger = (option) => {
+			const conditionJa = String(
+				option.dataset.triggerConditionJa || "",
+			).trim();
+			if (conditionJa) return conditionJa;
+			const raw = option.dataset.trigger || "";
+			if (
+				typeof MatchPhases !== "undefined" &&
+				MatchPhases.formatTriggerPhases
+			) {
+				return MatchPhases.formatTriggerPhases(raw);
+			}
+			return raw;
+		};
+
+		/**
 		 * セレクトボックス変更時にデータを裏側で同期する処理
 		 */
 		const updateDetailData = () => {
@@ -41,8 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			// dataset から値を取得してDOMに反映
 			if (titleEl)
 				titleEl.textContent = selectedOption.dataset.abilityName || "";
-			if (triggerEl)
-				triggerEl.textContent = selectedOption.dataset.trigger || "";
+			if (triggerEl) {
+				const triggerLabel = formatOptionTrigger(selectedOption);
+				triggerEl.textContent = triggerLabel;
+				triggerEl.style.display = triggerLabel ? "" : "none";
+			}
 			if (effectEl)
 				effectEl.innerHTML = selectedOption.dataset.effect || "";
 

@@ -14,18 +14,6 @@ class Roster extends Controller
 
 	public function index()
 	{
-		$token = Session::setToken($this->class_name . '/index');
-		$data = [
-			'token' => $token,
-			'js'    => [$this->class_name . '/index.js'],
-			'roster_data'  => $this->model->getFactions(),
-			'roster_error' => $this->pullFlash('roster_error'),
-		];
-		$this->view->render($this->class_name, 'index', 'ロスター作成', $data);
-	}
-
-	public function list()
-	{
 		$userId = Session::getUserInfo('user_id');
 		$rosterSuccess = Session::get('roster_success');
 		if ($rosterSuccess) {
@@ -40,6 +28,24 @@ class Roster extends Controller
 		$this->view->render($this->class_name, 'list', 'ロスター一覧', $data);
 	}
 
+	public function create()
+	{
+		$token = Session::setToken($this->class_name . '/create');
+		$data = [
+			'token' => $token,
+			'js'    => [$this->class_name . '/index.js'],
+			'roster_data'  => $this->model->getFactions(),
+			'roster_error' => $this->pullFlash('roster_error'),
+		];
+		$this->view->render($this->class_name, 'index', '新規ロスター作成', $data);
+	}
+
+	public function list()
+	{
+		header('Location: ' . URL . 'roster/');
+		exit;
+	}
+
 	public function detail($rosterId = '')
 	{
 		$userId = (int)Session::getUserInfo('user_id');
@@ -47,7 +53,7 @@ class Roster extends Controller
 		$rosterData = $this->model->getRosterWithDetails($rosterId, $userId);
 
 		if (!$rosterData) {
-			header('Location: ' . URL . 'roster/list');
+			header('Location: ' . URL . 'roster/');
 			exit;
 		}
 
@@ -243,14 +249,14 @@ class Roster extends Controller
 	public function delete()
 	{
 		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-			header('Location: ' . URL . 'roster/list');
+			header('Location: ' . URL . 'roster/');
 			exit;
 		}
 
 		$token = $_POST['token'] ?? '';
 		if (!Session::checkToken($this->class_name . '/delete', $token)) {
 			Session::set('roster_error', 'セッションが無効です。再度お試しください。');
-			header('Location: ' . URL . 'roster/list');
+			header('Location: ' . URL . 'roster/');
 			exit;
 		}
 
@@ -259,7 +265,7 @@ class Roster extends Controller
 
 		if ($rosterId <= 0) {
 			Session::set('roster_error', '削除対象のロスターが不正です。');
-			header('Location: ' . URL . 'roster/list');
+			header('Location: ' . URL . 'roster/');
 			exit;
 		}
 
@@ -269,7 +275,7 @@ class Roster extends Controller
 			Session::set('roster_error', 'ロスターの削除に失敗しました。');
 		}
 
-		header('Location: ' . URL . 'roster/list');
+		header('Location: ' . URL . 'roster/');
 		exit;
 	}
 
@@ -280,7 +286,7 @@ class Roster extends Controller
 		$rosterData = $this->model->getRosterWithDetails($rosterId, $userId);
 
 		if (!$rosterData) {
-			header('Location: ' . URL . 'roster/list');
+			header('Location: ' . URL . 'roster/');
 			exit;
 		}
 
@@ -388,14 +394,14 @@ class Roster extends Controller
 	public function save()
 	{
 		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-			header('Location: ' . URL . 'roster/index');
+			header('Location: ' . URL . 'roster/create');
 			exit;
 		}
 
 		$token = $_POST['token'] ?? '';
 		if (!Session::checkToken($this->class_name . '/index', $token)) {
 			Session::set('roster_error', 'セッションが無効です。再度お試しください。');
-			header('Location: ' . URL . 'roster/index');
+			header('Location: ' . URL . 'roster/create');
 			exit;
 		}
 
@@ -435,7 +441,7 @@ class Roster extends Controller
 
 		if ($data['roster_name'] === '' || $data['faction_id'] <= 0) {
 			Session::set('roster_error', 'ロスター名またはファクションが不正です。');
-			header('Location: ' . URL . 'roster/index');
+			header('Location: ' . URL . 'roster/create');
 			exit;
 		}
 
@@ -457,7 +463,7 @@ class Roster extends Controller
 		}
 
 		Session::set('roster_success', 'ロスターを保存しました。');
-		header('Location: ' . URL . 'roster/list');
+		header('Location: ' . URL . 'roster/');
 		exit;
 	}
 

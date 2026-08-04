@@ -662,11 +662,11 @@ class Roster_Model extends Model
 
 	public function getRostersByUser(int $userId): array
 	{
-		$sql = "SELECT r.*, f.name AS faction_name
+		$sql = "SELECT r.*, f.name AS faction_name, f.grand_alliance
                 FROM t_rosters r
                 LEFT JOIN m_factions f ON f.id = r.faction_id
                 WHERE r.user_id = :user_id
-                ORDER BY r.updated_at DESC, r.created_at DESC, r.id DESC;";
+                ORDER BY f.grand_alliance ASC, f.name ASC, r.updated_at DESC, r.created_at DESC, r.id DESC;";
 		return $this->db->select($sql, ['user_id' => $userId]);
 	}
 

@@ -15,7 +15,7 @@ $armyKeys = [
 <div class="roster detail">
 	<div class="detail-header">
 		<div class="detail-header-main">
-			<a href="<?= URL; ?>roster/list" class="detail-back-link">&larr; 一覧へ戻る</a>
+			<a href="<?= URL; ?>roster/" class="detail-back-link">&larr; 一覧へ戻る</a>
 			<h2><?= $this->h($roster['name'] ?? 'ロスター詳細'); ?></h2>
 		</div>
 		<div class="detail-header-actions">

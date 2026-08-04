@@ -873,10 +873,90 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	}
 
+	/**
+	 * 随伴スロット並び替え後: 同一連隊内で unitId から行を探し、unit_slot を再同期する。
+	 */
+	function findUnitRowByUnitId(card, unitId) {
+		if (!card || !unitId) return null;
+		return (
+			Array.from(card.querySelectorAll(".unit-slot-row")).find((r) => {
+				return String(getHeroRowUnitId(r)) === String(unitId);
+			}) || null
+		);
+	}
+
+	function remapEnhancementUnitSlotsForCard(regimentCard) {
+		if (!regimentCard || !regimentCard.isConnected) return;
+
+		const regIdx = String(regimentCard.dataset.regimentIndex ?? "");
+		const state = getState();
+
+		if (
+			state.traitId &&
+			String(traitRegimentInput?.value ?? "") === regIdx &&
+			(traitSlotInput?.value || "leader") !== "leader"
+		) {
+			const row = findUnitRowByUnitId(
+				regimentCard,
+				traitTargetInput?.value || "",
+			);
+			if (row) {
+				setTrait(
+					state.traitId,
+					parseTargetFromRow(row),
+					window._enhancementTraitMeta,
+				);
+			} else {
+				clearTrait();
+			}
+		}
+
+		if (
+			state.artefactId &&
+			String(artefactRegimentInput?.value ?? "") === regIdx &&
+			(artefactSlotInput?.value || "leader") !== "leader"
+		) {
+			const row = findUnitRowByUnitId(
+				regimentCard,
+				artefactTargetInput?.value || "",
+			);
+			if (row) {
+				setArtefact(
+					state.artefactId,
+					parseTargetFromRow(row),
+					window._enhancementArtefactMeta,
+				);
+			} else {
+				clearArtefact();
+			}
+		}
+
+		if (
+			state.seasonId &&
+			String(seasonRegimentInput?.value ?? "") === regIdx &&
+			(seasonSlotInput?.value || "leader") !== "leader"
+		) {
+			const row = findUnitRowByUnitId(
+				regimentCard,
+				seasonTargetInput?.value || "",
+			);
+			if (row) {
+				setSeason(
+					state.seasonId,
+					parseTargetFromRow(row),
+					window._enhancementSeasonMeta,
+				);
+			} else {
+				clearSeason();
+			}
+		}
+	}
+
 	window.getEnhancementPoints = getEnhancementPoints;
 	window.updateHeroEnhancementButtons = updateHeroEnhancementButtons;
 	window.captureEnhancementRegimentCards = captureEnhancementRegimentCards;
 	window.remapEnhancementRegimentIndices = remapEnhancementRegimentIndices;
+	window.remapEnhancementUnitSlotsForCard = remapEnhancementUnitSlotsForCard;
 
 	loadEnhancements().then(() => {
 		restoreFromEdit();

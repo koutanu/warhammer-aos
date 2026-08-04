@@ -385,6 +385,49 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 
+	function updateUnitMoveButtons(regimentCard) {
+		if (!regimentCard) return;
+		const rows = Array.from(
+			regimentCard.querySelectorAll(".units-slot-list .unit-slot-row"),
+		);
+		rows.forEach((row, idx) => {
+			const upBtn = row.querySelector(".btn-move-unit-up");
+			const downBtn = row.querySelector(".btn-move-unit-down");
+			if (upBtn) upBtn.disabled = idx === 0;
+			if (downBtn) downBtn.disabled = idx === rows.length - 1;
+		});
+	}
+
+	function moveUnitSlot(row, direction) {
+		if (!row) return false;
+		const regimentCard = row.closest(".regiment-card");
+		if (!regimentCard) return false;
+
+		const sibling =
+			direction < 0 ? row.previousElementSibling : row.nextElementSibling;
+		if (!sibling || !sibling.classList.contains("unit-slot-row")) {
+			return false;
+		}
+
+		if (direction < 0) {
+			row.parentNode.insertBefore(row, sibling);
+		} else {
+			row.parentNode.insertBefore(sibling, row);
+		}
+
+		reindexUnitSlots(regimentCard);
+		refreshRegimentOptionSelectors(regimentCard);
+		updateUnitMoveButtons(regimentCard);
+		if (typeof window.remapEnhancementUnitSlotsForCard === "function") {
+			window.remapEnhancementUnitSlotsForCard(regimentCard);
+		}
+		if (typeof window.updateHeroEnhancementButtons === "function") {
+			window.updateHeroEnhancementButtons();
+		}
+		updateAllPoints();
+		return true;
+	}
+
 	function reindexRegiments() {
 		const cards = Array.from(
 			regimentsContainer.querySelectorAll(".regiment-card"),
@@ -482,6 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const tempDiv = document.createElement("div");
 		tempDiv.innerHTML = html.trim();
 		slotList.appendChild(tempDiv.firstChild);
+		updateUnitMoveButtons(regimentCard);
 		return true;
 	}
 
@@ -539,12 +583,26 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
+		if (e.target.classList.contains("btn-move-unit-up")) {
+			moveUnitSlot(e.target.closest(".unit-slot-row"), -1);
+			return;
+		}
+
+		if (e.target.classList.contains("btn-move-unit-down")) {
+			moveUnitSlot(e.target.closest(".unit-slot-row"), 1);
+			return;
+		}
+
 		if (e.target.classList.contains("btn-delete-unit")) {
 			const row = e.target.closest(".unit-slot-row");
 			const regimentCard = row.closest(".regiment-card");
 			row.remove();
 			reindexUnitSlots(regimentCard);
 			refreshRegimentOptionSelectors(regimentCard);
+			updateUnitMoveButtons(regimentCard);
+			if (typeof window.remapEnhancementUnitSlotsForCard === "function") {
+				window.remapEnhancementUnitSlotsForCard(regimentCard);
+			}
 			if (typeof window.updateHeroEnhancementButtons === "function") {
 				window.updateHeroEnhancementButtons();
 			}
@@ -724,6 +782,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	window.autoAssignOption = autoAssignOption;
 	window.renderUnitOptionSelector = renderUnitOptionSelector;
 	window.refreshRegimentOptionSelectors = refreshRegimentOptionSelectors;
+	window.updateUnitMoveButtons = updateUnitMoveButtons;
 	updateAllPoints();
 });
 
@@ -869,6 +928,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		(reg.units || []).forEach((unit, unitIdx) => {
 			applyUnit(card, unit, unitIdx);
 		});
+		if (typeof window.updateUnitMoveButtons === "function") {
+			window.updateUnitMoveButtons(card);
+		}
 	});
 
 	if (typeof window.reindexRegiments === "function") {
