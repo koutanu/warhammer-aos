@@ -316,7 +316,7 @@
 		letter-spacing: 0.04em;
 		vertical-align: middle;
 		color: $color-background;
-		background: rgba($color-blood, 0.85);
+		background: rgba($color-magic, 0.85);
 	}
 
 	.roster-list-item.is-locked {
@@ -458,7 +458,7 @@
 		font-weight: bold;
 		letter-spacing: 0.04em;
 		color: $color-background;
-		background: rgba($color-blood, 0.85);
+		background: rgba($color-magic, 0.85);
 	}
 
 	.roster-lock-note {
@@ -469,7 +469,6 @@
 		line-height: 1.5;
 		background: rgba($color-blood, 0.12);
 		border: 1px solid rgba($color-blood, 0.4);
-		color: color.adjust($color-blood, $lightness: 20%);
 	}
 
 	.roster-flash {
