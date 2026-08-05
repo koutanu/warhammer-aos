@@ -23,6 +23,7 @@ $deleteToken = $delete_token ?? '';
 					<tr>
 						<th>対戦日</th>
 						<th>バトルプラン</th>
+						<th>ポイント</th>
 						<th>対戦カード</th>
 						<th>勝者</th>
 						<th></th>
@@ -35,10 +36,23 @@ $deleteToken = $delete_token ?? '';
 						$playedAt = $m['completed_at'] ?? $m['played_at'] ?? '-';
 						$aFaction = $m['player_a_faction_name'] ?? '';
 						$bFaction = $m['player_b_faction_name'] ?? '';
+						$ptsA = $m['player_a_roster_points'] ?? null;
+						$ptsB = $m['player_b_roster_points'] ?? null;
 						?>
 						<tr>
 							<td><?= $this->h($playedAt); ?></td>
 							<td><?= $this->h($m['battleplan_name'] ?? '-'); ?></td>
+							<td class="match-roster-points-cell">
+								<?php if ($ptsA !== null && $ptsB !== null && (int)$ptsA === (int)$ptsB): ?>
+									<?= (int)$ptsA; ?> pt
+								<?php elseif ($ptsA !== null || $ptsB !== null): ?>
+									<?= $ptsA !== null ? (int)$ptsA . ' pt' : '-'; ?>
+									<span class="match-roster-points-sep">/</span>
+									<?= $ptsB !== null ? (int)$ptsB . ' pt' : '-'; ?>
+								<?php else: ?>
+									-
+								<?php endif; ?>
+							</td>
 							<td class="match-card-cell">
 								<span class="match-side">
 									<strong><?= $this->h($m['player_a_name'] ?? 'Player 1'); ?></strong>

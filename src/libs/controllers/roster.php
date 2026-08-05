@@ -241,6 +241,8 @@ class Roster extends Controller
 				],
 			],
 			'battle_tactics' => $battleTactics,
+			'is_locked_in_match' => $this->model->isRosterLockedInActiveMatch($rosterId),
+			'roster_error' => $this->pullFlash('roster_error'),
 		];
 
 		$this->view->render($this->class_name, 'detail', 'ロスター詳細', $data);
@@ -269,6 +271,12 @@ class Roster extends Controller
 			exit;
 		}
 
+		if ($this->model->isRosterLockedInActiveMatch($rosterId)) {
+			Session::set('roster_error', '進行中の試合で使用中のため、このロスターは削除できません。');
+			header('Location: ' . URL . 'roster/');
+			exit;
+		}
+
 		if ($this->model->deleteRoster($rosterId, $userId)) {
 			Session::set('roster_success', 'ロスターを削除しました。');
 		} else {
@@ -287,6 +295,12 @@ class Roster extends Controller
 
 		if (!$rosterData) {
 			header('Location: ' . URL . 'roster/');
+			exit;
+		}
+
+		if ($this->model->isRosterLockedInActiveMatch($rosterId)) {
+			Session::set('roster_error', '進行中の試合で使用中のため、このロスターは編集できません。');
+			header('Location: ' . URL . 'roster/detail/' . $rosterId);
 			exit;
 		}
 

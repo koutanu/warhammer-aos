@@ -114,6 +114,19 @@
 		td {
 			color: $color-text;
 		}
+
+		.match-roster-points-cell {
+			white-space: nowrap;
+			font-weight: bold;
+			color: $color-accent;
+			font-variant-numeric: tabular-nums;
+
+			.match-roster-points-sep {
+				margin: 0 0.2rem;
+				font-weight: normal;
+				color: rgba($color-text, 0.4);
+			}
+		}
 	}
 
 	// 対戦カード（Player A vs Player B）のセル

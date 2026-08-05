@@ -17,11 +17,26 @@ $armyKeys = [
 		<div class="detail-header-main">
 			<a href="<?= URL; ?>roster/" class="detail-back-link">&larr; 一覧へ戻る</a>
 			<h2><?= $this->h($roster['name'] ?? 'ロスター詳細'); ?></h2>
+			<?php if (!empty($is_locked_in_match)): ?>
+				<span class="roster-lock-badge">試合中ロック</span>
+			<?php endif; ?>
 		</div>
 		<div class="detail-header-actions">
-			<a href="<?= URL; ?>roster/edit/<?= $this->h($roster['id']); ?>" class="btn-submit">編集</a>
+			<?php if (!empty($is_locked_in_match)): ?>
+				<span class="btn-submit is-disabled" title="進行中の試合で使用中のため編集できません" aria-disabled="true">編集</span>
+			<?php else: ?>
+				<a href="<?= URL; ?>roster/edit/<?= $this->h($roster['id']); ?>" class="btn-submit">編集</a>
+			<?php endif; ?>
 		</div>
 	</div>
+
+	<?php if (!empty($roster_error)): ?>
+		<div class="roster-flash roster-flash-error" role="alert"><?= $this->h($roster_error); ?></div>
+	<?php endif; ?>
+
+	<?php if (!empty($is_locked_in_match)): ?>
+		<p class="roster-lock-note" role="status">進行中の試合で使用中のため、編集・削除できません。試合終了後に操作できます。</p>
+	<?php endif; ?>
 
 	<div class="detail-summary-card">
 		<div class="detail-summary-grid">

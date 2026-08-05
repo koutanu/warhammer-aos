@@ -306,6 +306,24 @@
 		word-break: break-word;
 	}
 
+	.roster-lock-badge {
+		display: inline-block;
+		margin-left: 0.4rem;
+		padding: 0.1rem 0.45rem;
+		border-radius: 999px;
+		font-size: 0.68rem;
+		font-weight: bold;
+		letter-spacing: 0.04em;
+		vertical-align: middle;
+		color: $color-background;
+		background: rgba($color-blood, 0.85);
+	}
+
+	.roster-list-item.is-locked {
+		opacity: 0.92;
+		border: 1px solid rgba($color-blood, 0.35);
+	}
+
 	.roster-list-item-meta {
 		font-size: 0.85rem;
 		color: rgba($color-text, 0.7);
@@ -355,6 +373,14 @@
 			&:hover {
 				text-decoration: underline;
 			}
+		}
+
+		.btn-edit.is-disabled,
+		.btn-delete.is-disabled {
+			color: rgba($color-text, 0.35);
+			cursor: not-allowed;
+			pointer-events: none;
+			text-decoration: none;
 		}
 	}
 
@@ -423,6 +449,43 @@
 		color: $color-accent;
 	}
 
+	.roster-lock-badge {
+		display: inline-block;
+		margin-top: 0.4rem;
+		padding: 0.15rem 0.55rem;
+		border-radius: 999px;
+		font-size: 0.72rem;
+		font-weight: bold;
+		letter-spacing: 0.04em;
+		color: $color-background;
+		background: rgba($color-blood, 0.85);
+	}
+
+	.roster-lock-note {
+		margin: 0 0 1.25rem;
+		padding: 0.75rem 1rem;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		line-height: 1.5;
+		background: rgba($color-blood, 0.12);
+		border: 1px solid rgba($color-blood, 0.4);
+		color: color.adjust($color-blood, $lightness: 20%);
+	}
+
+	.roster-flash {
+		padding: 0.75rem 1rem;
+		border-radius: 6px;
+		margin-bottom: 1.25rem;
+		font-size: 0.9rem;
+		line-height: 1.5;
+	}
+
+	.roster-flash-error {
+		background: rgba($color-blood, 0.15);
+		border: 1px solid rgba($color-blood, 0.5);
+		color: color.adjust($color-blood, $lightness: 25%);
+	}
+
 	.btn-submit {
 		width: auto;
 		padding: 0.55rem 1.1rem;
@@ -430,6 +493,12 @@
 		text-decoration: none;
 		display: inline-block;
 		margin-top: 0;
+
+		&.is-disabled {
+			opacity: 0.45;
+			cursor: not-allowed;
+			pointer-events: none;
+		}
 	}
 
 	.detail-summary-card {

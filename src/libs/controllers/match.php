@@ -189,10 +189,21 @@ class Matchplay extends Controller
         }
 
         $match = $this->model->getMatchById($matchId);
+        $rosterSnapshots = $match
+            ? $this->model->getRosterSnapshotsForSummary($match)
+            : ['a' => null, 'b' => null];
+
         $data = [
             'state'  => $state,
             'match'  => $match,
             'hide_nav' => false,
+            'roster_snapshot_a' => $rosterSnapshots['a'],
+            'roster_snapshot_b' => $rosterSnapshots['b'],
+            'js' => [
+                $this->class_name . '/phases.js',
+                'roster/unit_detail.js',
+                'roster/detail.js',
+            ],
         ];
 
         $this->view->render($this->class_name, 'summary', '試合結果', $data);

@@ -152,17 +152,24 @@ class Match_Model extends Model
         $userId = Session::getUserInfo('user_id');
         $now = date('Y-m-d H:i:s');
 
+        $rosterAId = isset($data['player_a_roster_id']) ? (int)$data['player_a_roster_id'] : 0;
+        $rosterBId = isset($data['player_b_roster_id']) ? (int)$data['player_b_roster_id'] : 0;
+        $snapshotA = $this->encodeRosterSnapshot($rosterAId > 0 ? $rosterAId : null);
+        $snapshotB = $this->encodeRosterSnapshot($rosterBId > 0 ? $rosterBId : null);
+
         $sql = 'INSERT INTO t_matches (
             user_id, battleplan_id, status, battle_round,
             game_battle_round, active_player_slot, game_phase, game_turn_counter,
             player_a_user_id, player_a_name, player_a_faction_id, player_a_roster_id, player_a_vp,
             player_b_user_id, player_b_name, player_b_faction_id, player_b_roster_id, player_b_vp,
+            player_a_roster_snapshot, player_b_roster_snapshot,
             played_at, updated_at
         ) VALUES (
             :user_id, :battleplan_id, :status, 1,
             1, 1, :game_phase, 1,
             :player_a_user_id, :player_a_name, :player_a_faction_id, :player_a_roster_id, 0,
             :player_b_user_id, :player_b_name, :player_b_faction_id, :player_b_roster_id, 0,
+            :player_a_roster_snapshot, :player_b_roster_snapshot,
             :played_at, :updated_at
         );';
 
@@ -174,11 +181,13 @@ class Match_Model extends Model
             'player_a_user_id'    => $userId,
             'player_a_name'       => $data['player_a_name'],
             'player_a_faction_id' => $data['player_a_faction_id'] ?: null,
-            'player_a_roster_id'  => $data['player_a_roster_id'] ?? null,
+            'player_a_roster_id'  => $rosterAId > 0 ? $rosterAId : null,
             'player_b_user_id'    => null,
             'player_b_name'       => $data['player_b_name'],
             'player_b_faction_id' => $data['player_b_faction_id'] ?: null,
-            'player_b_roster_id'  => $data['player_b_roster_id'] ?? null,
+            'player_b_roster_id'  => $rosterBId > 0 ? $rosterBId : null,
+            'player_a_roster_snapshot' => $snapshotA,
+            'player_b_roster_snapshot' => $snapshotB,
             'played_at'           => $now,
             'updated_at'          => $now,
         ];
@@ -192,6 +201,151 @@ class Match_Model extends Model
         $this->initRoundScores($matchId);
 
         return [true, $matchId];
+    }
+
+    /**
+     * ロスター ID から試合結果用スナップショット JSON を生成する。
+     */
+    private function encodeRosterSnapshot(?int $rosterId): ?string
+    {
+        if (!$rosterId || $rosterId <= 0) {
+            return null;
+        }
+        require_once MODELS . 'roster_model.php';
+        $rosterModel = new Roster_Model();
+        $snapshot = $rosterModel->buildRosterSnapshotForHistory($rosterId);
+        if (!$snapshot) {
+            return null;
+        }
+        $json = json_encode($snapshot, JSON_UNESCAPED_UNICODE);
+        return $json === false ? null : $json;
+    }
+
+    /**
+     * 試合行のスナップショット列を decode。
+     * スナップショットが無い過去試合は null（現行ロスターへのフォールバックはしない）。
+     * BT 達成状況が未埋め込みの場合は t_match_battle_tactic_progress から補完する。
+     *
+     * @return array{a:?array,b:?array}
+     */
+    public function getRosterSnapshotsForSummary(array $match): array
+    {
+        $matchId = (int)($match['id'] ?? 0);
+        $progress = $matchId > 0 ? $this->getBattleTacticProgressMap($matchId) : [];
+
+        return [
+            'a' => $this->enrichSnapshotBattleTacticProgress(
+                $this->decodeRosterSnapshot($match['player_a_roster_snapshot'] ?? null),
+                $progress[1] ?? []
+            ),
+            'b' => $this->enrichSnapshotBattleTacticProgress(
+                $this->decodeRosterSnapshot($match['player_b_roster_snapshot'] ?? null),
+                $progress[2] ?? []
+            ),
+        ];
+    }
+
+    /**
+     * @param array<int, int> $progressByTacticId battle_tactic_id => highest_completed_order
+     */
+    private function enrichSnapshotBattleTacticProgress(?array $snapshot, array $progressByTacticId): ?array
+    {
+        if (!$snapshot) {
+            return null;
+        }
+        if (empty($snapshot['battleTactics']) || !is_array($snapshot['battleTactics'])) {
+            return $snapshot;
+        }
+
+        foreach ($snapshot['battleTactics'] as &$tactic) {
+            $id = (int)($tactic['id'] ?? 0);
+            if ($id > 0 && array_key_exists($id, $progressByTacticId)) {
+                $tactic['highestCompletedOrder'] = (int)$progressByTacticId[$id];
+            } elseif (!isset($tactic['highestCompletedOrder'])) {
+                $tactic['highestCompletedOrder'] = 0;
+            } else {
+                $tactic['highestCompletedOrder'] = (int)$tactic['highestCompletedOrder'];
+            }
+        }
+        unset($tactic);
+
+        return $snapshot;
+    }
+
+    /**
+     * 試合終了時: スナップショット内 BT に達成段階を書き込む。
+     */
+    private function persistBattleTacticProgressIntoSnapshots(int $matchId, array $match): void
+    {
+        $progress = $this->getBattleTacticProgressMap($matchId);
+        $updates = [];
+
+        $snapA = $this->enrichSnapshotBattleTacticProgress(
+            $this->decodeRosterSnapshot($match['player_a_roster_snapshot'] ?? null),
+            $progress[1] ?? []
+        );
+        if ($snapA !== null) {
+            $json = json_encode($snapA, JSON_UNESCAPED_UNICODE);
+            if ($json !== false) {
+                $updates['player_a_roster_snapshot'] = $json;
+            }
+        }
+
+        $snapB = $this->enrichSnapshotBattleTacticProgress(
+            $this->decodeRosterSnapshot($match['player_b_roster_snapshot'] ?? null),
+            $progress[2] ?? []
+        );
+        if ($snapB !== null) {
+            $json = json_encode($snapB, JSON_UNESCAPED_UNICODE);
+            if ($json !== false) {
+                $updates['player_b_roster_snapshot'] = $json;
+            }
+        }
+
+        if (empty($updates)) {
+            return;
+        }
+
+        $sets = [];
+        $bind = ['id' => $matchId];
+        foreach ($updates as $col => $value) {
+            $sets[] = "{$col} = :{$col}";
+            $bind[$col] = $value;
+        }
+        $this->db->executesql(
+            'UPDATE t_matches SET ' . implode(', ', $sets) . ' WHERE id = :id;',
+            $bind
+        );
+    }
+
+    private function decodeRosterSnapshot($rawJson): ?array
+    {
+        if (!is_string($rawJson) || $rawJson === '') {
+            return null;
+        }
+        $decoded = json_decode($rawJson, true);
+        if (!is_array($decoded) || empty($decoded)) {
+            return null;
+        }
+        return $decoded;
+    }
+
+    /**
+     * スナップショット JSON からロスター合計ポイントを取り出す。
+     */
+    private function extractRosterPointsFromSnapshot($rawJson): ?int
+    {
+        $snap = $this->decodeRosterSnapshot($rawJson);
+        if (!$snap) {
+            return null;
+        }
+        if (isset($snap['totalPoints'])) {
+            return (int)$snap['totalPoints'];
+        }
+        if (isset($snap['pointLimit'])) {
+            return (int)$snap['pointLimit'];
+        }
+        return null;
     }
 
     private function initRoundScores(int $matchId): void
@@ -232,6 +386,7 @@ class Match_Model extends Model
         $sql = 'SELECT m.id, m.battleplan_id, m.status, m.winner,
                        m.player_a_name, m.player_a_vp, fa.name AS player_a_faction_name,
                        m.player_b_name, m.player_b_vp, fb.name AS player_b_faction_name,
+                       m.player_a_roster_snapshot, m.player_b_roster_snapshot,
                        m.played_at, m.completed_at,
                        bp.name AS battleplan_name
                 FROM t_matches m
@@ -244,6 +399,14 @@ class Match_Model extends Model
 
         foreach ($matches as &$match) {
             $match['rounds'] = $this->getRoundScoreMap((int)$match['id']);
+            $match['player_a_roster_points'] = $this->extractRosterPointsFromSnapshot(
+                $match['player_a_roster_snapshot'] ?? null
+            );
+            $match['player_b_roster_points'] = $this->extractRosterPointsFromSnapshot(
+                $match['player_b_roster_snapshot'] ?? null
+            );
+            // 一覧表示用に巨大な JSON は落とす
+            unset($match['player_a_roster_snapshot'], $match['player_b_roster_snapshot']);
         }
         unset($match);
 
@@ -1796,6 +1959,7 @@ class Match_Model extends Model
         }
 
         $this->snapshotRoundVp($matchId, (int)$match['battle_round']);
+        $this->persistBattleTacticProgressIntoSnapshots($matchId, $match);
 
         $aVp = (int)($match['player_a_vp'] ?? 0);
         $bVp = (int)($match['player_b_vp'] ?? 0);

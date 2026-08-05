@@ -4,7 +4,7 @@
 .match.summary {
 	margin: 2rem auto;
 	padding: 2rem;
-	max-width: 800px;
+	max-width: 960px;
 	background: $color-base;
 	border: 1px solid $color-main;
 	border-radius: 8px;
@@ -162,6 +162,157 @@
 		}
 	}
 
+	.summary-rosters {
+		margin-bottom: 2rem;
+
+		> h3 {
+			font-size: 1rem;
+			margin-bottom: 1rem;
+		}
+	}
+
+	.summary-roster-points {
+		margin-bottom: 1.25rem;
+		padding: 0.85rem 1.25rem;
+		background: $color-background;
+		border-radius: 8px;
+		text-align: center;
+
+		.meta-label {
+			display: block;
+			font-size: 0.7rem;
+			color: rgba($color-text, 0.5);
+			letter-spacing: 0.1em;
+			margin-bottom: 0.25rem;
+		}
+
+		strong {
+			font-size: 1.35rem;
+			color: $color-accent;
+		}
+
+		.summary-roster-points-sep {
+			margin: 0 0.35rem;
+			color: rgba($color-text, 0.4);
+			font-weight: normal;
+		}
+	}
+
+	.summary-rosters-grid {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.summary-roster-panel {
+		background: $color-background;
+		border: 1px solid rgba($color-main, 0.55);
+		border-radius: 8px;
+		padding: 0.75rem 1rem 1rem;
+
+		.summary-roster-panel-toggle {
+			cursor: pointer;
+			list-style: none;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: baseline;
+			gap: 0.5rem 0.75rem;
+			padding: 0.25rem 0;
+			font-size: 0.95rem;
+
+			&::-webkit-details-marker {
+				display: none;
+			}
+
+			.summary-roster-player {
+				font-size: 0.75rem;
+				letter-spacing: 0.06em;
+				color: rgba($color-text, 0.55);
+				text-transform: uppercase;
+			}
+
+			.summary-roster-name {
+				color: $color-accent;
+			}
+
+			.summary-roster-meta {
+				font-size: 0.85rem;
+				color: rgba($color-text, 0.6);
+			}
+		}
+
+		.summary-roster-missing {
+			margin: 0.75rem 0 0;
+		}
+
+		.summary-roster-detail {
+			margin-top: 1rem;
+			max-width: none;
+			padding: 0;
+			background: transparent;
+			border: none;
+			box-shadow: none;
+
+			.detail-header {
+				display: none;
+			}
+		}
+
+		.summary-bt-list {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+
+		.summary-bt-item {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0.4rem 0.75rem;
+			padding: 0.65rem 0.75rem;
+			background: rgba($color-background, 0.65);
+			border: 1px solid rgba($color-main, 0.4);
+			border-radius: 6px;
+		}
+
+		.summary-bt-name {
+			flex: 1 1 10rem;
+			text-align: left;
+		}
+
+		.summary-bt-progress {
+			font-size: 0.8rem;
+			font-weight: bold;
+			color: $color-accent;
+			white-space: nowrap;
+		}
+
+		.summary-bt-stages {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.35rem;
+			width: 100%;
+		}
+
+		.summary-bt-stage {
+			display: inline-block;
+			padding: 0.15rem 0.5rem;
+			border-radius: 999px;
+			font-size: 0.68rem;
+			font-weight: bold;
+			letter-spacing: 0.04em;
+			color: rgba($color-text, 0.45);
+			border: 1px solid rgba($color-main, 0.4);
+			background: transparent;
+
+			&.is-done {
+				color: $color-background;
+				background: $color-accent;
+				border-color: $color-accent;
+			}
+		}
+	}
+
 	.form-actions {
 		display: flex;
 		gap: 1rem;
@@ -193,6 +344,7 @@
 	@media (max-width: 768px) {
 		margin: 0.5rem 0;
 		padding: 1.25rem 1rem;
+		max-width: none;
 
 		.summary-header-card {
 			flex-direction: column;

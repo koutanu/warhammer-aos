@@ -38,9 +38,15 @@
 				<section class="roster-faction-group alliance-section--<?= $this->h(strtolower($group['alliance'])); ?>">
 					<h3 class="roster-faction-heading"><?= $this->h($group['name']); ?></h3>
 					<?php foreach ($group['rosters'] as $roster): ?>
-						<div class="roster-list-item">
+						<?php $isLocked = !empty($roster['is_locked_in_match']); ?>
+						<div class="roster-list-item<?= $isLocked ? ' is-locked' : ''; ?>">
 							<div class="roster-list-item-main">
-								<strong class="roster-list-item-name"><?= $this->h($roster['name']); ?></strong>
+								<strong class="roster-list-item-name">
+									<?= $this->h($roster['name']); ?>
+									<?php if ($isLocked): ?>
+										<span class="roster-lock-badge">試合中</span>
+									<?php endif; ?>
+								</strong>
 								<span class="roster-list-item-meta">
 									<?= $this->h($roster['total_points']); ?> pt
 									·
@@ -49,12 +55,17 @@
 							</div>
 							<div class="list-actions">
 								<a href="<?= URL; ?>roster/detail/<?= $this->h($roster['id']); ?>" class="btn-detail">詳細</a>
-								<a href="<?= URL; ?>roster/edit/<?= $this->h($roster['id']); ?>" class="btn-edit">編集</a>
-								<form action="<?= URL; ?>roster/delete" method="post" class="delete-roster-form" onsubmit="return confirm('「<?= $this->h($roster['name']); ?>」を削除しますか？この操作は取り消せません。');">
-									<input type="hidden" name="token" value="<?= $this->h($delete_token); ?>">
-									<input type="hidden" name="roster_id" value="<?= $this->h($roster['id']); ?>">
-									<button type="submit" class="btn-delete">削除</button>
-								</form>
+								<?php if ($isLocked): ?>
+									<span class="btn-edit is-disabled" title="進行中の試合で使用中のため編集できません" aria-disabled="true">編集</span>
+									<span class="btn-delete is-disabled" title="進行中の試合で使用中のため削除できません" aria-disabled="true">削除</span>
+								<?php else: ?>
+									<a href="<?= URL; ?>roster/edit/<?= $this->h($roster['id']); ?>" class="btn-edit">編集</a>
+									<form action="<?= URL; ?>roster/delete" method="post" class="delete-roster-form" onsubmit="return confirm('「<?= $this->h($roster['name']); ?>」を削除しますか？この操作は取り消せません。');">
+										<input type="hidden" name="token" value="<?= $this->h($delete_token); ?>">
+										<input type="hidden" name="roster_id" value="<?= $this->h($roster['id']); ?>">
+										<button type="submit" class="btn-delete">削除</button>
+									</form>
+								<?php endif; ?>
 							</div>
 						</div>
 					<?php endforeach; ?>

@@ -663,12 +663,40 @@ class Roster_Model extends Model
 
 	public function getRostersByUser(int $userId): array
 	{
-		$sql = "SELECT r.*, f.name AS faction_name, f.grand_alliance
+		$sql = "SELECT r.*, f.name AS faction_name, f.grand_alliance,
+                       EXISTS (
+                           SELECT 1 FROM t_matches m
+                           WHERE m.status = 'active'
+                             AND (m.player_a_roster_id = r.id OR m.player_b_roster_id = r.id)
+                       ) AS is_locked_in_match
                 FROM t_rosters r
                 LEFT JOIN m_factions f ON f.id = r.faction_id
                 WHERE r.user_id = :user_id
                 ORDER BY f.grand_alliance ASC, f.name ASC, r.updated_at DESC, r.created_at DESC, r.id DESC;";
-		return $this->db->select($sql, ['user_id' => $userId]);
+		$rows = $this->db->select($sql, ['user_id' => $userId]);
+		foreach ($rows as &$row) {
+			$row['is_locked_in_match'] = !empty($row['is_locked_in_match']);
+		}
+		unset($row);
+		return $rows;
+	}
+
+	/**
+	 * 進行中の試合で使用中のロスターかどうか。
+	 */
+	public function isRosterLockedInActiveMatch(int $rosterId): bool
+	{
+		if ($rosterId <= 0) {
+			return false;
+		}
+		$rows = $this->db->select(
+			"SELECT id FROM t_matches
+             WHERE status = 'active'
+               AND (player_a_roster_id = :roster_id_a OR player_b_roster_id = :roster_id_b)
+             LIMIT 1;",
+			['roster_id_a' => $rosterId, 'roster_id_b' => $rosterId]
+		);
+		return !empty($rows);
 	}
 
 	public function getRostersByUserAndFaction(int $userId, int $factionId): array
@@ -1129,6 +1157,333 @@ class Roster_Model extends Model
 					'units'      => $reg['units'],
 				];
 			}, $data['regiments']),
+		];
+	}
+
+	/**
+	 * 試合結果画面用: ロスター削除後も当時の構成を表示できる自己完結スナップショット。
+	 * 名前・効果文・モーダル用 detail を埋め込み、マスタ再参照なしで描画可能にする。
+	 *
+	 * @return array{
+	 *   name:string,factionName:string,grandAlliance:string,totalPoints:int,pointLimit:int,memo:string,
+	 *   armyOptions:array,enhancements:array,battleTactics:list,regiments:list,manifestations:list
+	 * }|null
+	 */
+	public function buildRosterSnapshotForHistory(int $rosterId): ?array
+	{
+		$data = $this->getRosterWithDetails($rosterId);
+		if (!$data) {
+			return null;
+		}
+
+		$roster = $data['roster'];
+		$regiments = $data['regiments'];
+		$factionId = (int)($roster['faction_id'] ?? 0);
+
+		$formationRow = null;
+		$formationId = (int)($roster['battle_formation_id'] ?? 0);
+		if ($formationId > 0) {
+			$formationRow = $this->getBattleFormationById($formationId);
+		}
+
+		$spellLore = $this->findFormattedLoreForSnapshot(
+			$this->formatLoreDataForSnapshot($this->getSpellLores($factionId), 'spell'),
+			(int)($roster['spell_lore_id'] ?? 0)
+		);
+		$prayerLore = $this->findFormattedLoreForSnapshot(
+			$this->formatLoreDataForSnapshot($this->getPrayerLores($factionId), 'prayer'),
+			(int)($roster['prayer_lore_id'] ?? 0)
+		);
+		$manifestLore = $this->findFormattedLoreForSnapshot(
+			$this->formatLoreDataForSnapshot($this->getManifestationLores($factionId), 'manifestation'),
+			(int)($roster['manifestation_lore_id'] ?? 0)
+		);
+
+		$terrainId = (int)($roster['terrain_id'] ?? 0);
+		$terrainUnit = $terrainId > 0 ? $this->getTerrainUnitForMatch($terrainId) : null;
+
+		$traitId = (int)($roster['heroic_trait_id'] ?? 0);
+		$artefactId = (int)($roster['artefact_id'] ?? 0);
+		$seasonId = (int)($roster['season_enhancement_id'] ?? 0);
+
+		$trait = $traitId > 0 ? $this->getHeroicTraitById($traitId) : null;
+		$artefact = $artefactId > 0 ? $this->getArtefactById($artefactId) : null;
+		$seasonEnh = $seasonId > 0 ? $this->getSeasonEnhancementById($seasonId) : null;
+		$seasonLabel = $this->getSeasonEnhancementLabel($factionId);
+
+		$traitTarget = $trait
+			? $this->resolveEnhancementHeroLabel(
+				$regiments,
+				$roster['trait_regiment_index'] ?? null,
+				$roster['trait_unit_slot'] ?? 'leader',
+				(int)($roster['trait_target_unit_id'] ?? 0)
+			)
+			: null;
+		$artefactTarget = $artefact
+			? $this->resolveEnhancementHeroLabel(
+				$regiments,
+				$roster['artefact_regiment_index'] ?? null,
+				$roster['artefact_unit_slot'] ?? 'leader',
+				(int)($roster['artefact_target_unit_id'] ?? 0)
+			)
+			: null;
+		$seasonTarget = $seasonEnh
+			? $this->resolveEnhancementHeroLabel(
+				$regiments,
+				$roster['season_enhancement_regiment_index'] ?? null,
+				$roster['season_enhancement_unit_slot'] ?? 'leader',
+				(int)($roster['season_enhancement_target_unit_id'] ?? 0)
+			)
+			: null;
+
+		$battleTactics = [];
+		foreach ($this->getSelectedBattleTacticCardsForMatch($rosterId) as $card) {
+			$battleTactics[] = [
+				'id' => (int)($card['id'] ?? 0),
+				'name' => $card['name'] ?? '',
+				'highestCompletedOrder' => 0,
+				'stages' => array_map(static function ($stage) {
+					return [
+						'stage' => $stage['stage'] ?? '',
+						'stage_order' => (int)($stage['stageOrder'] ?? 0),
+						'name' => $stage['name'] ?? '',
+						'effect' => $stage['effect'] ?? '',
+						'victory_points' => (int)($stage['victoryPoints'] ?? 2),
+					];
+				}, $card['stages'] ?? []),
+			];
+		}
+
+		$snapshotRegiments = [];
+		foreach ($regiments as $reg) {
+			$hero = $reg['hero'] ?? [];
+			$units = [];
+			foreach ($reg['units'] ?? [] as $unit) {
+				$units[] = [
+					'id' => (int)($unit['id'] ?? 0),
+					'name' => (string)($unit['name'] ?? ''),
+					'points' => (int)($unit['points'] ?? 0),
+					'keywords' => (string)($unit['keywords'] ?? ''),
+					'is_reinforced' => (int)($unit['is_reinforced'] ?? 0),
+				];
+			}
+			$snapshotRegiments[] = [
+				'sort_order' => (int)($reg['sort_order'] ?? 0),
+				'is_general' => (int)($reg['is_general'] ?? 0),
+				'hero' => [
+					'id' => (int)($hero['id'] ?? 0),
+					'name' => (string)($hero['name'] ?? ''),
+					'points' => (int)($hero['points'] ?? 0),
+					'keywords' => (string)($hero['keywords'] ?? ''),
+				],
+				'units' => $units,
+			];
+		}
+
+		$manifestations = [];
+		foreach ($this->getManifestationUnitsForLore((int)($roster['manifestation_lore_id'] ?? 0)) as $m) {
+			$manifestations[] = [
+				'id' => (int)($m['id'] ?? 0),
+				'name' => (string)($m['name'] ?? ''),
+				'points' => (int)($m['points'] ?? 0),
+				'spellName' => $m['spellName'] ?? null,
+			];
+		}
+
+		return [
+			'name' => (string)($roster['name'] ?? ''),
+			'factionName' => (string)($roster['faction_name'] ?? ''),
+			'grandAlliance' => (string)($roster['grand_alliance'] ?? ''),
+			'totalPoints' => (int)($roster['total_points'] ?? 0),
+			'pointLimit' => (int)($roster['point_limit'] ?? $roster['total_points'] ?? 0),
+			'memo' => (string)($roster['memo'] ?? ''),
+			'armyOptions' => [
+				'battle_formation' => [
+					'name' => $formationRow['formation_name'] ?? $formationRow['ability_name'] ?? null,
+					'detail' => $formationRow ? $this->buildAbilityModalDetailForSnapshot(
+						(string)($formationRow['formation_name'] ?? $formationRow['ability_name'] ?? ''),
+						(string)($formationRow['trigger_phase'] ?? ''),
+						(string)($formationRow['effect'] ?? ''),
+						$formationRow['flavor_text'] ?? null,
+						false,
+						null,
+						$formationRow['trigger_condition_ja'] ?? null
+					) : null,
+				],
+				'spell_lore' => [
+					'name' => $spellLore['lore_name'] ?? null,
+					'detail' => $spellLore ? $this->buildAbilityModalDetailForSnapshot(
+						(string)($spellLore['lore_name'] ?? ''),
+						(string)($spellLore['trigger_phase'] ?? ''),
+						(string)($spellLore['combined_effect'] ?? ''),
+						null,
+						true
+					) : null,
+				],
+				'prayer_lore' => [
+					'name' => $prayerLore['lore_name'] ?? null,
+					'detail' => $prayerLore ? $this->buildAbilityModalDetailForSnapshot(
+						(string)($prayerLore['lore_name'] ?? ''),
+						(string)($prayerLore['trigger_phase'] ?? ''),
+						(string)($prayerLore['combined_effect'] ?? ''),
+						null,
+						true
+					) : null,
+				],
+				'manifestation_lore' => [
+					'name' => $manifestLore['lore_name'] ?? null,
+					'detail' => $manifestLore ? $this->buildAbilityModalDetailForSnapshot(
+						(string)($manifestLore['lore_name'] ?? ''),
+						(string)($manifestLore['trigger_phase'] ?? ''),
+						(string)($manifestLore['combined_effect'] ?? ''),
+						null,
+						true
+					) : null,
+				],
+				'faction_terrain' => [
+					'name' => $terrainUnit['name'] ?? null,
+					'unit_id' => $terrainUnit ? (int)$terrainUnit['id'] : null,
+				],
+			],
+			'enhancements' => [
+				'trait' => $trait ? [
+					'name' => (string)($trait['name'] ?? ''),
+					'target' => $traitTarget,
+					'detail' => $this->buildAbilityModalDetailForSnapshot(
+						(string)($trait['name'] ?? ''),
+						(string)($trait['trigger_phase'] ?? ''),
+						(string)($trait['effect'] ?? $trait['description'] ?? ''),
+						null,
+						false,
+						$traitTarget ? ('対象: ' . $traitTarget) : null,
+						$trait['trigger_condition_ja'] ?? null
+					),
+				] : null,
+				'artefact' => $artefact ? [
+					'name' => (string)($artefact['name'] ?? ''),
+					'target' => $artefactTarget,
+					'detail' => $this->buildAbilityModalDetailForSnapshot(
+						(string)($artefact['name'] ?? ''),
+						(string)($artefact['trigger_phase'] ?? ''),
+						(string)($artefact['effect'] ?? ''),
+						$artefact['flavor_text'] ?? null,
+						false,
+						$artefactTarget ? ('対象: ' . $artefactTarget) : null,
+						$artefact['trigger_condition_ja'] ?? null
+					),
+				] : null,
+				'season' => [
+					'label' => $seasonLabel['label_ja'] ?? '追加能力',
+					'name' => $seasonEnh['name'] ?? null,
+					'target' => $seasonTarget,
+					'detail' => $seasonEnh ? $this->buildAbilityModalDetailForSnapshot(
+						(string)($seasonEnh['name'] ?? ''),
+						(string)($seasonEnh['trigger_phase'] ?? ''),
+						(string)($seasonEnh['effect'] ?? ''),
+						null,
+						false,
+						$seasonTarget ? ('対象: ' . $seasonTarget) : null,
+						$seasonEnh['trigger_condition_ja'] ?? null
+					) : null,
+				],
+			],
+			'battleTactics' => $battleTactics,
+			'regiments' => $snapshotRegiments,
+			'manifestations' => $manifestations,
+		];
+	}
+
+	/**
+	 * @return list<array{id:int,lore_name:string,trigger_phase:string,combined_effect:string,points:mixed}>
+	 */
+	private function formatLoreDataForSnapshot(array $rawData, string $type): array
+	{
+		$lores = [];
+		$nameKey = $type . '_name';
+		$valKey = ($type === 'prayer') ? 'chanting_value' : 'casting_value';
+		$label = ($type === 'prayer') ? 'Chanting' : 'Casting';
+
+		foreach ($rawData as $row) {
+			$loreName = $row['lore_name'] ?? '';
+			if ($loreName === '') {
+				continue;
+			}
+			if (!isset($lores[$loreName])) {
+				$lores[$loreName] = [
+					'id' => (int)($row['id'] ?? 0),
+					'lore_name' => $loreName,
+					'trigger_phase' => 'YOUR HERO PHASE',
+					'texts' => [],
+					'points' => $row['points'] ?? null,
+				];
+			}
+
+			$abilityName = htmlspecialchars((string)($row[$nameKey] ?? ''), ENT_QUOTES, 'UTF-8');
+			$value = htmlspecialchars((string)($row[$valKey] ?? ''), ENT_QUOTES, 'UTF-8');
+			$effect = htmlspecialchars((string)($row['effect'] ?? ''), ENT_QUOTES, 'UTF-8');
+			$keywords = htmlspecialchars((string)($row['keywords'] ?? ''), ENT_QUOTES, 'UTF-8');
+
+			$text = "<strong>【{$abilityName}】</strong> ({$label}: {$value})\n"
+				. "{$effect}\n"
+				. "<span class='keywords-label'>Keywords:</span> {$keywords}";
+
+			if (!empty($row['flavor_text'])) {
+				$flavor = htmlspecialchars((string)$row['flavor_text'], ENT_QUOTES, 'UTF-8');
+				$text .= "\n<small class='text-muted lore-flavor'>{$flavor}</small>";
+			}
+			$lores[$loreName]['texts'][] = $text;
+		}
+
+		foreach ($lores as $name => $lore) {
+			$lores[$name]['combined_effect'] = implode("\n<hr class='lore-divider'>\n", $lore['texts']);
+			unset($lores[$name]['texts']);
+		}
+
+		return array_values($lores);
+	}
+
+	private function findFormattedLoreForSnapshot(array $lores, int $id): ?array
+	{
+		if ($id <= 0) {
+			return null;
+		}
+		foreach ($lores as $lore) {
+			if ((int)($lore['id'] ?? 0) === $id) {
+				return $lore;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return array{title:string,trigger_phase:string,trigger_condition_ja:?string,effect:string,flavor:?string,effect_html:bool,meta:?string}|null
+	 */
+	private function buildAbilityModalDetailForSnapshot(
+		string $title,
+		string $triggerPhase,
+		string $effect,
+		?string $flavor = null,
+		bool $effectHtml = false,
+		?string $meta = null,
+		?string $triggerConditionJa = null
+	): ?array {
+		$title = trim($title);
+		if ($title === '' && trim($effect) === '') {
+			return null;
+		}
+		$flavor = $flavor !== null ? trim($flavor) : null;
+		$meta = $meta !== null ? trim($meta) : null;
+		$triggerConditionJa = $triggerConditionJa !== null ? trim($triggerConditionJa) : null;
+		return [
+			'title' => $title !== '' ? $title : '詳細',
+			'trigger_phase' => trim($triggerPhase),
+			'trigger_condition_ja' => ($triggerConditionJa !== null && $triggerConditionJa !== '')
+				? $triggerConditionJa
+				: null,
+			'effect' => $effect,
+			'flavor' => ($flavor !== null && $flavor !== '') ? $flavor : null,
+			'effect_html' => $effectHtml,
+			'meta' => ($meta !== null && $meta !== '') ? $meta : null,
 		];
 	}
 
@@ -2155,6 +2510,10 @@ class Roster_Model extends Model
 			return [false, 'ロスターが見つかりません。'];
 		}
 
+		if ($rosterId && $this->isRosterLockedInActiveMatch($rosterId)) {
+			return [false, '進行中の試合で使用中のため、このロスターは編集できません。'];
+		}
+
 		$now = date('Y-m-d H:i:s');
 		$regiments = $data['regiments'] ?? [];
 		$generalIndex = isset($data['general_regiment_index']) ? (int)$data['general_regiment_index'] : 0;
@@ -2427,6 +2786,9 @@ class Roster_Model extends Model
 
 	public function deleteRoster(int $rosterId, int $userId): bool
 	{
+		if ($this->isRosterLockedInActiveMatch($rosterId)) {
+			return false;
+		}
 		$result = $this->db->executesql(
 			'DELETE FROM t_rosters WHERE id = :id AND user_id = :user_id;',
 			['id' => $rosterId, 'user_id' => $userId]
