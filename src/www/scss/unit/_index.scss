@@ -251,7 +251,8 @@
 	}
 
 	.btn-unit-detail,
-	.btn-unit-edit {
+	.btn-unit-edit,
+	.btn-unit-story {
 		font-size: 0.85rem;
 		padding: 0.35rem 0.8rem;
 		border-radius: 5px;
@@ -262,6 +263,19 @@
 		background: $color-main;
 		color: $color-text;
 		border: 1px solid #444;
+	}
+
+	.btn-unit-story {
+		display: inline-block;
+		background: rgba($color-text, 0.06);
+		color: $color-text;
+		border: 1px solid rgba($color-text, 0.28);
+		text-decoration: none;
+
+		&:hover {
+			border-color: rgba($color-accent, 0.6);
+			color: $color-accent;
+		}
 	}
 
 	.btn-unit-edit {
@@ -288,6 +302,7 @@
 	/* --- タブ --- */
 	.unit-tabs {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.4rem;
 		border-bottom: 2px solid $color-main;
 		margin-bottom: 1.25rem;
@@ -298,9 +313,9 @@
 		border: 1px solid transparent;
 		border-bottom: none;
 		color: rgba($color-text, 0.7);
-		font-size: 0.95rem;
+		font-size: 0.9rem;
 		font-weight: bold;
-		padding: 0.6rem 1.2rem;
+		padding: 0.55rem 0.9rem;
 		border-radius: 8px 8px 0 0;
 		cursor: pointer;
 		transition:
@@ -879,5 +894,68 @@
 				filter: brightness(1.08);
 			}
 		}
+	}
+}
+
+/* ==========================================
+7. ユニットストーリー (.unit.unit-story)
+   ========================================== */
+.unit.unit-story {
+	padding: 1.5rem 1rem;
+	max-width: 720px;
+	margin: 0 auto;
+
+	.unit-story-kicker {
+		margin: 0.25rem 0 0;
+		font-size: 0.85rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: rgba($color-text, 0.55);
+	}
+}
+
+.unit-story-empty {
+	margin-top: 1.5rem;
+	padding: 1.2rem;
+	background: $color-base;
+	border-radius: 8px;
+	color: rgba($color-text, 0.75);
+}
+
+.unit-story-body {
+	margin-top: 1.25rem;
+	padding: 1.4rem 1.25rem;
+	background: $color-base;
+	border-radius: 10px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+	line-height: 1.7;
+	font-size: 1rem;
+	color: $color-text;
+	white-space: normal;
+
+	&--faction {
+		margin-top: 0.5rem;
+	}
+}
+
+.unit-story-attribution {
+	margin-top: 1.25rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid rgba($color-main, 0.45);
+	font-size: 0.85rem;
+	color: rgba($color-text, 0.65);
+	line-height: 1.5;
+
+	a {
+		color: $color-accent;
+		word-break: break-all;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	.unit-story-license {
+		margin-top: 0.5rem;
 	}
 }

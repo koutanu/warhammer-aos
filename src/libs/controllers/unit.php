@@ -63,6 +63,32 @@ class Unit extends Controller
 	}
 
 	/**
+	 * ユニットの背景ストーリー（Fandom Wiki 英語本文）
+	 */
+	function story($unitId = '')
+	{
+		$unitId = (int)$unitId;
+		$unit = $this->model->getUnitById($unitId);
+		if (!$unit) {
+			header('Location: ' . URL . 'unit/index');
+			exit;
+		}
+
+		$faction = $this->model->getFactionById((int)$unit['faction_id']);
+		$data = [
+			'token'   => Session::setToken($this->class_name . '/index'),
+			'unit'    => $unit,
+			'faction' => $faction,
+		];
+		$this->view->render(
+			$this->class_name,
+			'story',
+			'ストーリー: ' . ($unit['name'] ?? ''),
+			$data
+		);
+	}
+
+	/**
 	 * 新規ユニット作成フォーム（管理者のみ）
 	 */
 	function create()

@@ -52,6 +52,9 @@ $freqJa = function (array $row) {
 		<button type="button" class="unit-tab" data-tab-target="tab-options" role="tab">
 			軍勢オプション
 		</button>
+		<button type="button" class="unit-tab" data-tab-target="tab-faction-story" role="tab">
+			陣営ストーリー
+		</button>
 	</div>
 
 	<div class="unit-tab-panel is-active" id="tab-units">
@@ -88,6 +91,10 @@ $freqJa = function (array $row) {
 								data-unit-id="<?= $this->h($unit['id']); ?>"
 								data-unit-name="<?= $this->h($unit['name']); ?>"
 								data-keywords="<?= $this->h($unit['keywords']); ?>">詳細</button>
+
+							<?php if (!empty($unit['story_text'])): ?>
+								<a href="<?= URL; ?>unit/story/<?= $this->h($unit['id']); ?>" class="btn-unit-story">ストーリー</a>
+							<?php endif; ?>
 
 							<?php if (!empty($is_admin)): ?>
 								<a href="<?= URL; ?>unit/edit/<?= $this->h($unit['id']); ?>" class="btn-unit-edit">編集</a>
@@ -485,6 +492,36 @@ $freqJa = function (array $row) {
 		</section>
 
 	</div><!-- /#tab-options -->
+
+	<div class="unit-tab-panel" id="tab-faction-story">
+		<?php
+		$factionStory = trim((string)($faction['story_text'] ?? ''));
+		$factionStoryUrl = trim((string)($faction['story_source_url'] ?? ''));
+		?>
+		<?php if ($factionStory === ''): ?>
+			<p class="unit-story-empty">この陣営のストーリーはまだ登録されていません。</p>
+		<?php else: ?>
+			<article class="unit-story-body unit-story-body--faction">
+				<?= nl2br($this->h($factionStory)); ?>
+			</article>
+			<footer class="unit-story-attribution">
+				<?php if ($factionStoryUrl !== ''): ?>
+					<p>
+						Source:
+						<a href="<?= $this->h($factionStoryUrl); ?>" target="_blank" rel="noopener noreferrer">
+							<?= $this->h($factionStoryUrl); ?>
+						</a>
+					</p>
+				<?php endif; ?>
+				<p class="unit-story-license">
+					Text adapted from the
+					<a href="https://ageofsigmar.fandom.com/wiki/Age_of_Sigmar_Wiki" target="_blank" rel="noopener noreferrer">Age of Sigmar Wiki</a>
+					and available under
+					<a href="https://www.fandom.com/licensing" target="_blank" rel="noopener noreferrer">CC-BY-SA</a>.
+				</p>
+			</footer>
+		<?php endif; ?>
+	</div><!-- /#tab-faction-story -->
 
 	<!-- ユニット詳細モーダル（roster/unit_detail.js が制御）。
 	     タブパネルの display:none の影響を受けないよう、タブの外側に配置する。 -->

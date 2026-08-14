@@ -33,8 +33,7 @@ a {
 
 html {
   -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-       text-size-adjust: 100%;
+  text-size-adjust: 100%;
   height: 100%;
   height: 100dvh;
   overflow: hidden;
@@ -110,8 +109,7 @@ button {
   border: none;
   cursor: pointer;
   outline: none;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none;
 }
 
@@ -444,8 +442,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   border-radius: 12px;
   z-index: 1;
   transform-origin: center;
@@ -588,8 +585,7 @@ button {
 #unitDetailModal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -667,9 +663,7 @@ button {
   display: inline;
 }
 #unitDetailModal .detail-keywords .detail-keyword--has-effect {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   background: none;
   border: none;
   padding: 0;
@@ -1027,8 +1021,7 @@ button {
 .unit.faction-units .unit-card-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .unit.faction-units .unit-card-name {
@@ -1101,7 +1094,8 @@ button {
   padding-top: 0.65rem;
 }
 .unit.faction-units .btn-unit-detail,
-.unit.faction-units .btn-unit-edit {
+.unit.faction-units .btn-unit-edit,
+.unit.faction-units .btn-unit-story {
   font-size: 0.85rem;
   padding: 0.35rem 0.8rem;
   border-radius: 5px;
@@ -1111,6 +1105,17 @@ button {
   background: #2f4f4f;
   color: #f0ead6;
   border: 1px solid #444;
+}
+.unit.faction-units .btn-unit-story {
+  display: inline-block;
+  background: rgba(240, 234, 214, 0.06);
+  color: #f0ead6;
+  border: 1px solid rgba(240, 234, 214, 0.28);
+  text-decoration: none;
+}
+.unit.faction-units .btn-unit-story:hover {
+  border-color: rgba(212, 175, 55, 0.6);
+  color: #d4af37;
 }
 .unit.faction-units .btn-unit-edit {
   background: rgba(212, 175, 55, 0.15);
@@ -1135,6 +1140,7 @@ button {
 }
 .unit.faction-units .unit-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
   border-bottom: 2px solid #2f4f4f;
   margin-bottom: 1.25rem;
@@ -1144,9 +1150,9 @@ button {
   border: 1px solid transparent;
   border-bottom: none;
   color: rgba(240, 234, 214, 0.7);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: bold;
-  padding: 0.6rem 1.2rem;
+  padding: 0.55rem 0.9rem;
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   transition: background-color 0.1s ease, color 0.1s ease;
@@ -1605,9 +1611,6 @@ button {
   background: rgba(19, 28, 28, 0.9);
   color: #f0ead6;
 }
-.unit.unit-edit .keyword-param-input:-moz-read-only {
-  opacity: 0.45;
-}
 .unit.unit-edit .keyword-param-input:read-only {
   opacity: 0.45;
 }
@@ -1636,6 +1639,64 @@ button {
 }
 .unit.unit-edit .unit-edit-footer .btn-save-unit:hover {
   filter: brightness(1.08);
+}
+
+/* ==========================================
+7. ユニットストーリー (.unit.unit-story)
+   ========================================== */
+.unit.unit-story {
+  padding: 1.5rem 1rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.unit.unit-story .unit-story-kicker {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(240, 234, 214, 0.55);
+}
+
+.unit-story-empty {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  background: #1a2626;
+  border-radius: 8px;
+  color: rgba(240, 234, 214, 0.75);
+}
+
+.unit-story-body {
+  margin-top: 1.25rem;
+  padding: 1.4rem 1.25rem;
+  background: #1a2626;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  line-height: 1.7;
+  font-size: 1rem;
+  color: #f0ead6;
+  white-space: normal;
+}
+.unit-story-body--faction {
+  margin-top: 0.5rem;
+}
+
+.unit-story-attribution {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(47, 79, 79, 0.45);
+  font-size: 0.85rem;
+  color: rgba(240, 234, 214, 0.65);
+  line-height: 1.5;
+}
+.unit-story-attribution a {
+  color: #d4af37;
+  word-break: break-all;
+}
+.unit-story-attribution a:hover {
+  text-decoration: underline;
+}
+.unit-story-attribution .unit-story-license {
+  margin-top: 0.5rem;
 }
 
 /* ==========================================
@@ -1694,8 +1755,7 @@ button {
   border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
-  -moz-appearance: none;
-       appearance: none;
+  appearance: none;
   -webkit-appearance: none; /* iOS/Safariのデフォルト形状をリセット */
 }
 .roster.index .form-group input[type=text]:focus,
@@ -1706,9 +1766,6 @@ button {
 }
 .roster.index .form-group {
   /* プレースホルダーの色調整 */
-}
-.roster.index .form-group input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
 }
 .roster.index .form-group input::placeholder {
   color: rgba(240, 234, 214, 0.4);
@@ -2210,9 +2267,7 @@ button {
   font-weight: bold;
 }
 .roster.detail .detail-open-btn {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   background: none;
   border: none;
   padding: 0;
@@ -2370,9 +2425,7 @@ button {
   justify-content: flex-end;
 }
 .roster-ability-modal .btn-close-detail {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   border: 1px solid #2f4f4f;
   background: rgba(19, 28, 28, 0.8);
   color: #f0ead6;
@@ -2388,9 +2441,7 @@ button {
   position: absolute;
   top: 0.55rem;
   right: 0.7rem;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   border: none;
   background: transparent;
   color: rgba(240, 234, 214, 0.7);
@@ -2508,11 +2559,6 @@ button {
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
 }
-.roster.create_roster .roster-title-display .roster-name-input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
-  font-weight: 400;
-  text-shadow: none;
-}
 .roster.create_roster .roster-title-display .roster-name-input::placeholder {
   color: rgba(240, 234, 214, 0.4);
   font-weight: 400;
@@ -2542,9 +2588,6 @@ button {
 .roster.create_roster .roster-memo-input:focus {
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
-}
-.roster.create_roster .roster-memo-input::-moz-placeholder {
-  color: rgba(240, 234, 214, 0.4);
 }
 .roster.create_roster .roster-memo-input::placeholder {
   color: rgba(240, 234, 214, 0.4);
@@ -2768,9 +2811,7 @@ button {
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .form-group select:focus,
 .roster.create_roster .form-group input[type=text]:focus {
@@ -2961,8 +3002,7 @@ button {
 .roster.create_roster .unit-slot-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .roster.create_roster .unit-slot-thumb .unit-slot-thumb-placeholder {
@@ -3238,9 +3278,7 @@ button {
   font-size: 0.95rem;
   outline: none;
   box-sizing: border-box;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 .roster.create_roster .unit-slot-row .select-wrapper .unit-select:focus {
   border-color: #d4af37;
@@ -3429,9 +3467,6 @@ button {
 }
 .roster.create_roster .modal-content .modal-search-input:focus {
   border-color: var(--color-accent, #ffcc00);
-}
-.roster.create_roster .modal-content .modal-search-input::-moz-placeholder {
-  color: #aaa;
 }
 .roster.create_roster .modal-content .modal-search-input::placeholder {
   color: #aaa;
@@ -5194,8 +5229,7 @@ button {
 .match.scoreboard .modal-overlay .ability-target-picker-modal-content .ability-target-picker-list .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .modal-overlay .ability-target-picker-modal-content .ability-target-picker-list .ability-unit-thumb-placeholder {
@@ -5517,8 +5551,7 @@ button {
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .match-roster-view .roster-unit-btn .unit-btn-thumb-placeholder {
@@ -5698,8 +5731,7 @@ button {
 .match.scoreboard .match-unit-detail-modal .detail-unit-image-wrap img {
   width: 100%;
   max-height: 360px;
-  -o-object-fit: contain;
-     object-fit: contain;
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid #444;
   background: rgba(0, 0, 0, 0.25);
@@ -5988,8 +6020,7 @@ button {
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-movement-unit .ability-unit-thumb-placeholder {
@@ -6068,8 +6099,7 @@ button {
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-shooting-unit .ability-unit-thumb-placeholder {
@@ -6138,8 +6168,7 @@ button {
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-combat-unit .ability-unit-thumb-placeholder {
@@ -6214,8 +6243,7 @@ button {
 .match.scoreboard .phase-opponent-unit .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .phase-opponent-unit .ability-unit-thumb-placeholder {
@@ -6316,9 +6344,7 @@ button {
   cursor: pointer;
   min-height: 48px;
   -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  user-select: none;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 .match.scoreboard .phase-ability-card.is-expandable:hover {
@@ -6333,9 +6359,7 @@ button {
 }
 .match.scoreboard .phase-ability-card .ability-effect-box,
 .match.scoreboard .phase-ability-card .ability-effect-box * {
-  -webkit-user-select: text;
-     -moz-user-select: text;
-          user-select: text;
+  user-select: text;
 }
 .match.scoreboard .phase-ability-card.is-open {
   border-left-color: #d4af37;
@@ -6639,8 +6663,7 @@ button {
 .match.scoreboard .ability-effect-box .ability-unit-thumb-image img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .ability-effect-box .ability-unit-thumb-placeholder {
@@ -6816,8 +6839,7 @@ button {
 .match.scoreboard .deployment-unit-thumb img {
   width: 100%;
   height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
+  object-fit: cover;
   display: block;
 }
 .match.scoreboard .deployment-unit-thumb-placeholder {
@@ -8000,4 +8022,6 @@ button {
     display: block;
     padding: 0.5rem 0;
   }
-}/*# sourceMappingURL=style.css.map */
+}
+
+/*# sourceMappingURL=style.css.map */

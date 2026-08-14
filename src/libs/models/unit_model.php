@@ -48,7 +48,8 @@ class Unit_Model extends Model
 		$keywordsExpr = KeywordSql::displayExpr('u', 'f');
 		$sql = "SELECT u.id, u.name, u.points,
                        {$keywordsExpr} AS keywords,
-                       u.unit_size, u.is_hidden, u.is_hero, u.can_reinforce, u.image
+                       u.unit_size, u.is_hidden, u.is_hero, u.can_reinforce, u.image,
+                       u.story_text
                 FROM m_units u
                 JOIN m_factions f ON f.id = u.faction_id
                 WHERE u.faction_id = :id
@@ -115,6 +116,38 @@ class Unit_Model extends Model
                 WHERE u.id = :id LIMIT 1;";
 		$rows = $this->db->select($sql, ['id' => (int)$unitId]);
 		return !empty($rows) ? $rows[0] : null;
+	}
+
+	/**
+	 * Fandom Wiki 由来のストーリー本文と出典 URL を更新する。
+	 */
+	public function updateUnitStory(int $unitId, string $storyText, string $sourceUrl): bool
+	{
+		$sql = 'UPDATE m_units
+		        SET story_text = :story_text, story_source_url = :story_source_url
+		        WHERE id = :id;';
+		$stmt = $this->db->prepare($sql);
+		return $stmt->execute([
+			':story_text'       => $storyText !== '' ? $storyText : null,
+			':story_source_url' => $sourceUrl !== '' ? mb_substr($sourceUrl, 0, 512) : null,
+			':id'               => $unitId,
+		]);
+	}
+
+	/**
+	 * 陣営ストーリー本文と出典 URL を更新する。
+	 */
+	public function updateFactionStory(int $factionId, string $storyText, string $sourceUrl): bool
+	{
+		$sql = 'UPDATE m_factions
+		        SET story_text = :story_text, story_source_url = :story_source_url
+		        WHERE id = :id;';
+		$stmt = $this->db->prepare($sql);
+		return $stmt->execute([
+			':story_text'       => $storyText !== '' ? $storyText : null,
+			':story_source_url' => $sourceUrl !== '' ? mb_substr($sourceUrl, 0, 512) : null,
+			':id'               => $factionId,
+		]);
 	}
 
 	public function getUnitWeapons($unitId)
