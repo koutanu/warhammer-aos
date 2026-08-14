@@ -152,6 +152,11 @@ $stageLabels = [
 	<div class="form-actions">
 		<a href="<?= URL; ?>match/setup" class="btn-submit">新しい対戦を開始</a>
 		<a href="<?= URL; ?>home" class="btn-secondary">ホームへ戻る</a>
+		<form action="<?= URL; ?>match/delete" method="post" class="delete-match-form" onsubmit="return confirm('この対戦記録（<?= $this->h($p1['name'] ?? 'Player 1'); ?> vs <?= $this->h($p2['name'] ?? 'Player 2'); ?>）を削除しますか？この操作は取り消せません。');">
+			<input type="hidden" name="token" value="<?= $this->h($delete_token ?? ''); ?>">
+			<input type="hidden" name="match_id" value="<?= $this->h($match['id'] ?? ''); ?>">
+			<button type="submit" class="btn-delete">この対戦記録を削除</button>
+		</form>
 	</div>
 </div>
 

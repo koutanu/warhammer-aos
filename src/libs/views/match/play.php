@@ -186,6 +186,7 @@ $p2Url = $playBaseUrl . '?slot=2';
 			</p>
 			<div id="battleTacticsModalList" class="battle-tactics-modal-list"></div>
 			<div class="battle-tactics-modal-actions">
+				<button type="button" id="battleTacticsModalCancel" class="btn-secondary">キャンセル</button>
 				<button type="button" id="battleTacticsModalSkip" class="btn-secondary">達成なしで続行</button>
 				<button type="button" id="battleTacticsModalConfirm" class="btn-submit">確定</button>
 			</div>

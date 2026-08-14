@@ -27,6 +27,7 @@ const MatchBattleTactics = (function () {
 			blocked: document.getElementById("battleTacticsModalBlocked"),
 			empty: document.getElementById("battleTacticsModalEmpty"),
 			list: document.getElementById("battleTacticsModalList"),
+			cancel: document.getElementById("battleTacticsModalCancel"),
 			skip: document.getElementById("battleTacticsModalSkip"),
 			confirm: document.getElementById("battleTacticsModalConfirm"),
 		};
@@ -39,6 +40,10 @@ const MatchBattleTactics = (function () {
 			listClose: document.getElementById("battleTacticsViewClose"),
 		};
 
+		els.cancel?.addEventListener("click", function () {
+			if (submitting) return;
+			hide();
+		});
 		els.skip?.addEventListener("click", function () {
 			submitCompletions([]);
 		});

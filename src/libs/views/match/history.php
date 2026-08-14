@@ -1,6 +1,5 @@
 <?php
 $matches = $matches ?? [];
-$deleteToken = $delete_token ?? '';
 ?>
 <div class="match history">
 	<div class="list-header">
@@ -25,48 +24,44 @@ $deleteToken = $delete_token ?? '';
 						<th>バトルプラン</th>
 						<th>ポイント</th>
 						<th>対戦カード</th>
-						<th>勝者</th>
 						<th></th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php foreach ($matches as $m): ?>
 						<?php
-						$isDraw = (($m['winner'] ?? '') === 'Draw');
-						$playedAt = $m['completed_at'] ?? $m['played_at'] ?? '-';
+						$playedAtRaw = $m['completed_at'] ?? $m['played_at'] ?? '';
+						$playedAt = $playedAtRaw !== '' ? substr($playedAtRaw, 0, 10) : '-';
 						$aFaction = $m['player_a_faction_name'] ?? '';
 						$bFaction = $m['player_b_faction_name'] ?? '';
-						$ptsA = $m['player_a_roster_points'] ?? null;
-						$ptsB = $m['player_b_roster_points'] ?? null;
+						$pointLimit = $m['point_limit'] ?? null;
 						?>
 						<tr>
-							<td><?= $this->h($playedAt); ?></td>
-							<td><?= $this->h($m['battleplan_name'] ?? '-'); ?></td>
+							<td class="match-played-at-cell"><?= $this->h($playedAt); ?></td>
+							<td class="match-battleplan-cell"><?= $this->h($m['battleplan_name'] ?? '-'); ?></td>
 							<td class="match-roster-points-cell">
-								<?php if ($ptsA !== null && $ptsB !== null && (int)$ptsA === (int)$ptsB): ?>
-									<?= (int)$ptsA; ?> pt
-								<?php elseif ($ptsA !== null || $ptsB !== null): ?>
-									<?= $ptsA !== null ? (int)$ptsA . ' pt' : '-'; ?>
-									<span class="match-roster-points-sep">/</span>
-									<?= $ptsB !== null ? (int)$ptsB . ' pt' : '-'; ?>
+								<?php if ($pointLimit !== null): ?>
+									<?= (int)$pointLimit; ?> pt
 								<?php else: ?>
 									-
 								<?php endif; ?>
 							</td>
 							<td class="match-card-cell">
-								<span class="match-side">
-									<strong><?= $this->h($m['player_a_name'] ?? 'Player 1'); ?></strong>
-									<?php if ($aFaction !== ''): ?>
-										<small>(<?= $this->h($aFaction); ?>)</small>
-									<?php endif; ?>
-								</span>
-								<span class="match-score"><?= (int)($m['player_a_vp'] ?? 0); ?> - <?= (int)($m['player_b_vp'] ?? 0); ?></span>
-								<span class="match-side">
-									<strong><?= $this->h($m['player_b_name'] ?? 'Player 2'); ?></strong>
-									<?php if ($bFaction !== ''): ?>
-										<small>(<?= $this->h($bFaction); ?>)</small>
-									<?php endif; ?>
-								</span>
+								<div class="match-card-inner">
+									<span class="match-side">
+										<strong><?= $this->h($m['player_a_name'] ?? 'Player 1'); ?></strong>
+										<?php if ($aFaction !== ''): ?>
+											<small>(<?= $this->h($aFaction); ?>)</small>
+										<?php endif; ?>
+									</span>
+									<span class="match-score"><?= (int)($m['player_a_vp'] ?? 0); ?> - <?= (int)($m['player_b_vp'] ?? 0); ?></span>
+									<span class="match-side">
+										<strong><?= $this->h($m['player_b_name'] ?? 'Player 2'); ?></strong>
+										<?php if ($bFaction !== ''): ?>
+											<small>(<?= $this->h($bFaction); ?>)</small>
+										<?php endif; ?>
+									</span>
+								</div>
 								<?php
 								$mRounds = $m['rounds'] ?? [];
 								$playedRounds = [];
@@ -88,20 +83,8 @@ $deleteToken = $delete_token ?? '';
 									</span>
 								<?php endif; ?> -->
 							</td>
-							<td>
-								<?php if ($isDraw): ?>
-									引き分け
-								<?php else: ?>
-									<?= $this->h($m['winner'] ?? '-'); ?>
-								<?php endif; ?>
-							</td>
 							<td class="list-actions">
 								<a href="<?= URL; ?>match/summary/<?= $this->h($m['id']); ?>" class="btn-edit">詳細</a>
-								<form action="<?= URL; ?>match/delete" method="post" class="delete-match-form" onsubmit="return confirm('この対戦記録（<?= $this->h($m['player_a_name'] ?? 'Player 1'); ?> vs <?= $this->h($m['player_b_name'] ?? 'Player 2'); ?>）を削除しますか？この操作は取り消せません。');">
-									<input type="hidden" name="token" value="<?= $this->h($deleteToken); ?>">
-									<input type="hidden" name="match_id" value="<?= $this->h($m['id']); ?>">
-									<button type="submit" class="btn-delete">削除</button>
-								</form>
 							</td>
 						</tr>
 					<?php endforeach; ?>

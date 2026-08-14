@@ -31,7 +31,6 @@ class Matchplay extends Controller
             'matches'        => $this->model->getMatchHistoryByUser($userId),
             'match_success'  => $this->pullFlash('match_success'),
             'match_error'    => $this->pullFlash('match_error'),
-            'delete_token'   => Session::setToken($this->class_name . '/delete'),
         ];
         $this->view->render($this->class_name, 'history', '戦績一覧', $data);
     }
@@ -199,6 +198,7 @@ class Matchplay extends Controller
             'hide_nav' => false,
             'roster_snapshot_a' => $rosterSnapshots['a'],
             'roster_snapshot_b' => $rosterSnapshots['b'],
+            'delete_token' => Session::setToken($this->class_name . '/delete'),
             'js' => [
                 $this->class_name . '/phases.js',
                 'roster/unit_detail.js',

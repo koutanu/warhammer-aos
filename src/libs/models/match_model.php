@@ -331,21 +331,16 @@ class Match_Model extends Model
     }
 
     /**
-     * スナップショット JSON からロスター合計ポイントを取り出す。
+     * スナップショット JSON から対戦の基準ポイント（1500 など）を取り出す。
      */
-    private function extractRosterPointsFromSnapshot($rawJson): ?int
+    private function extractPointLimitFromSnapshot($rawJson): ?int
     {
         $snap = $this->decodeRosterSnapshot($rawJson);
         if (!$snap) {
             return null;
         }
-        if (isset($snap['totalPoints'])) {
-            return (int)$snap['totalPoints'];
-        }
-        if (isset($snap['pointLimit'])) {
-            return (int)$snap['pointLimit'];
-        }
-        return null;
+        $limit = (int)($snap['pointLimit'] ?? 0);
+        return $limit > 0 ? $limit : null;
     }
 
     private function initRoundScores(int $matchId): void
@@ -399,12 +394,9 @@ class Match_Model extends Model
 
         foreach ($matches as &$match) {
             $match['rounds'] = $this->getRoundScoreMap((int)$match['id']);
-            $match['player_a_roster_points'] = $this->extractRosterPointsFromSnapshot(
-                $match['player_a_roster_snapshot'] ?? null
-            );
-            $match['player_b_roster_points'] = $this->extractRosterPointsFromSnapshot(
-                $match['player_b_roster_snapshot'] ?? null
-            );
+            $limitA = $this->extractPointLimitFromSnapshot($match['player_a_roster_snapshot'] ?? null);
+            $limitB = $this->extractPointLimitFromSnapshot($match['player_b_roster_snapshot'] ?? null);
+            $match['point_limit'] = $limitA ?? $limitB;
             // 一覧表示用に巨大な JSON は落とす
             unset($match['player_a_roster_snapshot'], $match['player_b_roster_snapshot']);
         }

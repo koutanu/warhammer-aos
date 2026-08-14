@@ -339,6 +339,34 @@
 			display: inline-flex;
 			align-items: center;
 		}
+
+		.delete-match-form {
+			margin: 0;
+		}
+
+		.btn-delete {
+			padding: 0.85rem 2rem;
+			color: color.adjust($color-blood, $lightness: 25%);
+			background: none;
+			border: 1px solid rgba($color-blood, 0.5);
+			border-radius: 4px;
+			font-weight: bold;
+			font-family: inherit;
+			font-size: inherit;
+			cursor: pointer;
+			min-height: 48px;
+			display: inline-flex;
+			align-items: center;
+			white-space: nowrap;
+			transition:
+				background-color 0.15s,
+				color 0.15s;
+
+			&:hover {
+				background: $color-blood;
+				color: $color-text;
+			}
+		}
 	}
 
 	@media (max-width: 768px) {
@@ -380,7 +408,8 @@
 			align-items: stretch;
 
 			.btn-submit,
-			.btn-secondary {
+			.btn-secondary,
+			.btn-delete {
 				justify-content: center;
 				width: 100%;
 				box-sizing: border-box;
