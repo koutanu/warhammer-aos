@@ -281,6 +281,7 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 							data-activation="<?= $this->h($a['activation'] ?? 'active'); ?>"
 							data-usage_scope="<?= $this->h($a['usage_scope'] ?? 'unlimited'); ?>"
 							data-usage_per="<?= $this->h($a['usage_per'] ?? 'unit'); ?>"
+							data-usable_when_destroyed="<?= !empty($a['usable_when_destroyed']) ? '1' : '0'; ?>"
 							data-icon_type="<?= $this->h($a['icon_type'] ?? ''); ?>"
 							data-trigger_condition_en="<?= $this->h($a['trigger_condition_en'] ?? ''); ?>"
 							data-trigger_condition_ja="<?= $this->h($a['trigger_condition_ja'] ?? ''); ?>"
@@ -309,6 +310,7 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 				$activation = $a['activation'] ?? 'active';
 				$scope = $a['usage_scope'] ?? 'unlimited';
 				$per = $a['usage_per'] ?? 'unit';
+				$usableWhenDestroyed = !empty($a['usable_when_destroyed']);
 				$icon = (string)($a['icon_type'] ?? '');
 				$castingType = (string)($a['casting_type'] ?? '');
 				$castingValue = (string)($a['casting_value'] ?? '');
@@ -352,6 +354,12 @@ $isManifestationUnit = !empty($u['is_manifestation']);
 							<option value="<?= $val; ?>" <?= $per === $val ? 'selected' : ''; ?>><?= $this->h($lbl); ?></option>
 						<?php endforeach; ?>
 					</select>
+				</div>
+				<div class="form-group form-check">
+					<label>
+						<input type="checkbox" name="abilities[<?= $idx; ?>][usable_when_destroyed]" value="1" <?= $usableWhenDestroyed ? 'checked' : ''; ?>>
+						撃破後も使用可
+					</label>
 				</div>
 				<div class="form-group">
 					<label>アイコン分類</label>

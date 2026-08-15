@@ -606,12 +606,27 @@ document.addEventListener("DOMContentLoaded", () => {
 		);
 	}
 
-	function isAbilityAvailable(ab, livingUnits) {
+	function allRosterUnits(roster, game) {
+		return collectOpponentRosterUnits(
+			roster,
+			null,
+			game?.summonedUnits?.[viewerSlot] || {},
+		);
+	}
+
+	function unitsForAbility(ab, livingUnits, allUnits) {
+		return ab.usableWhenDestroyed ? allUnits : livingUnits;
+	}
+
+	function isAbilityAvailable(ab, livingUnits, allUnits = []) {
 		const category = ab.category || "unit";
 		if (ABILITY_CATEGORIES_WITHOUT_UNIT.has(category)) {
 			return true;
 		}
-		const linked = resolveAbilityUnits(ab, livingUnits);
+		const linked = resolveAbilityUnits(
+			ab,
+			unitsForAbility(ab, livingUnits, allUnits),
+		);
 		if (
 			category === "spell" ||
 			category === "prayer" ||
@@ -999,6 +1014,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const deck = myPlayer?.abilitiesDeck || [];
 		const usedMap = game.usedAbilities?.[viewerSlot] || {};
 		const livingUnits = livingRosterUnits(myPlayer?.roster || null, game);
+		const allUnits = allRosterUnits(myPlayer?.roster || null, game);
 
 		const filtered = deck.filter((ab) => {
 			const phaseNorms =
@@ -1010,7 +1026,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			return (
 				MatchPhases.matchesAnyPhase(phaseNorms, viewPhase) &&
 				MatchPhases.matchesCurrentTurn(turnNorm, isMyTurn) &&
-				isAbilityAvailable(ab, livingUnits)
+				isAbilityAvailable(ab, livingUnits, allUnits)
 			);
 		});
 
@@ -1089,7 +1105,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				groupEl.appendChild(title);
 
 				items.forEach((ab) =>
-					groupEl.appendChild(buildAbilityCard(ab, {}, livingUnits)),
+					groupEl.appendChild(
+						buildAbilityCard(ab, {}, livingUnits, allUnits),
+					),
 				);
 				els.abilityList.appendChild(groupEl);
 			});
@@ -1117,7 +1135,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				})
 				.forEach((ab) =>
 					grid.appendChild(
-						buildAbilityCard(ab, { passive: true }, livingUnits),
+						buildAbilityCard(ab, { passive: true }, livingUnits, allUnits),
 					),
 				);
 
@@ -1126,7 +1144,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	}
 
-	function buildAbilityCard(ab, opts = {}, livingUnits = []) {
+	function buildAbilityCard(ab, opts = {}, livingUnits = [], allUnits = []) {
 		const isPassive = !!opts.passive;
 		const state = MatchStateManager.getState();
 		const game = state.game || {
@@ -1252,7 +1270,10 @@ document.addEventListener("DOMContentLoaded", () => {
 					: "";
 
 			const abilityUnits = hasEffect
-				? resolveAbilityUnits(ab, livingUnits)
+				? resolveAbilityUnits(
+						ab,
+						unitsForAbility(ab, livingUnits, allUnits),
+					)
 				: [];
 			let unitThumbsHtml = "";
 			if (hasEffect && ab.category === "manifestation") {

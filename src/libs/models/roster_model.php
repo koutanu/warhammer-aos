@@ -645,6 +645,7 @@ class Roster_Model extends Model
                     m.activation,
                     m.usage_scope,
                     m.usage_per,
+                    m.usable_when_destroyed,
                     m.trigger_condition_ja,
                     m.icon_type, 
                     m.effect, 
@@ -1839,23 +1840,26 @@ class Roster_Model extends Model
 						? null
 						: (int)$ability['command_point'];
 					$key = 'army:terrain:' . $abilityId;
-					$deck[] = $this->buildDeckEntry(
-						$key,
-						$ability['name'] ?? '',
-						$ability['effect'] ?? '',
-						$ability['trigger_phase'] ?? '',
-						$ability['trigger_turn'] ?? '',
-						'陣営地形',
-						$terrainName,
-						'terrain',
-						$key,
-						$terrainCp,
-						$ability['activation'] ?? 'active',
-						$ability['usage_scope'] ?? 'unlimited',
-						$ability['usage_per'] ?? 'unit',
-						$triggerCondition,
-						$ability['casting_value'] ?? null,
-						$ability['casting_type'] ?? null
+					$deck[] = $this->applyUsableWhenDestroyed(
+						$this->buildDeckEntry(
+							$key,
+							$ability['name'] ?? '',
+							$ability['effect'] ?? '',
+							$ability['trigger_phase'] ?? '',
+							$ability['trigger_turn'] ?? '',
+							'陣営地形',
+							$terrainName,
+							'terrain',
+							$key,
+							$terrainCp,
+							$ability['activation'] ?? 'active',
+							$ability['usage_scope'] ?? 'unlimited',
+							$ability['usage_per'] ?? 'unit',
+							$triggerCondition,
+							$ability['casting_value'] ?? null,
+							$ability['casting_type'] ?? null
+						),
+						$ability
 					);
 				}
 			}
@@ -1914,23 +1918,26 @@ class Roster_Model extends Model
 					$unitAbilityCp = ($ability['command_point'] === null || $ability['command_point'] === '')
 						? null
 						: (int)$ability['command_point'];
-					$deck[] = $this->buildDeckEntry(
-						$dedupeKey,
-						$ability['name'] ?? '',
-						$ability['effect'] ?? '',
-						$ability['trigger_phase'] ?? '',
-						$ability['trigger_turn'] ?? '',
-						'ユニット能力',
-						$unit['name'] ?? '',
-						'unit',
-						$dedupeKey,
-						$unitAbilityCp,
-						$ability['activation'] ?? 'active',
-						$ability['usage_scope'] ?? 'unlimited',
-						$ability['usage_per'] ?? 'unit',
-						$triggerCondition,
-						$ability['casting_value'] ?? null,
-						$ability['casting_type'] ?? null
+					$deck[] = $this->applyUsableWhenDestroyed(
+						$this->buildDeckEntry(
+							$dedupeKey,
+							$ability['name'] ?? '',
+							$ability['effect'] ?? '',
+							$ability['trigger_phase'] ?? '',
+							$ability['trigger_turn'] ?? '',
+							'ユニット能力',
+							$unit['name'] ?? '',
+							'unit',
+							$dedupeKey,
+							$unitAbilityCp,
+							$ability['activation'] ?? 'active',
+							$ability['usage_scope'] ?? 'unlimited',
+							$ability['usage_per'] ?? 'unit',
+							$triggerCondition,
+							$ability['casting_value'] ?? null,
+							$ability['casting_type'] ?? null
+						),
+						$ability
 					);
 				}
 			}
@@ -2070,6 +2077,9 @@ class Roster_Model extends Model
 			if (!empty($entry['behaviorId']) && empty($existing['behaviorId'])) {
 				$existing['behaviorId'] = $entry['behaviorId'];
 			}
+			if (!empty($entry['usableWhenDestroyed'])) {
+				$existing['usableWhenDestroyed'] = true;
+			}
 			unset($existing);
 		}
 
@@ -2134,6 +2144,15 @@ class Roster_Model extends Model
 		}
 		if ($targetsUnitOnSummon) {
 			$entry['targetsUnitOnSummon'] = true;
+		}
+		return $entry;
+	}
+
+	/** 撃破後も使用可フラグをデッキエントリへ載せる。 */
+	private function applyUsableWhenDestroyed(array $entry, array $ability): array
+	{
+		if (!empty($ability['usable_when_destroyed'])) {
+			$entry['usableWhenDestroyed'] = true;
 		}
 		return $entry;
 	}

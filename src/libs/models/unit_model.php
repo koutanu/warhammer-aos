@@ -161,7 +161,7 @@ class Unit_Model extends Model
 	 */
 	public function getUnitAbilities($unitId)
 	{
-		$sql = "SELECT m.id, m.name, m.command_point, m.casting_value, m.casting_type, m.trigger_phase, m.trigger_turn, m.activation, m.usage_scope, m.usage_per, m.trigger_condition_ja, m.icon_type, m.effect, m.flavor_text, m.keywords
+		$sql = "SELECT m.id, m.name, m.command_point, m.casting_value, m.casting_type, m.trigger_phase, m.trigger_turn, m.activation, m.usage_scope, m.usage_per, m.usable_when_destroyed, m.trigger_condition_ja, m.icon_type, m.effect, m.flavor_text, m.keywords
                 FROM m_unit_abilities AS ua
                 JOIN m_ability_master AS m ON ua.ability_id = m.id
                 WHERE ua.unit_id = :unit_id
@@ -242,7 +242,7 @@ class Unit_Model extends Model
 	 */
 	public function getAllAbilities()
 	{
-		$sql = "SELECT id, name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, trigger_condition_ja, icon_type, effect, flavor_text, keywords
+		$sql = "SELECT id, name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, usable_when_destroyed, trigger_condition_ja, icon_type, effect, flavor_text, keywords
                 FROM m_ability_master
                 ORDER BY name ASC, id ASC;";
 		return $this->db->select($sql);
@@ -596,13 +596,14 @@ class Unit_Model extends Model
                 SET name = :name, command_point = :command_point, casting_value = :casting_value, casting_type = :casting_type,
                     trigger_phase = :trigger_phase, trigger_turn = :trigger_turn,
                     activation = :activation, usage_scope = :usage_scope, usage_per = :usage_per,
+                    usable_when_destroyed = :usable_when_destroyed,
                     icon_type = :icon_type, trigger_condition_ja = :trigger_condition_ja,
                     effect = :effect, flavor_text = :flavor_text, keywords = :keywords
                 WHERE id = :id;'
 		);
 		$insertMaster = $this->db->prepare(
-			'INSERT INTO m_ability_master (name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, icon_type, trigger_condition_ja, effect, flavor_text, keywords)
-             VALUES (:name, :command_point, :casting_value, :casting_type, :trigger_phase, :trigger_turn, :activation, :usage_scope, :usage_per, :icon_type, :trigger_condition_ja, :effect, :flavor_text, :keywords);'
+			'INSERT INTO m_ability_master (name, command_point, casting_value, casting_type, trigger_phase, trigger_turn, activation, usage_scope, usage_per, usable_when_destroyed, icon_type, trigger_condition_ja, effect, flavor_text, keywords)
+             VALUES (:name, :command_point, :casting_value, :casting_type, :trigger_phase, :trigger_turn, :activation, :usage_scope, :usage_per, :usable_when_destroyed, :icon_type, :trigger_condition_ja, :effect, :flavor_text, :keywords);'
 		);
 		$attach = $this->db->prepare(
 			'INSERT INTO m_unit_abilities (unit_id, ability_id) VALUES (:unit_id, :ability_id);'
@@ -635,6 +636,7 @@ class Unit_Model extends Model
 				':activation'           => $this->sanitizeEnum($ab['activation'] ?? null, ['active', 'passive', 'reaction'], 'active'),
 				':usage_scope'          => $this->sanitizeEnum($ab['usage_scope'] ?? null, ['unlimited', 'once_per_turn', 'once_per_phase', 'once_per_battle'], 'unlimited'),
 				':usage_per'            => $this->sanitizeEnum($ab['usage_per'] ?? null, ['unit', 'army'], 'unit'),
+				':usable_when_destroyed' => !empty($ab['usable_when_destroyed']) ? 1 : 0,
 				':icon_type'            => $this->nullableStr($ab['icon_type'] ?? null),
 				':trigger_condition_ja' => $this->nullableStr($ab['trigger_condition_ja'] ?? null),
 				// effect は m_ability_master で NOT NULL のため、未入力時は NULL ではなく空文字にする

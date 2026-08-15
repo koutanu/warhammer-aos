@@ -159,6 +159,15 @@ function ensureSchema(PDO $pdo): void
         $pdo->exec('ALTER TABLE m_ability_master ADD COLUMN trigger_condition_ja TEXT NULL DEFAULT NULL AFTER trigger_condition_en');
         echo "ALTER: added trigger_condition_ja to m_ability_master\n";
     }
+
+    $abilityCols = $pdo->query('DESCRIBE m_ability_master')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('usable_when_destroyed', $abilityCols, true)) {
+        $after = in_array('usage_per', $abilityCols, true) ? ' AFTER usage_per' : '';
+        $pdo->exec(
+            'ALTER TABLE m_ability_master ADD COLUMN usable_when_destroyed TINYINT(1) NOT NULL DEFAULT 0' . $after
+        );
+        echo "ALTER: added usable_when_destroyed to m_ability_master\n";
+    }
 }
 
 function csvFilesPresent(): bool
@@ -880,12 +889,19 @@ function getOrCreateAbilityMaster(
     string $iconType = '',
     string $condition = ''
 ): int {
-    $find = $pdo->prepare('SELECT id, effect, icon_type, trigger_condition_en FROM m_ability_master WHERE name = ? LIMIT 1');
+    $find = $pdo->prepare('SELECT id, effect, icon_type, trigger_condition_en, usable_when_destroyed FROM m_ability_master WHERE name = ? LIMIT 1');
     $find->execute([$name]);
     $existing = $find->fetch(PDO::FETCH_ASSOC);
     if ($existing && normalizeText($existing['effect']) === normalizeText($effect)) {
         backfillAbilityIconType($pdo, (int)$existing['id'], $existing['icon_type'] ?? null, $iconType);
         backfillAbilityCondition($pdo, (int)$existing['id'], $existing['trigger_condition_en'] ?? null, $condition);
+        backfillAbilityUsableWhenDestroyed(
+            $pdo,
+            (int)$existing['id'],
+            (int)($existing['usable_when_destroyed'] ?? 0),
+            $effect,
+            $condition
+        );
         return (int)$existing['id'];
     }
 
@@ -898,23 +914,31 @@ function getOrCreateAbilityMaster(
         if ($existing && normalizeText($existing['effect']) === normalizeText($effect)) {
             backfillAbilityIconType($pdo, (int)$existing['id'], $existing['icon_type'] ?? null, $iconType);
             backfillAbilityCondition($pdo, (int)$existing['id'], $existing['trigger_condition_en'] ?? null, $condition);
+            backfillAbilityUsableWhenDestroyed(
+                $pdo,
+                (int)$existing['id'],
+                (int)($existing['usable_when_destroyed'] ?? 0),
+                $effect,
+                $condition
+            );
             return (int)$existing['id'];
         }
     }
 
     $stmt = $pdo->prepare(
-        'INSERT INTO m_ability_master (name, trigger_phase, trigger_turn, ability_type, trigger_condition_en, icon_type, effect, flavor_text)
-         VALUES (:name, :trigger_phase, :trigger_turn, :ability_type, :trigger_condition_en, :icon_type, :effect, :flavor_text)'
+        'INSERT INTO m_ability_master (name, trigger_phase, trigger_turn, ability_type, trigger_condition_en, icon_type, effect, flavor_text, usable_when_destroyed)
+         VALUES (:name, :trigger_phase, :trigger_turn, :ability_type, :trigger_condition_en, :icon_type, :effect, :flavor_text, :usable_when_destroyed)'
     );
     $stmt->execute([
-        'name'                 => mb_substr($storedName, 0, 255),
-        'trigger_phase'        => mb_substr($triggerPhase, 0, 100),
-        'trigger_turn'         => mb_substr($triggerTurn, 0, 100),
-        'ability_type'         => mb_substr($abilityType, 0, 100),
-        'trigger_condition_en' => $condition !== '' ? $condition : null,
-        'icon_type'            => $iconType !== '' ? mb_substr($iconType, 0, 20) : null,
-        'effect'               => $effect,
-        'flavor_text'          => $flavor !== '' ? $flavor : null,
+        'name'                   => mb_substr($storedName, 0, 255),
+        'trigger_phase'          => mb_substr($triggerPhase, 0, 100),
+        'trigger_turn'           => mb_substr($triggerTurn, 0, 100),
+        'ability_type'           => mb_substr($abilityType, 0, 100),
+        'trigger_condition_en'   => $condition !== '' ? $condition : null,
+        'icon_type'              => $iconType !== '' ? mb_substr($iconType, 0, 20) : null,
+        'effect'                 => $effect,
+        'flavor_text'            => $flavor !== '' ? $flavor : null,
+        'usable_when_destroyed'  => abilityUsableWhenDestroyed($effect, $condition) ? 1 : 0,
     ]);
     return (int)$pdo->lastInsertId();
 }
@@ -937,6 +961,33 @@ function backfillAbilityCondition(PDO $pdo, int $abilityId, ?string $current, st
     }
     $pdo->prepare('UPDATE m_ability_master SET trigger_condition_en = ? WHERE id = ?')
         ->execute([$condition, $abilityId]);
+}
+
+/** 撃破後も使用可の定型句があればフラグを立てる（既に 1 なら触らない） */
+function backfillAbilityUsableWhenDestroyed(
+    PDO $pdo,
+    int $abilityId,
+    int $current,
+    string $effect,
+    string $condition
+): void {
+    if ($current === 1 || !abilityUsableWhenDestroyed($effect, $condition)) {
+        return;
+    }
+    $pdo->prepare('UPDATE m_ability_master SET usable_when_destroyed = 1 WHERE id = ?')
+        ->execute([$abilityId]);
+}
+
+function abilityUsableWhenDestroyed(string $effect, string $condition = ''): bool
+{
+    $haystack = $effect . "\n" . $condition;
+    if (stripos($haystack, 'even if this unit has been destroyed') !== false) {
+        return true;
+    }
+    if (stripos($haystack, 'even if this unit is destroyed') !== false) {
+        return true;
+    }
+    return mb_strpos($haystack, 'このユニットが破壊されていても使用できる') !== false;
 }
 
 function normalizeText(string $text): string

@@ -200,6 +200,7 @@
 			setSelectValue(card, "activation", data.activation, "active");
 			setSelectValue(card, "usage_scope", data.usage_scope, "unlimited");
 			setSelectValue(card, "usage_per", data.usage_per, "unit");
+			setCheckboxValue(card, "usable_when_destroyed", data.usable_when_destroyed);
 			setSelectValue(card, "icon_type", data.icon_type, "");
 			setSelectValue(card, "casting_type", data.casting_type, "");
 			setFieldValue(card, "casting_value", data.casting_value);
@@ -215,6 +216,12 @@
 	function setFieldValue(card, fieldSuffix, value) {
 		const el = card.querySelector(`[name$="[${fieldSuffix}]"]`);
 		if (el) el.value = value || "";
+	}
+
+	function setCheckboxValue(card, fieldSuffix, value) {
+		const el = card.querySelector(`input[type="checkbox"][name$="[${fieldSuffix}]"]`);
+		if (!el) return;
+		el.checked = value === "1" || value === "true" || value === true || value === 1;
 	}
 
 	function setSelectValue(card, fieldSuffix, value, fallback) {
@@ -248,6 +255,7 @@
 			activation: opt.dataset.activation,
 			usage_scope: opt.dataset.usage_scope,
 			usage_per: opt.dataset.usage_per,
+			usable_when_destroyed: opt.dataset.usable_when_destroyed,
 			icon_type: opt.dataset.icon_type,
 			casting_value: opt.dataset.casting_value,
 			casting_type: opt.dataset.casting_type,
