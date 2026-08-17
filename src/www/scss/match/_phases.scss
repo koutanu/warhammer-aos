@@ -487,6 +487,50 @@
 		}
 	}
 
+	.phase-unit-card {
+		flex: 0 0 auto;
+		width: 100px;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		border: 1px solid rgba($color-main, 0.45);
+		border-radius: 4px;
+		background: rgba($color-base, 0.9);
+
+		&.is-phase-done {
+			opacity: 0.55;
+
+			.phase-action-toggle {
+				background: rgba($color-accent, 0.22);
+				color: $color-accent;
+				border-top-color: rgba($color-accent, 0.45);
+			}
+		}
+
+		.phase-movement-unit,
+		.phase-shooting-unit,
+		.phase-combat-unit,
+		.phase-opponent-unit {
+			width: 100%;
+			border: none;
+			border-radius: 0;
+			background: transparent;
+		}
+	}
+
+	.phase-action-toggle {
+		width: 100%;
+		padding: 0.22rem 0.15rem;
+		border: none;
+		border-top: 1px solid rgba($color-main, 0.4);
+		background: rgba($color-background, 0.75);
+		color: rgba($color-text, 0.85);
+		font-size: 0.65rem;
+		font-weight: bold;
+		letter-spacing: 0.02em;
+		cursor: pointer;
+	}
+
 	.phase-list-title {
 		margin: 0 0 0.75rem;
 		font-size: 0.9rem;

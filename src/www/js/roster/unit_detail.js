@@ -356,12 +356,56 @@ window.RosterUnitDetail = (function () {
 		return `<img src="${baseUrl}assets/icons/${file}" alt="${alt}" title="${alt}" onerror="this.onerror=null;this.src='${fallbackSrc}';" style="vertical-align:middle;height:20px;margin-right:5px;">`;
 	}
 
+	let lastShownUnit = null;
+
+	function bindAttackableWeapons(weaponsBody, detailData) {
+		if (!weaponsBody || typeof window.MatchCombatRef === "undefined") {
+			return;
+		}
+		const weapons = detailData?.weapons || [];
+		weaponsBody.querySelectorAll("tr[data-weapon-index]").forEach((tr) => {
+			const idx = parseInt(tr.dataset.weaponIndex, 10);
+			const weapon = weapons[idx];
+			if (!weapon || !window.MatchCombatRef.canAttackWith(weapon)) {
+				return;
+			}
+			tr.classList.add("is-attackable");
+			tr.setAttribute("role", "button");
+			tr.tabIndex = 0;
+			tr.setAttribute(
+				"aria-label",
+				`${weapon.name || "武器"}で攻撃対象を選ぶ`,
+			);
+			const activate = (e) => {
+				if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") {
+					return;
+				}
+				e.preventDefault();
+				window.MatchCombatRef.start({
+					attacker: lastShownUnit,
+					weapon,
+					detailData,
+				});
+			};
+			tr.addEventListener("click", activate);
+			tr.addEventListener("keydown", activate);
+		});
+	}
+
 	async function show(unit) {
 		const unitDetailModal = getEl(modalId);
 		if (!unitDetailModal || !unit) return;
 
 		const unitId = unit.id || unit.unitId;
 		if (!unitId) return;
+
+		lastShownUnit = {
+			id: unitId,
+			name: unit.name,
+			keywords: unit.keywords,
+			instanceKey: unit.instanceKey || "",
+			playerSlot: unit.playerSlot,
+		};
 
 		if (getEl("detailUnitName")) {
 			getEl("detailUnitName").textContent = unit.name || "-";
@@ -423,6 +467,9 @@ window.RosterUnitDetail = (function () {
 
 			if (getEl("detailUnitName") && info.name) {
 				getEl("detailUnitName").textContent = info.name;
+			}
+			if (lastShownUnit) {
+				lastShownUnit.name = info.name || lastShownUnit.name;
 			}
 			if (getEl("detailUnitPoints") && info.points) {
 				getEl("detailUnitPoints").textContent = info.points + "pt";
@@ -522,15 +569,29 @@ window.RosterUnitDetail = (function () {
 			if (weaponsBody) {
 				weaponsBody.innerHTML = "";
 				if (detailData.weapons && detailData.weapons.length > 0) {
-					detailData.weapons.forEach((w) => {
+					detailData.weapons.forEach((w, index) => {
 						const tr = document.createElement("tr");
+						tr.dataset.weaponIndex = String(index);
 						const rangeDisplay = w.rng ? `${w.rng}"` : "近接";
 						const badge = w.abilities
 							? `<br><small style="color: #ffcc00; font-size:0.75rem;">★ ${w.abilities}</small>`
 							: "";
+						const canAttack =
+							typeof window.MatchCombatRef !== "undefined" &&
+							window.MatchCombatRef.canAttackWith(w);
+						const viewPhase =
+							window.MatchAbilityPanel?.getViewPhase?.();
+						const inAttackPhase =
+							viewPhase === "shooting" || viewPhase === "combat";
+						if (inAttackPhase && !canAttack) {
+							tr.classList.add("is-weapon-inactive");
+						}
+						const attackHint = canAttack
+							? `<span class="weapon-attack-hint">タップして攻撃対象を選ぶ</span>`
+							: "";
 						const weaponIcon = buildWeaponIcon(baseUrl, w);
 						tr.innerHTML = `
-							<td>${weaponIcon}<strong>${w.name || "不明な武器"}</strong>${badge}</td>
+							<td>${weaponIcon}<strong>${w.name || "不明な武器"}</strong>${badge}${attackHint}</td>
 							<td>${rangeDisplay}</td>
 							<td>${w.atk ?? "-"}</td>
 							<td>${w.hit ? w.hit + "+" : "-"}</td>
@@ -540,6 +601,7 @@ window.RosterUnitDetail = (function () {
 						`;
 						weaponsBody.appendChild(tr);
 					});
+					bindAttackableWeapons(weaponsBody, detailData);
 				} else {
 					weaponsBody.innerHTML =
 						'<tr><td colspan="7" style="color:#aaa; text-align:center; padding: 15px;">武器情報が登録されていません。</td></tr>';

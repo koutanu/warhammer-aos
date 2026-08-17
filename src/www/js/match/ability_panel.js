@@ -23,13 +23,17 @@ document.addEventListener("DOMContentLoaded", () => {
 		phaseMovementStrip: document.getElementById("phaseMovementStrip"),
 		phaseShootingStrip: document.getElementById("phaseShootingStrip"),
 		phaseCombatStrip: document.getElementById("phaseCombatStrip"),
-		opponentRosterStrip: document.getElementById("phaseOpponentRosterStrip"),
+		opponentRosterStrip: document.getElementById(
+			"phaseOpponentRosterStrip",
+		),
 		turnMy: document.getElementById("phaseTurnMy"),
 		turnOpponent: document.getElementById("phaseTurnOpponent"),
 		targetPickerModal: document.getElementById("abilityTargetPickerModal"),
 		targetPickerList: document.getElementById("abilityTargetPickerList"),
 		targetPickerEmpty: document.getElementById("abilityTargetPickerEmpty"),
-		targetPickerCancel: document.getElementById("abilityTargetPickerCancel"),
+		targetPickerCancel: document.getElementById(
+			"abilityTargetPickerCancel",
+		),
 		targetPickerLead: document.querySelector(
 			"#abilityTargetPickerModal .ability-target-picker-lead",
 		),
@@ -74,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		setMode("phase");
 	}
 
-	window.MatchAbilityPanel = { setMode };
+	window.MatchAbilityPanel = { setMode, getViewPhase, getLivingUnitsForSlot };
 
 	window.addEventListener("matchStateUpdated", () => {
 		renderPhasePanel();
@@ -200,10 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			const behaviorId = card.dataset.behaviorId || "";
 			const isUsed = toggleBtn.getAttribute("aria-pressed") === "true";
 
-			if (
-				!isUsed &&
-				behaviorId === "pick_unit_once_per_battle"
-			) {
+			if (!isUsed && behaviorId === "pick_unit_once_per_battle") {
 				openAbilityTargetPicker({
 					abilityKey,
 					triggerTurn,
@@ -229,7 +230,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		});
 		els.targetPickerList?.addEventListener("click", (e) => {
-			const thumb = e.target.closest(".ability-unit-thumb[data-unit-key]");
+			const thumb = e.target.closest(
+				".ability-unit-thumb[data-unit-key]",
+			);
 			if (!thumb || !pendingTargetPick) return;
 			const unitKey = thumb.dataset.unitKey || "";
 			if (!unitKey) return;
@@ -271,31 +274,19 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 
 		els.phaseMovementStrip?.addEventListener("click", (e) => {
-			const thumb = e.target.closest(".ability-unit-thumb");
-			if (!thumb) return;
-			e.stopPropagation();
-			openUnitDetailFromThumb(thumb);
+			handlePhaseStripClick(e);
 		});
 
 		els.phaseShootingStrip?.addEventListener("click", (e) => {
-			const thumb = e.target.closest(".ability-unit-thumb");
-			if (!thumb) return;
-			e.stopPropagation();
-			openUnitDetailFromThumb(thumb);
+			handlePhaseStripClick(e);
 		});
 
 		els.phaseCombatStrip?.addEventListener("click", (e) => {
-			const thumb = e.target.closest(".ability-unit-thumb");
-			if (!thumb) return;
-			e.stopPropagation();
-			openUnitDetailFromThumb(thumb);
+			handlePhaseStripClick(e);
 		});
 
 		els.opponentRosterStrip?.addEventListener("click", (e) => {
-			const thumb = e.target.closest(".ability-unit-thumb");
-			if (!thumb) return;
-			e.stopPropagation();
-			openUnitDetailFromThumb(thumb);
+			handlePhaseStripClick(e);
 		});
 
 		els.abilityList?.addEventListener("keydown", (e) => {
@@ -345,6 +336,28 @@ document.addEventListener("DOMContentLoaded", () => {
 			.finally(() => {
 				gameSyncing = false;
 			});
+	}
+
+	function handlePhaseStripClick(e) {
+		const toggle = e.target.closest(".phase-action-toggle");
+		if (toggle) {
+			e.stopPropagation();
+			const unitKey = toggle.dataset.unitKey || "";
+			const flag = toggle.dataset.flag || "";
+			const playerSlot = parseInt(toggle.dataset.playerSlot, 10);
+			if (!unitKey || !flag || !Number.isFinite(playerSlot)) return;
+			postGameAction("match/toggleUnitPhaseFlag", {
+				playerSlot,
+				viewerSlot,
+				unitKey,
+				flag,
+			});
+			return;
+		}
+		const thumb = e.target.closest(".ability-unit-thumb");
+		if (!thumb) return;
+		e.stopPropagation();
+		openUnitDetailFromThumb(thumb);
 	}
 
 	function unitInstanceKey(unit) {
@@ -475,7 +488,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const myPlayer = state.players?.find((p) => p.slot === viewerSlot);
 		const opponentSlot = viewerSlot === 1 ? 2 : 1;
-		const opponentPlayer = state.players?.find((p) => p.slot === opponentSlot);
+		const opponentPlayer = state.players?.find(
+			(p) => p.slot === opponentSlot,
+		);
 		const rosterName =
 			myPlayer?.roster?.name || myPlayer?.name || `Player ${viewerSlot}`;
 		const isMyTurn = viewTurn === "my";
@@ -494,7 +509,12 @@ document.addEventListener("DOMContentLoaded", () => {
 		renderMovementStrip(viewPhase, myPlayer?.roster || null, game);
 		renderShootingStrip(viewPhase, myPlayer?.roster || null, game);
 		renderCombatStrip(viewPhase, myPlayer?.roster || null, game);
-		renderOpponentRosterStrip(opponentPlayer, game, opponentSlot);
+		renderOpponentRosterStrip(
+			opponentPlayer,
+			game,
+			opponentSlot,
+			viewPhase,
+		);
 		renderAbilities(state, game, myPlayer, isMyTurn);
 	}
 
@@ -553,8 +573,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		function pushUnit(unit) {
 			if (!unit) return;
 			const key =
-				unit.instanceKey ||
-				(unit.id ? `legacy:${unit.id}` : "");
+				unit.instanceKey || (unit.id ? `legacy:${unit.id}` : "");
 			if (!key || seenKeys.has(key)) return;
 			if (destroyedMap && destroyedMap[key]) return;
 			seenKeys.add(key);
@@ -569,21 +588,23 @@ document.addEventListener("DOMContentLoaded", () => {
 		return units;
 	}
 
-	function collectOpponentRosterUnits(roster, destroyedMap = null, summonedMap = null) {
+	function collectOpponentRosterUnits(
+		roster,
+		destroyedMap = null,
+		summonedMap = null,
+	) {
 		const units = collectRosterUnits(roster, destroyedMap);
 		const seenKeys = new Set(
 			units.map(
 				(unit) =>
-					unit.instanceKey ||
-					(unit.id ? `legacy:${unit.id}` : ""),
+					unit.instanceKey || (unit.id ? `legacy:${unit.id}` : ""),
 			),
 		);
 
 		(roster?.manifestations || []).forEach((unit) => {
 			if (!unit) return;
 			const key =
-				unit.instanceKey ||
-				(unit.id ? `legacy:${unit.id}` : "");
+				unit.instanceKey || (unit.id ? `legacy:${unit.id}` : "");
 			if (!key || seenKeys.has(key)) return;
 			if (!summonedMap || !summonedMap[key]) return;
 			if (destroyedMap && destroyedMap[key]) return;
@@ -604,6 +625,26 @@ document.addEventListener("DOMContentLoaded", () => {
 			getDestroyedMapForViewer(game),
 			game?.summonedUnits?.[viewerSlot] || {},
 		);
+	}
+
+	function getViewPhase() {
+		return viewPhase;
+	}
+
+	function getLivingUnitsForSlot(slot) {
+		const slotNum = parseInt(slot, 10);
+		if (!Number.isFinite(slotNum) || slotNum < 1) return [];
+		const state = MatchStateManager.getState() || {};
+		const game = state.game || {};
+		const player =
+			MatchStateManager.getPlayer?.(slotNum) ||
+			(state.players || []).find((p) => p.slot === slotNum) ||
+			null;
+		return collectOpponentRosterUnits(
+			player?.roster || null,
+			game?.destroyedUnits?.[slotNum] || {},
+			game?.summonedUnits?.[slotNum] || {},
+		).filter((unit) => unit.id);
 	}
 
 	function allRosterUnits(roster, game) {
@@ -692,9 +733,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const category = ab.category || "unit";
 
 		if (category === "spell" || category === "manifestation") {
-			return allUnits.filter((u) =>
-				hasKeyword(u, "魔術師", "WIZARD"),
-			);
+			return allUnits.filter((u) => hasKeyword(u, "魔術師", "WIZARD"));
 		}
 		if (category === "prayer") {
 			return allUnits.filter((u) => hasKeyword(u, "神官", "PRIEST"));
@@ -806,29 +845,96 @@ document.addEventListener("DOMContentLoaded", () => {
 		const value = unit?.movement;
 		if (value === null || value === undefined) return false;
 		const str = String(value).trim();
-		if (str === "" || str === "-" || str === "–" || str === "—") return false;
+		if (str === "" || str === "-" || str === "–" || str === "—")
+			return false;
 		return true;
 	}
 
-	function buildMovementStripHtml(units) {
+	function getPhaseFlagMap(game, slot, flag) {
+		const key =
+			flag === "moved"
+				? "movedUnits"
+				: flag === "shot"
+					? "shotUnits"
+					: "foughtUnits";
+		return game?.[key]?.[slot] || {};
+	}
+
+	function isPhaseFlagDone(doneMap, unit) {
+		const key = unitInstanceKey(unit);
+		return !!(key && doneMap[key]);
+	}
+
+	function isHeroUnit(unit) {
+		return unitInstanceKey(unit).startsWith("hero:");
+	}
+
+	function sortUnitsHeroFirst(units) {
+		const heroes = [];
+		const rest = [];
+		units.forEach((unit) => {
+			if (isHeroUnit(unit)) heroes.push(unit);
+			else rest.push(unit);
+		});
+		return heroes.concat(rest);
+	}
+
+	function phaseActionLabel(flag, done) {
+		if (flag === "moved") return done ? "移動済み" : "移動待ち";
+		if (flag === "shot") return done ? "射撃済み" : "射撃待ち";
+		return done ? "攻撃済み" : "攻撃待ち";
+	}
+
+	function buildPhaseUnitCardHtml(unit, opts) {
+		const unitClass = opts.unitClass || "";
+		const extraInnerHtml = opts.extraInnerHtml || "";
+		const flag = opts.flag || "";
+		const done = !!opts.done;
+		const playerSlot = opts.playerSlot;
+		const ariaLabel = opts.ariaLabel || unit.name || "ユニット";
+		const key = unitInstanceKey(unit);
+		const doneClass = done ? " is-phase-done" : "";
+		const toggleHtml = flag
+			? `<button type="button" class="phase-action-toggle"
+					data-flag="${escapeAttr(flag)}"
+					data-unit-key="${escapeAttr(key)}"
+					data-player-slot="${playerSlot}"
+					aria-pressed="${done}">
+					${escapeHtml(phaseActionLabel(flag, done))}
+				</button>`
+			: "";
+		return `<div class="phase-unit-card${doneClass}">
+			<button type="button" class="${escapeAttr(unitClass)} ability-unit-thumb"
+				data-unit-id="${unit.id}"
+				data-unit-key="${escapeAttr(key)}"
+				data-unit-name="${escapeAttr(unit.name || "")}"
+				data-unit-keywords="${escapeAttr(unit.keywords || "")}"
+				data-player-slot="${playerSlot}"
+				aria-label="${escapeAttr(ariaLabel)}">
+				<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
+				${extraInnerHtml}
+			</button>
+			${toggleHtml}
+		</div>`;
+	}
+
+	function buildMovementStripHtml(units, doneMap) {
 		if (!units.length) return "";
-		const buttons = units
-			.map(
-				(unit) =>
-					`<button type="button" class="phase-movement-unit ability-unit-thumb"
-						data-unit-id="${unit.id}"
-						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
-						data-unit-name="${escapeAttr(unit.name || "")}"
-						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
-						aria-label="${escapeAttr((unit.name || "ユニット") + " 移動力 " + formatMovement(unit.movement))}">
-						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
-						<span class="phase-movement-value">${escapeHtml(formatMovement(unit.movement))}</span>
-					</button>`,
+		const cards = units
+			.map((unit) =>
+				buildPhaseUnitCardHtml(unit, {
+					unitClass: "phase-movement-unit",
+					extraInnerHtml: `<span class="phase-movement-value">${escapeHtml(formatMovement(unit.movement))}</span>`,
+					flag: "moved",
+					done: isPhaseFlagDone(doneMap, unit),
+					playerSlot: viewerSlot,
+					ariaLabel: `${unit.name || "ユニット"} 移動力 ${formatMovement(unit.movement)}`,
+				}),
 			)
 			.join("");
 		return `<section class="phase-movement-section">
-			<h4 class="phase-movement-title">移動力（参照）</h4>
-			<div class="phase-movement-units" role="list">${buttons}</div>
+			<h4 class="phase-movement-title">移動力</h4>
+			<div class="phase-movement-units" role="list">${cards}</div>
 		</section>`;
 	}
 
@@ -843,9 +949,12 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		const units = livingRosterUnits(roster, game)
-			.filter((u) => u.id && hasMovement(u))
-			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+		const doneMap = getPhaseFlagMap(game, viewerSlot, "moved");
+		const units = sortUnitsHeroFirst(
+			livingRosterUnits(roster, game).filter(
+				(u) => u.id && hasMovement(u),
+			),
+		);
 
 		if (!units.length) {
 			strip.innerHTML = "";
@@ -854,29 +963,27 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		strip.innerHTML = buildMovementStripHtml(units);
+		strip.innerHTML = buildMovementStripHtml(units, doneMap);
 		strip.style.display = "";
 		strip.hidden = false;
 	}
 
-	function buildShootingStripHtml(units) {
+	function buildShootingStripHtml(units, doneMap) {
 		if (!units.length) return "";
-		const buttons = units
-			.map(
-				(unit) =>
-					`<button type="button" class="phase-shooting-unit ability-unit-thumb"
-						data-unit-id="${unit.id}"
-						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
-						data-unit-name="${escapeAttr(unit.name || "")}"
-						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
-						aria-label="${escapeAttr(unit.name || "ユニット")}">
-						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
-					</button>`,
+		const cards = units
+			.map((unit) =>
+				buildPhaseUnitCardHtml(unit, {
+					unitClass: "phase-shooting-unit",
+					flag: "shot",
+					done: isPhaseFlagDone(doneMap, unit),
+					playerSlot: viewerSlot,
+					ariaLabel: unit.name || "ユニット",
+				}),
 			)
 			.join("");
 		return `<section class="phase-shooting-section">
-			<h4 class="phase-shooting-title">射撃可能ユニット（参照）</h4>
-			<div class="phase-shooting-units" role="list">${buttons}</div>
+			<h4 class="phase-shooting-title">射撃可能ユニット</h4>
+			<div class="phase-shooting-units" role="list">${cards}</div>
 		</section>`;
 	}
 
@@ -891,9 +998,12 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		const units = livingRosterUnits(roster, game)
-			.filter((u) => u.id && u.hasRangedWeapon)
-			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+		const doneMap = getPhaseFlagMap(game, viewerSlot, "shot");
+		const units = sortUnitsHeroFirst(
+			livingRosterUnits(roster, game).filter(
+				(u) => u.id && u.hasRangedWeapon,
+			),
+		);
 
 		if (!units.length) {
 			strip.innerHTML = "";
@@ -902,29 +1012,27 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		strip.innerHTML = buildShootingStripHtml(units);
+		strip.innerHTML = buildShootingStripHtml(units, doneMap);
 		strip.style.display = "";
 		strip.hidden = false;
 	}
 
-	function buildCombatStripHtml(units) {
+	function buildCombatStripHtml(units, doneMap) {
 		if (!units.length) return "";
-		const buttons = units
-			.map(
-				(unit) =>
-					`<button type="button" class="phase-combat-unit ability-unit-thumb"
-						data-unit-id="${unit.id}"
-						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
-						data-unit-name="${escapeAttr(unit.name || "")}"
-						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
-						aria-label="${escapeAttr(unit.name || "ユニット")}">
-						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
-					</button>`,
+		const cards = units
+			.map((unit) =>
+				buildPhaseUnitCardHtml(unit, {
+					unitClass: "phase-combat-unit",
+					flag: "fought",
+					done: isPhaseFlagDone(doneMap, unit),
+					playerSlot: viewerSlot,
+					ariaLabel: unit.name || "ユニット",
+				}),
 			)
 			.join("");
 		return `<section class="phase-combat-section">
-			<h4 class="phase-combat-title">戦闘可能ユニット（参照）</h4>
-			<div class="phase-combat-units" role="list">${buttons}</div>
+			<h4 class="phase-combat-title">戦闘可能ユニット</h4>
+			<div class="phase-combat-units" role="list">${cards}</div>
 		</section>`;
 	}
 
@@ -939,9 +1047,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		const units = livingRosterUnits(roster, game)
-			.filter((u) => u.id && u.hasWeapon)
-			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+		const doneMap = getPhaseFlagMap(game, viewerSlot, "fought");
+		const units = sortUnitsHeroFirst(
+			livingRosterUnits(roster, game).filter((u) => u.id && u.hasWeapon),
+		);
 
 		if (!units.length) {
 			strip.innerHTML = "";
@@ -950,34 +1059,36 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		strip.innerHTML = buildCombatStripHtml(units);
+		strip.innerHTML = buildCombatStripHtml(units, doneMap);
 		strip.style.display = "";
 		strip.hidden = false;
 	}
 
-	function buildOpponentRosterStripHtml(units, playerSlot) {
+	function buildOpponentRosterStripHtml(units, playerSlot, doneMap) {
 		if (!units.length) return "";
-		const buttons = units
-			.map(
-				(unit) =>
-					`<button type="button" class="phase-opponent-unit ability-unit-thumb"
-						data-unit-id="${unit.id}"
-						data-unit-key="${escapeAttr(unitInstanceKey(unit))}"
-						data-unit-name="${escapeAttr(unit.name || "")}"
-						data-unit-keywords="${escapeAttr(unit.keywords || "")}"
-						data-player-slot="${playerSlot}"
-						aria-label="${escapeAttr(unit.name || "ユニット")}">
-						<span class="ability-unit-thumb-image">${unitThumbImageHtml(unit)}</span>
-					</button>`,
+		const cards = units
+			.map((unit) =>
+				buildPhaseUnitCardHtml(unit, {
+					unitClass: "phase-opponent-unit",
+					flag: "",
+					done: isPhaseFlagDone(doneMap, unit),
+					playerSlot,
+					ariaLabel: unit.name || "ユニット",
+				}),
 			)
 			.join("");
 		return `<section class="phase-opponent-roster-section">
 			<h4 class="phase-opponent-roster-title">相手ロスター</h4>
-			<div class="phase-opponent-units" role="list">${buttons}</div>
+			<div class="phase-opponent-units" role="list">${cards}</div>
 		</section>`;
 	}
 
-	function renderOpponentRosterStrip(opponentPlayer, game, opponentSlot) {
+	function renderOpponentRosterStrip(
+		opponentPlayer,
+		game,
+		opponentSlot,
+		viewPhase,
+	) {
 		const strip = els.opponentRosterStrip;
 		if (!strip) return;
 
@@ -990,13 +1101,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const destroyedMap = game?.destroyedUnits?.[opponentSlot] || {};
 		const summonedMap = game?.summonedUnits?.[opponentSlot] || {};
-		const units = collectOpponentRosterUnits(
-			roster,
-			destroyedMap,
-			summonedMap,
-		)
-			.filter((u) => u.id)
-			.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+		const doneMap =
+			viewPhase === "combat"
+				? getPhaseFlagMap(game, opponentSlot, "fought")
+				: {};
+		const units = sortUnitsHeroFirst(
+			collectOpponentRosterUnits(
+				roster,
+				destroyedMap,
+				summonedMap,
+			).filter((u) => u.id),
+		);
 
 		if (!units.length) {
 			strip.innerHTML = "";
@@ -1004,7 +1119,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		strip.innerHTML = buildOpponentRosterStripHtml(units, opponentSlot);
+		strip.innerHTML = buildOpponentRosterStripHtml(
+			units,
+			opponentSlot,
+			doneMap,
+		);
 		strip.hidden = false;
 	}
 
@@ -1072,45 +1191,45 @@ document.addEventListener("DOMContentLoaded", () => {
 		];
 
 		orderedCategories.forEach((cat) => {
-				const items = groups.get(cat).sort((a, b) => {
-					const aUsed = usedMap[a.key]?.used ? 1 : 0;
-					const bUsed = usedMap[b.key]?.used ? 1 : 0;
-					if (aUsed !== bUsed) return aUsed - bUsed;
-					// 汎用コマンドはコマンドコスト有無でまとめる（CPありを先）
-					if (cat === "common") {
-						const aCp = commandCostValue(a);
-						const bCp = commandCostValue(b);
-						const aHasCp = aCp > 0 ? 0 : 1;
-						const bHasCp = bCp > 0 ? 0 : 1;
-						if (aHasCp !== bHasCp) return aHasCp - bHasCp;
-						if (aCp !== bCp) return aCp - bCp;
-					}
-					// 参照ユニットが1体だけのアビリティを同一ユニットで連続表示
-					const aUnit = unitGroupKey(a);
-					const bUnit = unitGroupKey(b);
-					if (aUnit !== bUnit) return aUnit.localeCompare(bUnit);
-					return (a.name || "").localeCompare(b.name || "");
-				});
-
-				const groupEl = document.createElement("section");
-				groupEl.className = `phase-ability-group cat-${escapeHtml(cat)}`;
-
-				const title = document.createElement("h5");
-				title.className = "phase-ability-group-title";
-				const groupLabel =
-					cat === "season_enhancement" && items[0]?.source
-						? items[0].source
-						: MatchPhases.labelCategoryJa(cat);
-				title.textContent = `${groupLabel}（${items.length}）`;
-				groupEl.appendChild(title);
-
-				items.forEach((ab) =>
-					groupEl.appendChild(
-						buildAbilityCard(ab, {}, livingUnits, allUnits),
-					),
-				);
-				els.abilityList.appendChild(groupEl);
+			const items = groups.get(cat).sort((a, b) => {
+				const aUsed = usedMap[a.key]?.used ? 1 : 0;
+				const bUsed = usedMap[b.key]?.used ? 1 : 0;
+				if (aUsed !== bUsed) return aUsed - bUsed;
+				// 汎用コマンドはコマンドコスト有無でまとめる（CPありを先）
+				if (cat === "common") {
+					const aCp = commandCostValue(a);
+					const bCp = commandCostValue(b);
+					const aHasCp = aCp > 0 ? 0 : 1;
+					const bHasCp = bCp > 0 ? 0 : 1;
+					if (aHasCp !== bHasCp) return aHasCp - bHasCp;
+					if (aCp !== bCp) return aCp - bCp;
+				}
+				// 参照ユニットが1体だけのアビリティを同一ユニットで連続表示
+				const aUnit = unitGroupKey(a);
+				const bUnit = unitGroupKey(b);
+				if (aUnit !== bUnit) return aUnit.localeCompare(bUnit);
+				return (a.name || "").localeCompare(b.name || "");
 			});
+
+			const groupEl = document.createElement("section");
+			groupEl.className = `phase-ability-group cat-${escapeHtml(cat)}`;
+
+			const title = document.createElement("h5");
+			title.className = "phase-ability-group-title";
+			const groupLabel =
+				cat === "season_enhancement" && items[0]?.source
+					? items[0].source
+					: MatchPhases.labelCategoryJa(cat);
+			title.textContent = `${groupLabel}（${items.length}）`;
+			groupEl.appendChild(title);
+
+			items.forEach((ab) =>
+				groupEl.appendChild(
+					buildAbilityCard(ab, {}, livingUnits, allUnits),
+				),
+			);
+			els.abilityList.appendChild(groupEl);
+		});
 
 		if (passives.length) {
 			const section = document.createElement("section");
@@ -1135,7 +1254,12 @@ document.addEventListener("DOMContentLoaded", () => {
 				})
 				.forEach((ab) =>
 					grid.appendChild(
-						buildAbilityCard(ab, { passive: true }, livingUnits, allUnits),
+						buildAbilityCard(
+							ab,
+							{ passive: true },
+							livingUnits,
+							allUnits,
+						),
 					),
 				);
 
@@ -1281,11 +1405,18 @@ document.addEventListener("DOMContentLoaded", () => {
 					MatchStateManager.getPlayer?.(viewerSlot) ||
 					(state.players || []).find((p) => p.slot === viewerSlot) ||
 					null;
-				const manifest = resolveManifestUnit(ab, myPlayer?.roster || null);
+				const manifest = resolveManifestUnit(
+					ab,
+					myPlayer?.roster || null,
+				);
 				const sections = [];
 				if (manifest) {
 					sections.push(
-						buildThumbsSectionHtml("召喚する顕現", [manifest], null),
+						buildThumbsSectionHtml(
+							"召喚する顕現",
+							[manifest],
+							null,
+						),
 					);
 				}
 				if (abilityUnits.length) {
@@ -1321,7 +1452,10 @@ document.addEventListener("DOMContentLoaded", () => {
 				unitThumbsHtml = sections.length
 					? `<div class="ability-unit-thumbs-row">${sections.join("")}</div>`
 					: "";
-			} else if (hasEffect && behaviorId === "pick_unit_once_per_battle") {
+			} else if (
+				hasEffect &&
+				behaviorId === "pick_unit_once_per_battle"
+			) {
 				const myPlayer =
 					MatchStateManager.getPlayer?.(viewerSlot) ||
 					(state.players || []).find((p) => p.slot === viewerSlot) ||

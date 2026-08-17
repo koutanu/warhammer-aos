@@ -165,6 +165,7 @@ class Matchplay extends Controller
                 $this->class_name . '/ability_panel.js',
                 $this->class_name . '/round_start.js',
                 'roster/unit_detail.js',
+                $this->class_name . '/combat_ref.js',
                 $this->class_name . '/roster_panel.js',
                 $this->class_name . '/deployment.js',
             ],
@@ -560,6 +561,36 @@ class Matchplay extends Controller
             );
             if (empty($result['ok'])) {
                 $this->jsonError($result['error'] ?? 'アビリティの更新に失敗しました。', 400);
+            }
+
+            return ['success' => true, 'state' => $this->model->buildMatchState($matchId)];
+        });
+    }
+
+    public function toggleUnitPhaseFlag()
+    {
+        $this->jsonResponse(function () {
+            $body = $this->getJsonBody();
+            $this->requireTokenFromBody($body);
+            $matchId = (int)($body['matchId'] ?? 0);
+            $playerSlot = (int)($body['playerSlot'] ?? 0);
+            $viewerSlot = (int)($body['viewerSlot'] ?? 0);
+            $unitKey = trim($body['unitKey'] ?? '');
+            $flag = trim($body['flag'] ?? '');
+
+            if ($matchId <= 0 || !in_array($playerSlot, [1, 2], true) || $unitKey === '') {
+                $this->jsonError('無効なパラメータです。', 400);
+            }
+
+            $result = $this->model->toggleUnitPhaseFlag(
+                $matchId,
+                $playerSlot,
+                $unitKey,
+                $flag,
+                $viewerSlot
+            );
+            if (empty($result['ok'])) {
+                $this->jsonError($result['error'] ?? 'ユニット状態の更新に失敗しました。', 400);
             }
 
             return ['success' => true, 'state' => $this->model->buildMatchState($matchId)];

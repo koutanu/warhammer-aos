@@ -26,12 +26,18 @@ const MatchStateManager = {
 			destroyedUnits: {},
 			summonedUnits: {},
 			replacedUnits: {},
+			movedUnits: {},
+			shotUnits: {},
+			foughtUnits: {},
 		};
 		state.game.usedAbilities = state.game.usedAbilities || {};
 		state.game.abilityTargetUnits = state.game.abilityTargetUnits || {};
 		state.game.destroyedUnits = state.game.destroyedUnits || {};
 		state.game.summonedUnits = state.game.summonedUnits || {};
 		state.game.replacedUnits = state.game.replacedUnits || {};
+		state.game.movedUnits = state.game.movedUnits || {};
+		state.game.shotUnits = state.game.shotUnits || {};
+		state.game.foughtUnits = state.game.foughtUnits || {};
 		if (state.game.firstPlayer === undefined) {
 			state.game.firstPlayer = null;
 		}
@@ -107,6 +113,9 @@ const MatchStateManager = {
 				destroyedUnits: {},
 				summonedUnits: {},
 				replacedUnits: {},
+				movedUnits: {},
+				shotUnits: {},
+				foughtUnits: {},
 			};
 		}
 		const localPhase = this.state.game.phase;
@@ -125,6 +134,9 @@ const MatchStateManager = {
 		this.state.game.destroyedUnits = game.destroyedUnits || {};
 		this.state.game.summonedUnits = game.summonedUnits || {};
 		this.state.game.replacedUnits = game.replacedUnits || {};
+		this.state.game.movedUnits = game.movedUnits || {};
+		this.state.game.shotUnits = game.shotUnits || {};
+		this.state.game.foughtUnits = game.foughtUnits || {};
 		this.state.game.phase = localPhase;
 		if (updatedAt) {
 			this.state.updatedAt = updatedAt;

@@ -457,6 +457,10 @@ class Match_Model extends Model
             ['match_id' => $matchId]
         );
         $this->db->executesql(
+            'DELETE FROM t_match_unit_phase_flags WHERE match_id = :match_id;',
+            ['match_id' => $matchId]
+        );
+        $this->db->executesql(
             'DELETE FROM t_match_round_scores WHERE match_id = :match_id;',
             ['match_id' => $matchId]
         );
@@ -511,6 +515,7 @@ class Match_Model extends Model
         $destroyedUnits = $this->buildDestroyedUnitsMap($matchId);
         $summonedUnits = $this->buildSummonedUnitsMap($matchId);
         $replacedUnits = $this->buildReplacedUnitsMap($matchId);
+        $phaseFlagMaps = $this->buildUnitPhaseFlagMaps($matchId);
         $manifestationTargets = $this->buildManifestationTargetsMap($matchId);
         $btProgress = $this->getBattleTacticProgressMap($matchId);
 
@@ -549,6 +554,9 @@ class Match_Model extends Model
                 'destroyedUnits'         => $destroyedUnits,
                 'summonedUnits'          => $summonedUnits,
                 'replacedUnits'          => $replacedUnits,
+                'movedUnits'             => $phaseFlagMaps['moved'],
+                'shotUnits'              => $phaseFlagMaps['shot'],
+                'foughtUnits'            => $phaseFlagMaps['fought'],
                 'manifestationTargets'   => $manifestationTargets,
             ],
             'updatedAt'      => $match['updated_at'],
@@ -879,6 +887,149 @@ class Match_Model extends Model
             $map[$slot][$key] = true;
         }
         return $map;
+    }
+
+    /**
+     * @return array{moved: array<int, array<string, true>>, shot: array<int, array<string, true>>, fought: array<int, array<string, true>>}
+     */
+    public function buildUnitPhaseFlagMaps(int $matchId): array
+    {
+        $maps = [
+            'moved'  => [],
+            'shot'   => [],
+            'fought' => [],
+        ];
+        $match = $this->getMatchById($matchId);
+        if (!$match) {
+            return $maps;
+        }
+        $turnCounter = (int)($match['game_turn_counter'] ?? 1);
+
+        $rows = $this->db->select(
+            'SELECT player_slot, unit_key, flag FROM t_match_unit_phase_flags
+             WHERE match_id = :match_id AND used_in_turn = :turn_counter;',
+            [
+                'match_id'     => $matchId,
+                'turn_counter' => $turnCounter,
+            ]
+        );
+        foreach ($rows as $row) {
+            $flag = (string)($row['flag'] ?? '');
+            if (!isset($maps[$flag])) {
+                continue;
+            }
+            $slot = (int)$row['player_slot'];
+            $key = (string)$row['unit_key'];
+            if ($key === '') {
+                continue;
+            }
+            $maps[$flag][$slot][$key] = true;
+        }
+        return $maps;
+    }
+
+    /**
+     * @return array{ok:bool, error?:string}
+     */
+    public function toggleUnitPhaseFlag(
+        int $matchId,
+        int $playerSlot,
+        string $unitKey,
+        string $flag,
+        int $viewerSlot
+    ): array {
+        $allowed = ['moved', 'shot', 'fought'];
+        $unitKey = trim($unitKey);
+        $flag = trim($flag);
+
+        if (
+            !in_array($playerSlot, [1, 2], true)
+            || !in_array($viewerSlot, [1, 2], true)
+            || $unitKey === ''
+            || !in_array($flag, $allowed, true)
+        ) {
+            return ['ok' => false, 'error' => '無効なパラメータです。'];
+        }
+
+        if ($playerSlot !== $viewerSlot) {
+            return ['ok' => false, 'error' => '自分のユニットのみ記録できます。'];
+        }
+
+        $match = $this->getMatchById($matchId);
+        if (!$match || $match['status'] === 'completed') {
+            return ['ok' => false, 'error' => '試合を更新できません。'];
+        }
+
+        $turnCounter = (int)($match['game_turn_counter'] ?? 1);
+        $now = date('Y-m-d H:i:s');
+
+        $rows = $this->db->select(
+            'SELECT id, used_in_turn FROM t_match_unit_phase_flags
+             WHERE match_id = :match_id AND player_slot = :player_slot
+               AND unit_key = :unit_key AND flag = :flag
+             LIMIT 1;',
+            [
+                'match_id'    => $matchId,
+                'player_slot' => $playerSlot,
+                'unit_key'    => $unitKey,
+                'flag'        => $flag,
+            ]
+        );
+
+        if (!empty($rows)) {
+            $row = $rows[0];
+            if ((int)$row['used_in_turn'] === $turnCounter) {
+                $this->db->executesql(
+                    'DELETE FROM t_match_unit_phase_flags WHERE id = :id;',
+                    ['id' => $row['id']]
+                );
+                $this->db->executesql(
+                    'UPDATE t_matches SET updated_at = :updated_at WHERE id = :id;',
+                    ['updated_at' => $now, 'id' => $matchId]
+                );
+                return ['ok' => true];
+            }
+
+            $this->db->executesql(
+                'UPDATE t_match_unit_phase_flags SET
+                    used_in_turn = :turn_counter,
+                    updated_at = :updated_at
+                 WHERE id = :id;',
+                [
+                    'turn_counter' => $turnCounter,
+                    'updated_at'   => $now,
+                    'id'           => $row['id'],
+                ]
+            );
+            $this->db->executesql(
+                'UPDATE t_matches SET updated_at = :updated_at WHERE id = :id;',
+                ['updated_at' => $now, 'id' => $matchId]
+            );
+            return ['ok' => true];
+        }
+
+        $result = $this->db->executesql(
+            'INSERT INTO t_match_unit_phase_flags
+                (match_id, player_slot, unit_key, flag, used_in_turn, updated_at)
+             VALUES
+                (:match_id, :player_slot, :unit_key, :flag, :turn_counter, :updated_at);',
+            [
+                'match_id'     => $matchId,
+                'player_slot'  => $playerSlot,
+                'unit_key'     => $unitKey,
+                'flag'         => $flag,
+                'turn_counter' => $turnCounter,
+                'updated_at'   => $now,
+            ]
+        );
+        if (!$result[0]) {
+            return ['ok' => false, 'error' => 'ユニット状態の更新に失敗しました。'];
+        }
+        $this->db->executesql(
+            'UPDATE t_matches SET updated_at = :updated_at WHERE id = :id;',
+            ['updated_at' => $now, 'id' => $matchId]
+        );
+        return ['ok' => true];
     }
 
     public function toggleUnitDestroyed(int $matchId, int $playerSlot, string $unitKey): bool

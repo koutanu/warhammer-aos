@@ -280,6 +280,31 @@ $p2Url = $playBaseUrl . '?slot=2';
 		</div>
 	</div>
 
+	<div id="combatRefModal" class="modal-overlay" style="display:none;">
+		<div class="modal-content combat-ref-modal-content">
+			<div id="combatRefPickerStep">
+				<h3>攻撃対象を選択</h3>
+				<p class="combat-ref-lead" id="combatRefPickerLead">この武器で攻撃するユニットを選んでください。</p>
+				<div id="combatRefPickerList" class="combat-ref-picker-list"></div>
+				<p id="combatRefPickerEmpty" class="combat-ref-picker-empty" style="display:none;">
+					選択できるユニットがありません。
+				</p>
+				<div class="combat-ref-actions">
+					<button type="button" id="combatRefPickerCancel" class="btn-secondary">キャンセル</button>
+				</div>
+			</div>
+			<div id="combatRefCompareStep" style="display:none;">
+				<h3>攻撃参照</h3>
+				<p class="combat-ref-lead" id="combatRefCompareLead"></p>
+				<div id="combatRefCompareBody" class="combat-ref-compare"></div>
+				<div class="combat-ref-actions">
+					<button type="button" id="combatRefChangeTarget" class="btn-secondary">対象を変える</button>
+					<button type="button" id="combatRefCompareClose" class="btn-secondary">閉じる</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<div id="rosterMemoModal" class="modal-overlay" style="display:none;">
 		<div class="modal-content confirm-modal-content roster-memo-modal-content">
 			<h3>メモ</h3>
