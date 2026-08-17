@@ -32,6 +32,17 @@ window.RosterUnitDetail = (function () {
 		return /^\d+$/.test(str) ? `${str}+` : str;
 	}
 
+	function isBlankStat(value) {
+		if (value === null || value === undefined) return true;
+		const str = String(value).trim();
+		return str === "" || str === "0";
+	}
+
+	function formatWeaponNumber(value, suffix = "") {
+		if (isBlankStat(value)) return "-";
+		return `${String(value).trim()}${suffix}`;
+	}
+
 	/**
 	 * 防御力表示。加護 param があるときは「4+/5+」形式。
 	 */
@@ -586,18 +597,15 @@ window.RosterUnitDetail = (function () {
 						if (inAttackPhase && !canAttack) {
 							tr.classList.add("is-weapon-inactive");
 						}
-						const attackHint = canAttack
-							? `<span class="weapon-attack-hint">タップして攻撃対象を選ぶ</span>`
-							: "";
 						const weaponIcon = buildWeaponIcon(baseUrl, w);
 						tr.innerHTML = `
-							<td>${weaponIcon}<strong>${w.name || "不明な武器"}</strong>${badge}${attackHint}</td>
+							<td>${weaponIcon}<strong>${w.name || "不明な武器"}</strong>${badge}</td>
 							<td>${rangeDisplay}</td>
-							<td>${w.atk ?? "-"}</td>
-							<td>${w.hit ? w.hit + "+" : "-"}</td>
-							<td>${w.wnd ? w.wnd + "+" : "-"}</td>
-							<td>${w.rnd ? w.rnd : "0"}</td>
-							<td>${w.dmg ?? "-"}</td>
+							<td>${formatWeaponNumber(w.atk)}</td>
+							<td>${formatWeaponNumber(w.hit, "+")}</td>
+							<td>${formatWeaponNumber(w.wnd, "+")}</td>
+							<td>${formatWeaponNumber(w.rnd)}</td>
+							<td>${formatWeaponNumber(w.dmg)}</td>
 						`;
 						weaponsBody.appendChild(tr);
 					});

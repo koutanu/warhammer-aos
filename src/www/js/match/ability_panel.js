@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		"battletrait",
 		"formation",
 	]);
+	const LORE_CATEGORIES = new Set(["spell", "prayer", "manifestation"]);
 
 	bindModeTabs();
 	bindPhaseActions();
@@ -270,6 +271,13 @@ document.addEventListener("DOMContentLoaded", () => {
 			// 使用済み・召喚トグルのタップはアコーディオンを開閉しない。
 			if (e.target.closest(".ability-used-toggle")) return;
 			if (e.target.closest(".ability-summon-toggle")) return;
+			const loreGroup = e.target.closest(
+				".phase-ability-group.is-lore-group",
+			);
+			if (loreGroup) {
+				toggleLoreGroup(loreGroup);
+				return;
+			}
 			toggleAbilityCard(e.target.closest(".phase-ability-card"));
 		});
 
@@ -291,6 +299,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		els.abilityList?.addEventListener("keydown", (e) => {
 			if (e.key !== "Enter" && e.key !== " ") return;
+			const loreGroup = e.target.closest(
+				".phase-ability-group.is-lore-group",
+			);
+			if (loreGroup && e.target === loreGroup) {
+				e.preventDefault();
+				toggleLoreGroup(loreGroup);
+				return;
+			}
 			const card = e.target.closest(".phase-ability-card.is-expandable");
 			if (!card || e.target !== card) return;
 			e.preventDefault();
@@ -300,12 +316,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	function toggleAbilityCard(card) {
 		if (!card) return;
+		if (card.closest(".phase-ability-group.is-lore-group")) return;
 		const box = card.querySelector(".ability-effect-box");
 		if (!box) return; // 効果説明のないカードは無反応。
 		const open = box.style.display === "block";
 		box.style.display = open ? "none" : "block";
 		card.classList.toggle("is-open", !open);
 		card.setAttribute("aria-expanded", String(!open));
+	}
+
+	function toggleLoreGroup(group) {
+		if (!group) return;
+		if (!group.querySelector(".ability-effect-box")) return;
+		const open = group.classList.contains("is-open");
+		group.classList.toggle("is-open", !open);
+		group.setAttribute("aria-expanded", String(!open));
 	}
 
 	function updateTurnTabs() {
@@ -730,6 +755,12 @@ document.addEventListener("DOMContentLoaded", () => {
 		const allUnits = Array.isArray(unitsOrRoster)
 			? unitsOrRoster
 			: collectRosterUnits(unitsOrRoster);
+		const thumbKeywords = Array.isArray(ab.thumbKeywords)
+			? ab.thumbKeywords.map((k) => String(k || "").trim()).filter(Boolean)
+			: [];
+		if (thumbKeywords.length) {
+			return allUnits.filter((u) => hasKeyword(u, ...thumbKeywords));
+		}
 		const category = ab.category || "unit";
 
 		if (category === "spell" || category === "manifestation") {
@@ -776,7 +807,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		// category === null は顕現本体など「キーワードラベル不要・名前表示」の用途。
 		const labelBases =
 			category === null ? null : labelBasesForCategory(category);
-		const showName = !!opts.showName || category === null;
+		const showName =
+			opts.showName === false
+				? false
+				: !!opts.showName || category === null;
 		const markUsed = !!opts.markUsed;
 		const selectable = !!opts.selectable;
 		const buttons = units
@@ -1212,22 +1246,48 @@ document.addEventListener("DOMContentLoaded", () => {
 			});
 
 			const groupEl = document.createElement("section");
-			groupEl.className = `phase-ability-group cat-${escapeHtml(cat)}`;
+			const isLoreGroup = LORE_CATEGORIES.has(cat);
+			groupEl.className = `phase-ability-group cat-${escapeHtml(cat)}${isLoreGroup ? " is-lore-group" : ""}`;
 
-			const title = document.createElement("h5");
+			const title = document.createElement("div");
 			title.className = "phase-ability-group-title";
 			const groupLabel =
 				cat === "season_enhancement" && items[0]?.source
 					? items[0].source
 					: MatchPhases.labelCategoryJa(cat);
-			title.textContent = `${groupLabel}（${items.length}）`;
-			groupEl.appendChild(title);
 
-			items.forEach((ab) =>
-				groupEl.appendChild(
-					buildAbilityCard(ab, {}, livingUnits, allUnits),
+			const cards = items.map((ab) =>
+				buildAbilityCard(
+					ab,
+					{ loreGroup: isLoreGroup },
+					livingUnits,
+					allUnits,
 				),
 			);
+			const hasAnyEffect = cards.some((card) =>
+				card.querySelector(".ability-effect-box"),
+			);
+			if (isLoreGroup && hasAnyEffect) {
+				groupEl.classList.add("is-expandable");
+				groupEl.setAttribute("role", "button");
+				groupEl.setAttribute("tabindex", "0");
+				groupEl.setAttribute("aria-expanded", "false");
+			}
+
+			const loreThumbsHtml = isLoreGroup
+				? loreGroupCasterThumbsHtml(items, livingUnits, allUnits)
+				: "";
+			title.innerHTML = `<h5 class="phase-ability-group-title-text">${escapeHtml(groupLabel)}（${items.length}）</h5>${loreThumbsHtml}${isLoreGroup && hasAnyEffect ? '<span class="ability-expand-chevron" aria-hidden="true">▾</span>' : ""}`;
+			groupEl.appendChild(title);
+
+			if (isLoreGroup) {
+				const grid = document.createElement("div");
+				grid.className = "lore-ability-grid";
+				cards.forEach((card) => grid.appendChild(card));
+				groupEl.appendChild(grid);
+			} else {
+				cards.forEach((card) => groupEl.appendChild(card));
+			}
 			els.abilityList.appendChild(groupEl);
 		});
 
@@ -1268,8 +1328,21 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	}
 
+	function loreGroupCasterThumbsHtml(items, livingUnits, allUnits) {
+		const sample = items[0];
+		if (!sample) return "";
+		const units = resolveAbilityUnits(
+			sample,
+			unitsForAbility(sample, livingUnits, allUnits),
+		);
+		const thumbs = buildUnitThumbsHtml(units, null, { showName: false });
+		if (!thumbs) return "";
+		return `<div class="lore-group-thumbs">${thumbs}</div>`;
+	}
+
 	function buildAbilityCard(ab, opts = {}, livingUnits = [], allUnits = []) {
 		const isPassive = !!opts.passive;
+		const inLoreGroup = !!opts.loreGroup;
 		const state = MatchStateManager.getState();
 		const game = state.game || {
 			usedAbilities: {},
@@ -1297,7 +1370,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				(used ? " is-used" : "") +
 				(summoned ? " is-summoned" : "") +
 				(isPassive ? " phase-ability-card--passive" : "") +
-				(hasEffect ? " is-expandable" : "") +
+				(hasEffect && !inLoreGroup ? " is-expandable" : "") +
 				(ab.category ? ` cat-${ab.category}` : "");
 			card.dataset.abilityKey = ab.key;
 			card.dataset.triggerTurn = ab.triggerTurn || "";
@@ -1311,15 +1384,15 @@ document.addEventListener("DOMContentLoaded", () => {
 				card.dataset.targetsUnitOnSummon = "1";
 			}
 			// 効果説明があるカードのみアコーディオン開閉のタップ対象にする。
-			if (hasEffect) {
+			// lore グループ内はグループ全体が開閉対象なのでカード単体には付けない。
+			if (hasEffect && !inLoreGroup) {
 				card.setAttribute("role", "button");
 				card.setAttribute("tabindex", "0");
 				card.setAttribute("aria-expanded", "false");
 			}
 
 			// 呪文/祈祷/顕現は lore 名（unitName=lore_name）をメタに表示しない。
-			const loreCategories = ["spell", "prayer", "manifestation"];
-			const unitLabel = loreCategories.includes(ab.category)
+			const unitLabel = LORE_CATEGORIES.has(ab.category)
 				? ""
 				: formatUnitNames(ab);
 			const categoryLabel =
@@ -1375,10 +1448,14 @@ document.addEventListener("DOMContentLoaded", () => {
 				: "";
 
 			const conditionText = String(ab.triggerCondition || "").trim();
-			// 発動条件(日本語)があればフェイズ/ターンのバッジより優先してメタに表示する。
-			const metaBadges = conditionText
-				? `<span class="ability-phase-badge ability-condition-badge">${escapeHtml(conditionText)}</span>`
-				: `${phaseLabel ? `<span class="ability-phase-badge">${escapeHtml(phaseLabel)}</span>` : ""}${turnLabel ? `<span class="ability-turn-badge">${escapeHtml(turnLabel)}</span>` : ""}`;
+			// 呪文/奇蹟/顕現はヒーローフェイズ・自分のターンが自明なので出さない。
+			const metaBadges = inLoreGroup
+				? conditionText
+					? `<span class="ability-phase-badge ability-condition-badge">${escapeHtml(conditionText)}</span>`
+					: ""
+				: conditionText
+					? `<span class="ability-phase-badge ability-condition-badge">${escapeHtml(conditionText)}</span>`
+					: `${phaseLabel ? `<span class="ability-phase-badge">${escapeHtml(phaseLabel)}</span>` : ""}${turnLabel ? `<span class="ability-turn-badge">${escapeHtml(turnLabel)}</span>` : ""}`;
 
 			const usedToggle = tracked
 				? `<button type="button" class="ability-used-toggle" aria-pressed="${used}">
@@ -1391,6 +1468,23 @@ document.addEventListener("DOMContentLoaded", () => {
 					? `<button type="button" class="ability-summon-toggle${summoned ? " is-summoned" : ""}" data-manifest-unit-key="${escapeAttr(manifestUnitKey)}" aria-pressed="${summoned}">
 						${summoned ? "召喚中" : "召喚成功"}
 					</button>`
+				: "";
+
+			const metaRowHtml =
+				metaParts.length ||
+				metaBadges ||
+				freqBadge ||
+				used ||
+				summoned ||
+				(hasEffect && !inLoreGroup)
+					? `<div class="ability-card-meta">
+					${metaParts.length ? `<span class="ability-source">${escapeHtml(metaParts.join(" / "))}</span>` : ""}
+					${metaBadges}
+					${freqBadge}
+					${used ? '<span class="ability-used-badge">使用済み</span>' : ""}
+					${summoned ? '<span class="ability-summoned-badge">召喚中</span>' : ""}
+					${hasEffect && !inLoreGroup ? '<span class="ability-expand-chevron" aria-hidden="true">▾</span>' : ""}
+				</div>`
 					: "";
 
 			const abilityUnits = hasEffect
@@ -1419,7 +1513,7 @@ document.addEventListener("DOMContentLoaded", () => {
 						),
 					);
 				}
-				if (abilityUnits.length) {
+				if (!inLoreGroup && abilityUnits.length) {
 					sections.push(
 						buildThumbsSectionHtml(
 							"詠唱可能な魔術師",
@@ -1479,9 +1573,15 @@ document.addEventListener("DOMContentLoaded", () => {
 				unitThumbsHtml = sections.length
 					? `<div class="ability-unit-thumbs-row">${sections.join("")}</div>`
 					: `<div class="ability-unit-thumbs-row"><div class="ability-unit-thumbs-section"><div class="ability-unit-thumbs-label">このバトルで使用済み</div><p class="ability-target-none">まだありません</p></div></div>`;
-			} else if (hasEffect) {
+			} else if (hasEffect && !inLoreGroup) {
 				unitThumbsHtml = buildUnitThumbsHtml(abilityUnits, ab.category);
 			}
+
+			const abilityName = String(ab.abilityName || "").trim();
+			const abilityNameHtml =
+				abilityName && hasEffect
+					? `<strong class="ability-effect-title">${escapeHtml(abilityName)}</strong>`
+					: "";
 
 			card.innerHTML = `
 				<div class="ability-card-head">
@@ -1495,15 +1595,8 @@ document.addEventListener("DOMContentLoaded", () => {
 					</div>
 					<div class="ability-card-actions">${usedToggle}${summonToggle}</div>
 				</div>
-				<div class="ability-card-meta">
-					${metaParts.length ? `<span class="ability-source">${escapeHtml(metaParts.join(" / "))}</span>` : ""}
-					${metaBadges}
-					${freqBadge}
-					${used ? '<span class="ability-used-badge">使用済み</span>' : ""}
-					${summoned ? '<span class="ability-summoned-badge">召喚中</span>' : ""}
-					${hasEffect ? '<span class="ability-expand-chevron" aria-hidden="true">▾</span>' : ""}
-				</div>
-				${hasEffect ? `<div class="ability-effect-box" style="display:none;"><p>${escapeHtml(effectText)}</p>${unitThumbsHtml}</div>` : ""}
+				${metaRowHtml}
+				${hasEffect ? `<div class="ability-effect-box"${inLoreGroup ? "" : ' style="display:none;"'}>${abilityNameHtml}<p>${escapeHtml(effectText)}</p>${unitThumbsHtml}</div>` : ""}
 			`;
 
 			return card;

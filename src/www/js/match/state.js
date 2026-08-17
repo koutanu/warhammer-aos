@@ -173,6 +173,34 @@ const MatchStateManager = {
 		return changed;
 	},
 
+	/**
+	 * ポーリング用: ターン切替時にサーバーの VP を取り込む。
+	 * ローカル編集中（dirty）では呼ばないこと。
+	 * @returns {boolean} 値が変わったか
+	 */
+	applyServerPlayerVp(players) {
+		if (!this.state || !Array.isArray(players)) return false;
+		let changed = false;
+		players.forEach((remote) => {
+			const local = this.getPlayer(remote.slot);
+			if (!local) return;
+			const nextVp = Math.max(0, Number(remote.totalVp) || 0);
+			if ((local.totalVp || 0) !== nextVp) {
+				local.totalVp = nextVp;
+				changed = true;
+			}
+			const nextStart = Math.max(0, Number(remote.roundStartVp) || 0);
+			if ((local.roundStartVp || 0) !== nextStart) {
+				local.roundStartVp = nextStart;
+				changed = true;
+			}
+		});
+		if (changed) {
+			window.dispatchEvent(new CustomEvent("matchStateUpdated"));
+		}
+		return changed;
+	},
+
 	isDirty() {
 		return this.dirty;
 	},

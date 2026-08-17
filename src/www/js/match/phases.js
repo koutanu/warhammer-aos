@@ -64,8 +64,8 @@ const MatchPhases = {
 		"artefact",
 		"season_enhancement",
 		"spell",
-		"prayer",
 		"manifestation",
+		"prayer",
 		"common",
 	],
 

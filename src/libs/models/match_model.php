@@ -527,6 +527,11 @@ class Match_Model extends Model
             $seizedInitiative = (int)($rounds[$currentGameRound][$slot]['is_double_turn'] ?? 0) === 1;
             $player['isDoubleTurn'] = $seizedInitiative;
             $player['seizedInitiative'] = $seizedInitiative;
+            $roundStartVp = 0;
+            for ($r = 1; $r < $currentGameRound; $r++) {
+                $roundStartVp += (int)($rounds[$r][$slot]['round_vp'] ?? 0);
+            }
+            $player['roundStartVp'] = $roundStartVp;
             $player['battleTactics'] = $this->buildPlayerBattleTactics(
                 $player['roster']['battleTactics'] ?? [],
                 $btProgress[$slot] ?? []
@@ -1469,6 +1474,7 @@ class Match_Model extends Model
         }
 
         $this->clearTurnScopedAbilities($matchId, $active, $turnCounter);
+        $this->clearUnitPhaseFlags($matchId);
 
         $result = $this->db->executesql(
             'UPDATE t_matches SET
@@ -1496,6 +1502,14 @@ class Match_Model extends Model
         if (!in_array($playerSlot, [1, 2], true)) {
             return false;
         }
+
+        $match = $this->getMatchById($matchId);
+        if (!$match || $match['status'] === 'completed') {
+            return false;
+        }
+
+        $this->clearUnitPhaseFlags($matchId);
+
         $result = $this->db->executesql(
             'UPDATE t_matches SET active_player_slot = :slot, game_phase = :phase, updated_at = :updated_at WHERE id = :id;',
             [
@@ -1758,6 +1772,14 @@ class Match_Model extends Model
 
         $this->abilityBehaviorCache[$matchId][$playerSlot] = $map;
         return $map;
+    }
+
+    private function clearUnitPhaseFlags(int $matchId): void
+    {
+        $this->db->executesql(
+            'DELETE FROM t_match_unit_phase_flags WHERE match_id = :match_id;',
+            ['match_id' => $matchId]
+        );
     }
 
     private function clearTurnScopedAbilities(int $matchId, int $playerSlot, int $turnCounter): void
@@ -2054,6 +2076,7 @@ class Match_Model extends Model
 
         $this->clearTurnScopedAbilities($matchId, 1, $turnCounter);
         $this->clearTurnScopedAbilities($matchId, 2, $turnCounter);
+        $this->clearUnitPhaseFlags($matchId);
 
         $result = $this->db->executesql(
             'UPDATE t_matches SET

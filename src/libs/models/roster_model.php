@@ -1675,22 +1675,31 @@ class Roster_Model extends Model
 		if ($formationId > 0) {
 			$formation = $this->getBattleFormationById($formationId);
 			if ($formation) {
-				$deck[] = $this->buildDeckEntry(
-					'army:formation:' . $formationId,
-					$formation['formation_name'] ?? $formation['ability_name'] ?? 'Formation',
-					$formation['effect'] ?? '',
-					$formation['trigger_phase'] ?? '',
-					$formation['trigger_turn'] ?? '',
-					'バトルフォーメーション',
-					null,
-					'formation',
-					null,
-					null,
-					$formation['activation'] ?? 'active',
-					$formation['usage_scope'] ?? 'unlimited',
-					$formation['usage_per'] ?? 'unit',
-					trim((string)($formation['trigger_condition_ja'] ?? ''))
+				$entry = $this->applyThumbKeywords(
+					$this->buildDeckEntry(
+						'army:formation:' . $formationId,
+						$formation['formation_name'] ?? $formation['ability_name'] ?? 'Formation',
+						$formation['effect'] ?? '',
+						$formation['trigger_phase'] ?? '',
+						$formation['trigger_turn'] ?? '',
+						'バトルフォーメーション',
+						null,
+						'formation',
+						null,
+						null,
+						$formation['activation'] ?? 'active',
+						$formation['usage_scope'] ?? 'unlimited',
+						$formation['usage_per'] ?? 'unit',
+						trim((string)($formation['trigger_condition_ja'] ?? ''))
+					),
+					$formation
 				);
+				$abilityName = trim((string)($formation['ability_name'] ?? ''));
+				$formationName = trim((string)($formation['formation_name'] ?? ''));
+				if ($abilityName !== '' && $abilityName !== $formationName) {
+					$entry['abilityName'] = $abilityName;
+				}
+				$deck[] = $entry;
 			}
 		}
 
@@ -2153,6 +2162,29 @@ class Roster_Model extends Model
 	{
 		if (!empty($ability['usable_when_destroyed'])) {
 			$entry['usableWhenDestroyed'] = true;
+		}
+		return $entry;
+	}
+
+	/** 詳細サムネ用キーワードをデッキエントリへ載せる。 */
+	private function applyThumbKeywords(array $entry, array $row): array
+	{
+		$keywords = [];
+		$seen = [];
+		foreach (explode(',', (string)($row['thumb_keywords'] ?? '')) as $token) {
+			$name = trim($token);
+			if ($name === '') {
+				continue;
+			}
+			$key = mb_strtoupper($name);
+			if (isset($seen[$key])) {
+				continue;
+			}
+			$seen[$key] = true;
+			$keywords[] = $name;
+		}
+		if ($keywords) {
+			$entry['thumbKeywords'] = $keywords;
 		}
 		return $entry;
 	}

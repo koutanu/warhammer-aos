@@ -86,13 +86,15 @@ document.addEventListener("DOMContentLoaded", () => {
 		els.btnComplete?.addEventListener("click", promptFirstPlayer);
 
 		els.abilityList?.addEventListener("click", (e) => {
-			const detailBtn = e.target.closest(".ability-detail-toggle");
-			if (!detailBtn) return;
-			const box = detailBtn.parentElement?.querySelector(".ability-effect-box");
-			if (!box) return;
-			const open = box.style.display === "block";
-			box.style.display = open ? "none" : "block";
-			detailBtn.textContent = open ? "詳細" : "閉じる";
+			toggleAbilityCard(e.target.closest(".phase-ability-card"));
+		});
+
+		els.abilityList?.addEventListener("keydown", (e) => {
+			if (e.key !== "Enter" && e.key !== " ") return;
+			const card = e.target.closest(".phase-ability-card.is-expandable");
+			if (!card || e.target !== card) return;
+			e.preventDefault();
+			toggleAbilityCard(card);
 		});
 
 		els.regiments?.addEventListener("click", (e) => {
@@ -161,9 +163,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	function buildAbilityCard(ab) {
+		const effectText = String(ab.effect || "").trim();
+		const hasEffect = effectText !== "";
 		const card = document.createElement("article");
 		card.className =
-			"phase-ability-card" + (ab.category ? ` cat-${ab.category}` : "");
+			"phase-ability-card" +
+			(hasEffect ? " is-expandable" : "") +
+			(ab.category ? ` cat-${ab.category}` : "");
+		if (hasEffect) {
+			card.setAttribute("role", "button");
+			card.setAttribute("tabindex", "0");
+			card.setAttribute("aria-expanded", "false");
+		}
 
 		const categoryLabel = MatchPhases.labelCategoryJa(ab.category);
 		const unitLabel = formatUnitNames(ab);
@@ -179,11 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
 			? `<span class="ability-freq-badge freq-${escapeHtml(freq.kind)}">${escapeHtml(freq.label)}</span>`
 			: "";
 
-		const conditionText = String(ab.triggerCondition || "").trim();
-		const conditionBlock = conditionText
-			? `<p class="ability-trigger-condition"><span class="ability-trigger-condition-label">発動条件</span>${escapeHtml(conditionText)}</p>`
-			: "";
-
 		card.innerHTML = `
 			<div class="ability-card-head">
 				<div class="ability-card-title-block">
@@ -196,14 +202,21 @@ document.addEventListener("DOMContentLoaded", () => {
 				${unitLabel ? `<span class="ability-source">${escapeHtml(unitLabel)}</span>` : ""}
 				<span class="ability-phase-badge">${escapeHtml(MatchPhases.labelPhaseJa("deployment"))}</span>
 				${freqBadge}
+				${hasEffect ? '<span class="ability-expand-chevron" aria-hidden="true">▾</span>' : ""}
 			</div>
-			<button type="button" class="ability-detail-toggle">詳細</button>
-			<div class="ability-effect-box" style="display:none;">
-				<!-- ${conditionBlock} -->
-				<p>${escapeHtml(ab.effect || "")}</p>
-			</div>
+			${hasEffect ? `<div class="ability-effect-box" style="display:none;"><p>${escapeHtml(effectText)}</p></div>` : ""}
 		`;
 		return card;
+	}
+
+	function toggleAbilityCard(card) {
+		if (!card) return;
+		const box = card.querySelector(".ability-effect-box");
+		if (!box) return;
+		const open = box.style.display === "block";
+		box.style.display = open ? "none" : "block";
+		card.classList.toggle("is-open", !open);
+		card.setAttribute("aria-expanded", String(!open));
 	}
 
 	function formatUnitNames(ab) {

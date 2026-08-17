@@ -41,6 +41,17 @@ window.MatchCombatRef = (function () {
 		return /^\d+$/.test(str) ? `${str}+` : str;
 	}
 
+	function isBlankStat(value) {
+		if (value === null || value === undefined) return true;
+		const str = String(value).trim();
+		return str === "" || str === "0";
+	}
+
+	function formatWeaponNumber(value, suffix = "") {
+		if (isBlankStat(value)) return "-";
+		return `${String(value).trim()}${suffix}`;
+	}
+
 	function formatSaveDisplay(save, ward) {
 		const saveStr = formatStatPlus(save);
 		if (!saveStr) return "-";
@@ -327,8 +338,6 @@ window.MatchCombatRef = (function () {
 		const defenderName =
 			defenderInfo.name || session.defender?.name || "防御側";
 		const rangeDisplay = weapon.rng ? `${weapon.rng}"` : "近接";
-		const hit = weapon.hit ? `${weapon.hit}+` : "-";
-		const wnd = weapon.wnd ? `${weapon.wnd}+` : "-";
 		const saveLabel = formatStatPlus(defenderInfo.ward)
 			? "防御力/加護"
 			: "防御力";
@@ -361,11 +370,11 @@ window.MatchCombatRef = (function () {
 					<p class="combat-ref-weapon-name">${escapeHtml(weapon.name || "武器")}</p>
 					<div class="combat-ref-weapon-stats">
 						${weaponStat("射程", rangeDisplay)}
-						${weaponStat("回数", weapon.atk ?? "-")}
-						${weaponStat("ヒット", hit)}
-						${weaponStat("ウーンズ", wnd)}
-						${weaponStat("貫通", weapon.rnd || "0")}
-						${weaponStat("ダメージ", weapon.dmg ?? "-")}
+						${weaponStat("回数", formatWeaponNumber(weapon.atk))}
+						${weaponStat("ヒット", formatWeaponNumber(weapon.hit, "+"))}
+						${weaponStat("ウーンズ", formatWeaponNumber(weapon.wnd, "+"))}
+						${weaponStat("貫通", formatWeaponNumber(weapon.rnd))}
+						${weaponStat("ダメージ", formatWeaponNumber(weapon.dmg))}
 					</div>
 					${
 						weapon.abilities

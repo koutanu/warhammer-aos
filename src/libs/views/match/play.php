@@ -37,7 +37,10 @@ $p2Url = $playBaseUrl . '?slot=2';
 					</div>
 					<div class="vp-counter">
 						<button type="button" class="vp-step vp-minus" data-player="1" data-delta="-1" aria-label="VPを減らす">&minus;</button>
-						<strong class="vp-value" id="player1TotalVp">0</strong>
+						<div class="vp-numbers">
+							<strong class="vp-value" id="player1TotalVp">0</strong>
+							<span class="vp-start" id="player1RoundStartVp">開始 0</span>
+						</div>
 						<button type="button" class="vp-step vp-plus" data-player="1" data-delta="1" aria-label="VPを増やす">&plus;</button>
 					</div>
 				</div>
@@ -56,7 +59,10 @@ $p2Url = $playBaseUrl . '?slot=2';
 					</div>
 					<div class="vp-counter">
 						<button type="button" class="vp-step vp-minus" data-player="2" data-delta="-1" aria-label="VPを減らす">&minus;</button>
-						<strong class="vp-value" id="player2TotalVp">0</strong>
+						<div class="vp-numbers">
+							<strong class="vp-value" id="player2TotalVp">0</strong>
+							<span class="vp-start" id="player2RoundStartVp">開始 0</span>
+						</div>
 						<button type="button" class="vp-step vp-plus" data-player="2" data-delta="1" aria-label="VPを増やす">&plus;</button>
 					</div>
 				</div>
@@ -73,7 +79,6 @@ $p2Url = $playBaseUrl . '?slot=2';
 					<button type="button" id="btnReselectFirstPlayer" class="btn-reselect-first-player" style="display:none;">先攻を選び直す</button>
 				</div>
 				<button type="button" id="btnNextRound" class="btn-next-round">次のラウンドへ</button>
-				<button type="button" id="btnCompleteMatch" class="btn-header-end">試合終了</button>
 			</div>
 
 			<?php if ($viewerSlot === 1): ?>
@@ -135,6 +140,8 @@ $p2Url = $playBaseUrl . '?slot=2';
 					</div>
 				</div>
 			</div>
+
+			<button type="button" id="btnCompleteMatch" class="btn-header-end">試合終了</button>
 		</aside>
 
 		<main class="scoreboard-main">

@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", function () {
 		player2Faction: document.getElementById("player2Faction"),
 		player1TotalVp: document.getElementById("player1TotalVp"),
 		player2TotalVp: document.getElementById("player2TotalVp"),
+		player1RoundStartVp: document.getElementById("player1RoundStartVp"),
+		player2RoundStartVp: document.getElementById("player2RoundStartVp"),
 		vpBar: document.getElementById("vpBar"),
 		btnSwitchTurn: document.getElementById("btnSwitchTurn"),
 		btnReselectFirstPlayer: document.getElementById("btnReselectFirstPlayer"),
@@ -124,6 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
 						remote,
 						data.state.updatedAt,
 					);
+					MatchStateManager.applyServerPlayerVp(data.state.players);
 				}
 
 				MatchStateManager.applyServerPlayerResources(
@@ -287,6 +290,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
 		els.player1TotalVp.textContent = p1.totalVp ?? 0;
 		els.player2TotalVp.textContent = p2.totalVp ?? 0;
+		if (els.player1RoundStartVp) {
+			els.player1RoundStartVp.textContent = `開始 ${p1.roundStartVp ?? 0}`;
+		}
+		if (els.player2RoundStartVp) {
+			els.player2RoundStartVp.textContent = `開始 ${p2.roundStartVp ?? 0}`;
+		}
 
 		if (els.mineCp) els.mineCp.textContent = mine.commandPoints ?? 0;
 		if (els.mineRageLevel) els.mineRageLevel.textContent = mine.rageLevel ?? 0;
