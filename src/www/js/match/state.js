@@ -35,6 +35,11 @@ const MatchStateManager = {
 		if (state.game.firstPlayer === undefined) {
 			state.game.firstPlayer = null;
 		}
+		(state.players || []).forEach((p) => {
+			p.commandPoints = Math.max(0, Number(p.commandPoints) || 0);
+			p.rageLevel = Math.max(0, Math.min(7, Number(p.rageLevel) || 0));
+			p.rageDice = Math.max(0, Number(p.rageDice) || 0);
+		});
 		return state;
 	},
 
@@ -57,6 +62,28 @@ const MatchStateManager = {
 		p.totalVp = Math.max(0, vp);
 		this.dirty = true;
 		return p.totalVp;
+	},
+
+	getPlayerResource(slot, key) {
+		const p = this.getPlayer(slot);
+		if (!p || !this.isResourceKey(key)) return 0;
+		return Number(p[key]) || 0;
+	},
+
+	setPlayerResource(slot, key, value) {
+		const p = this.getPlayer(slot);
+		if (!p || !this.isResourceKey(key)) return 0;
+		let next = Math.max(0, Number(value) || 0);
+		if (key === "rageLevel") {
+			next = Math.min(7, next);
+		}
+		p[key] = next;
+		this.dirty = true;
+		return p[key];
+	},
+
+	isResourceKey(key) {
+		return key === "commandPoints" || key === "rageLevel" || key === "rageDice";
 	},
 
 	applyServerState(serverState) {
@@ -103,6 +130,35 @@ const MatchStateManager = {
 			this.state.updatedAt = updatedAt;
 		}
 		window.dispatchEvent(new CustomEvent("matchStateUpdated"));
+	},
+
+	/**
+	 * ポーリング用: 相手端末で更新された CP / 憤激を取り込む。
+	 * ローカル編集中（dirty）では呼ばないこと。
+	 * @returns {boolean} 値が変わったか
+	 */
+	applyServerPlayerResources(players) {
+		if (!this.state || !Array.isArray(players)) return false;
+		let changed = false;
+		players.forEach((remote) => {
+			const local = this.getPlayer(remote.slot);
+			if (!local) return;
+			const next = {
+				commandPoints: Math.max(0, Number(remote.commandPoints) || 0),
+				rageLevel: Math.max(0, Math.min(7, Number(remote.rageLevel) || 0)),
+				rageDice: Math.max(0, Number(remote.rageDice) || 0),
+			};
+			["commandPoints", "rageLevel", "rageDice"].forEach((key) => {
+				if (local[key] !== next[key]) {
+					local[key] = next[key];
+					changed = true;
+				}
+			});
+		});
+		if (changed) {
+			window.dispatchEvent(new CustomEvent("matchStateUpdated"));
+		}
+		return changed;
 	},
 
 	isDirty() {

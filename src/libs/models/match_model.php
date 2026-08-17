@@ -1701,18 +1701,24 @@ class Match_Model extends Model
     {
         $slots = [
             1 => [
-                'slot'       => 1,
-                'name'       => $match['player_a_name'] ?? 'Player 1',
-                'factionId'  => $match['player_a_faction_id'] ? (int)$match['player_a_faction_id'] : null,
-                'rosterId'   => $match['player_a_roster_id'] ? (int)$match['player_a_roster_id'] : null,
-                'totalVp'    => (int)$match['player_a_vp'],
+                'slot'           => 1,
+                'name'           => $match['player_a_name'] ?? 'Player 1',
+                'factionId'      => $match['player_a_faction_id'] ? (int)$match['player_a_faction_id'] : null,
+                'rosterId'       => $match['player_a_roster_id'] ? (int)$match['player_a_roster_id'] : null,
+                'totalVp'        => (int)$match['player_a_vp'],
+                'commandPoints'  => (int)($match['player_a_cp'] ?? 0),
+                'rageLevel'      => (int)($match['player_a_rage_level'] ?? 0),
+                'rageDice'       => (int)($match['player_a_rage_dice'] ?? 0),
             ],
             2 => [
-                'slot'       => 2,
-                'name'       => $match['player_b_name'] ?? 'Player 2',
-                'factionId'  => $match['player_b_faction_id'] ? (int)$match['player_b_faction_id'] : null,
-                'rosterId'   => $match['player_b_roster_id'] ? (int)$match['player_b_roster_id'] : null,
-                'totalVp'    => (int)$match['player_b_vp'],
+                'slot'           => 2,
+                'name'           => $match['player_b_name'] ?? 'Player 2',
+                'factionId'      => $match['player_b_faction_id'] ? (int)$match['player_b_faction_id'] : null,
+                'rosterId'       => $match['player_b_roster_id'] ? (int)$match['player_b_roster_id'] : null,
+                'totalVp'        => (int)$match['player_b_vp'],
+                'commandPoints'  => (int)($match['player_b_cp'] ?? 0),
+                'rageLevel'      => (int)($match['player_b_rage_level'] ?? 0),
+                'rageDice'       => (int)($match['player_b_rage_dice'] ?? 0),
             ],
         ];
 
@@ -1843,6 +1849,35 @@ class Match_Model extends Model
         $result = $this->db->executesql(
             "UPDATE t_matches SET {$column} = :vp, updated_at = :updated_at WHERE id = :id;",
             ['vp' => $vp, 'updated_at' => date('Y-m-d H:i:s'), 'id' => $matchId]
+        );
+        return (bool)$result[0];
+    }
+
+    public function setPlayerResources(int $matchId, int $playerSlot, int $commandPoints, int $rageLevel, int $rageDice): bool
+    {
+        if (!in_array($playerSlot, [1, 2], true)) {
+            return false;
+        }
+
+        $commandPoints = max(0, $commandPoints);
+        $rageLevel = max(0, min(7, $rageLevel));
+        $rageDice = max(0, $rageDice);
+        $prefix = $playerSlot === 1 ? 'player_a' : 'player_b';
+
+        $result = $this->db->executesql(
+            "UPDATE t_matches SET
+                {$prefix}_cp = :cp,
+                {$prefix}_rage_level = :rage_level,
+                {$prefix}_rage_dice = :rage_dice,
+                updated_at = :updated_at
+             WHERE id = :id;",
+            [
+                'cp'          => $commandPoints,
+                'rage_level'  => $rageLevel,
+                'rage_dice'   => $rageDice,
+                'updated_at'  => date('Y-m-d H:i:s'),
+                'id'          => $matchId,
+            ]
         );
         return (bool)$result[0];
     }

@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	MatchStateManager.init(initialState);
 
 	const syncTimers = { 1: null, 2: null };
+	const resourceSyncTimers = { 1: null, 2: null };
 
 	const els = {
 		battleplanName: document.getElementById("battleplanName"),
@@ -53,6 +54,14 @@ document.addEventListener("DOMContentLoaded", function () {
 		firstPlayerChoice1: document.getElementById("firstPlayerChoice1"),
 		firstPlayerChoice2: document.getElementById("firstPlayerChoice2"),
 		firstPlayerModalCancel: document.getElementById("firstPlayerModalCancel"),
+		resourceBar: document.getElementById("resourceBar"),
+		mineCp: document.getElementById("mineCp"),
+		mineRageLevel: document.getElementById("mineRageLevel"),
+		mineRageDice: document.getElementById("mineRageDice"),
+		oppCp: document.getElementById("oppCp"),
+		oppRageLevel: document.getElementById("oppRageLevel"),
+		oppRageDice: document.getElementById("oppRageDice"),
+		resourceOppLabel: document.getElementById("resourceOppLabel"),
 	};
 
 	async function apiPost(endpoint, body) {
@@ -110,11 +119,15 @@ document.addEventListener("DOMContentLoaded", function () {
 					local.battleRound !== remote.battleRound ||
 					local.firstPlayer !== remote.firstPlayer;
 
-				if (!turnChanged) return;
+				if (turnChanged) {
+					MatchStateManager.applyServerGameSync(
+						remote,
+						data.state.updatedAt,
+					);
+				}
 
-				MatchStateManager.applyServerGameSync(
-					remote,
-					data.state.updatedAt,
+				MatchStateManager.applyServerPlayerResources(
+					data.state.players,
 				);
 			})
 			.catch(() => {})
@@ -152,6 +165,20 @@ document.addEventListener("DOMContentLoaded", function () {
 				MatchStateManager.setPlayerVp(slot, current + delta);
 				render();
 				scheduleSync(slot);
+			});
+		});
+
+		els.resourceBar?.querySelectorAll(".res-step").forEach((btn) => {
+			btn.addEventListener("click", function () {
+				const slot = parseInt(btn.dataset.player, 10);
+				if (slot !== viewerSlot) return;
+				const key = btn.dataset.resource;
+				const delta = parseInt(btn.dataset.delta, 10) || 0;
+				if (!key) return;
+				const current = MatchStateManager.getPlayerResource(slot, key);
+				MatchStateManager.setPlayerResource(slot, key, current + delta);
+				render();
+				scheduleResourceSync(slot);
 			});
 		});
 
@@ -247,6 +274,9 @@ document.addEventListener("DOMContentLoaded", function () {
 		const state = MatchStateManager.getState();
 		const p1 = MatchStateManager.getPlayer(1) || {};
 		const p2 = MatchStateManager.getPlayer(2) || {};
+		const opponentSlot = viewerSlot === 1 ? 2 : 1;
+		const mine = viewerSlot === 1 ? p1 : p2;
+		const opp = opponentSlot === 1 ? p1 : p2;
 
 		els.battleplanName.textContent = state.battleplanName || "-";
 
@@ -257,6 +287,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 		els.player1TotalVp.textContent = p1.totalVp ?? 0;
 		els.player2TotalVp.textContent = p2.totalVp ?? 0;
+
+		if (els.mineCp) els.mineCp.textContent = mine.commandPoints ?? 0;
+		if (els.mineRageLevel) els.mineRageLevel.textContent = mine.rageLevel ?? 0;
+		if (els.mineRageDice) els.mineRageDice.textContent = mine.rageDice ?? 0;
+		if (els.oppCp) els.oppCp.textContent = opp.commandPoints ?? 0;
+		if (els.oppRageLevel) els.oppRageLevel.textContent = opp.rageLevel ?? 0;
+		if (els.oppRageDice) els.oppRageDice.textContent = opp.rageDice ?? 0;
+		if (els.resourceOppLabel) {
+			const oppName = opp.name || (opponentSlot === 1 ? "Player 1" : "Player 2");
+			els.resourceOppLabel.textContent = `相手（${oppName}）`;
+		}
 
 		renderRound(state);
 		renderTurn(state);
@@ -395,6 +436,11 @@ document.addEventListener("DOMContentLoaded", function () {
 		syncTimers[slot] = setTimeout(() => syncVp(slot), 400);
 	}
 
+	function scheduleResourceSync(slot) {
+		clearTimeout(resourceSyncTimers[slot]);
+		resourceSyncTimers[slot] = setTimeout(() => syncResources(slot), 400);
+	}
+
 	async function syncVp(slot) {
 		const vp = MatchStateManager.getPlayerVp(slot);
 		try {
@@ -407,6 +453,22 @@ document.addEventListener("DOMContentLoaded", function () {
 			MatchStateManager.markClean();
 		} catch (e) {
 			console.error("VP sync failed", e);
+		}
+	}
+
+	async function syncResources(slot) {
+		try {
+			await apiPost("match/setResources", {
+				token,
+				matchId,
+				playerSlot: slot,
+				commandPoints: MatchStateManager.getPlayerResource(slot, "commandPoints"),
+				rageLevel: MatchStateManager.getPlayerResource(slot, "rageLevel"),
+				rageDice: MatchStateManager.getPlayerResource(slot, "rageDice"),
+			});
+			MatchStateManager.markClean();
+		} catch (e) {
+			console.error("Resource sync failed", e);
 		}
 	}
 

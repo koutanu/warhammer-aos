@@ -6955,6 +6955,108 @@ button {
   width: 100%;
   margin-top: 0.15rem;
 }
+.match.scoreboard .scoreboard-sidebar .sidebar-resources {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(47, 79, 79, 0.5);
+  border-radius: 8px;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .sidebar-resources-label {
+  font-size: 0.65rem;
+  color: rgba(240, 234, 214, 0.5);
+  letter-spacing: 0.1em;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-mine {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-block-label {
+  font-size: 0.62rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  color: rgba(212, 175, 55, 0.85);
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-label {
+  font-size: 0.72rem;
+  color: rgba(240, 234, 214, 0.8);
+  line-height: 1.2;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-counter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .res-step {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid #2f4f4f;
+  background: #131c1c;
+  color: #d4af37;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .res-step:active {
+  transform: scale(0.92);
+  background: rgba(212, 175, 55, 0.2);
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .res-value {
+  min-width: 1.4rem;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #d4af37;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-opponent {
+  margin-top: 0.15rem;
+  padding: 0.5rem 0.55rem 0.55rem;
+  background: rgba(19, 28, 28, 0.65);
+  border: 1px dashed rgba(47, 79, 79, 0.75);
+  border-radius: 6px;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-opponent .resource-block-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: rgba(240, 234, 214, 0.45);
+  font-weight: normal;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-opp-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.3rem;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-opp-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-opp-key {
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+  color: rgba(240, 234, 214, 0.4);
+}
+.match.scoreboard .scoreboard-sidebar .sidebar-resources .resource-opp-value {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: rgba(240, 234, 214, 0.62);
+}
 
 .match.summary {
   margin: 2rem auto;

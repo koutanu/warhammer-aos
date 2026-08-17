@@ -278,6 +278,42 @@ class Matchplay extends Controller
         });
     }
 
+    public function setResources()
+    {
+        $this->jsonResponse(function () {
+            $body = $this->getJsonBody();
+            $this->requireTokenFromBody($body);
+
+            $matchId        = (int)($body['matchId'] ?? 0);
+            $playerSlot     = (int)($body['playerSlot'] ?? 0);
+            $commandPoints  = (int)($body['commandPoints'] ?? 0);
+            $rageLevel      = (int)($body['rageLevel'] ?? 0);
+            $rageDice       = (int)($body['rageDice'] ?? 0);
+
+            if ($matchId <= 0 || !in_array($playerSlot, [1, 2], true)) {
+                $this->jsonError('無効なパラメータです。', 400);
+            }
+
+            $match = $this->model->getMatchById($matchId);
+            if (!$match || $match['status'] === 'completed') {
+                $this->jsonError('試合を更新できません。', 400);
+            }
+
+            $ok = $this->model->setPlayerResources(
+                $matchId,
+                $playerSlot,
+                $commandPoints,
+                $rageLevel,
+                $rageDice
+            );
+            if (!$ok) {
+                $this->jsonError('リソースの更新に失敗しました。', 500);
+            }
+
+            return ['success' => true, 'state' => $this->model->buildMatchState($matchId)];
+        });
+    }
+
     public function advanceRound()
     {
         $this->jsonResponse(function () {

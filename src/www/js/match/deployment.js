@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	function startPoll() {
 		stopPoll();
-		pollTimer = setInterval(pollState, 15000);
+		pollTimer = setInterval(pollState, 3000);
 	}
 
 	function stopPoll() {

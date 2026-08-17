@@ -87,6 +87,54 @@ $p2Url = $playBaseUrl . '?slot=2';
 					<button type="button" id="btnRosterMemo" class="btn-roster-memo">メモ</button>
 				</div>
 			<?php endif; ?>
+
+			<div class="sidebar-resources" id="resourceBar">
+				<span class="sidebar-resources-label">リソース</span>
+				<div class="resource-mine">
+					<span class="resource-block-label">自分</span>
+					<div class="resource-row">
+						<span class="resource-label">CP</span>
+						<div class="resource-counter">
+							<button type="button" class="res-step" data-player="<?= $this->h($viewerSlot); ?>" data-resource="commandPoints" data-delta="-1" aria-label="自分のCPを減らす">&minus;</button>
+							<strong class="res-value" id="mineCp">0</strong>
+							<button type="button" class="res-step" data-player="<?= $this->h($viewerSlot); ?>" data-resource="commandPoints" data-delta="1" aria-label="自分のCPを増やす">&plus;</button>
+						</div>
+					</div>
+					<div class="resource-row">
+						<span class="resource-label">憤激レベル</span>
+						<div class="resource-counter">
+							<button type="button" class="res-step" data-player="<?= $this->h($viewerSlot); ?>" data-resource="rageLevel" data-delta="-1" aria-label="自分の憤激レベルを減らす">&minus;</button>
+							<strong class="res-value" id="mineRageLevel">0</strong>
+							<button type="button" class="res-step" data-player="<?= $this->h($viewerSlot); ?>" data-resource="rageLevel" data-delta="1" aria-label="自分の憤激レベルを増やす">&plus;</button>
+						</div>
+					</div>
+					<div class="resource-row">
+						<span class="resource-label">憤激ダイス</span>
+						<div class="resource-counter">
+							<button type="button" class="res-step" data-player="<?= $this->h($viewerSlot); ?>" data-resource="rageDice" data-delta="-1" aria-label="自分の憤激ダイスを減らす">&minus;</button>
+							<strong class="res-value" id="mineRageDice">0</strong>
+							<button type="button" class="res-step" data-player="<?= $this->h($viewerSlot); ?>" data-resource="rageDice" data-delta="1" aria-label="自分の憤激ダイスを増やす">&plus;</button>
+						</div>
+					</div>
+				</div>
+				<div class="resource-opponent" aria-label="相手のリソース（参照専用）">
+					<span class="resource-block-label" id="resourceOppLabel">相手（参照）</span>
+					<div class="resource-opp-stats">
+						<div class="resource-opp-stat">
+							<span class="resource-opp-key">CP</span>
+							<strong class="resource-opp-value" id="oppCp">0</strong>
+						</div>
+						<div class="resource-opp-stat">
+							<span class="resource-opp-key">憤激Lv</span>
+							<strong class="resource-opp-value" id="oppRageLevel">0</strong>
+						</div>
+						<div class="resource-opp-stat">
+							<span class="resource-opp-key">憤激ダイス</span>
+							<strong class="resource-opp-value" id="oppRageDice">0</strong>
+						</div>
+					</div>
+				</div>
+			</div>
 		</aside>
 
 		<main class="scoreboard-main">
