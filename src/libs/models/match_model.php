@@ -444,22 +444,7 @@ class Match_Model extends Model
             return false;
         }
 
-        $this->db->executesql(
-            'DELETE FROM t_match_ability_usage WHERE match_id = :match_id;',
-            ['match_id' => $matchId]
-        );
-        $this->db->executesql(
-            'DELETE FROM t_match_ability_target_units WHERE match_id = :match_id;',
-            ['match_id' => $matchId]
-        );
-        $this->db->executesql(
-            'DELETE FROM t_match_unit_status WHERE match_id = :match_id;',
-            ['match_id' => $matchId]
-        );
-        $this->db->executesql(
-            'DELETE FROM t_match_unit_phase_flags WHERE match_id = :match_id;',
-            ['match_id' => $matchId]
-        );
+        $this->pruneLiveMatchData($matchId);
         $this->db->executesql(
             'DELETE FROM t_match_round_scores WHERE match_id = :match_id;',
             ['match_id' => $matchId]
@@ -2180,10 +2165,49 @@ class Match_Model extends Model
             ['status' => 'completed', 'winner' => $winner, 'completed_at' => $now, 'updated_at' => $now, 'id' => $matchId]
         );
 
+        $this->pruneLiveMatchData($matchId);
+
         return [
             'winner'   => $winner,
             'playerAVp'=> $aVp,
             'playerBVp'=> $bVp,
         ];
+    }
+
+    /**
+     * 試合終了後に不要になるプレイ中専用データを削除する。
+     * t_matches / t_match_round_scores は履歴のため残す。
+     */
+    public function pruneLiveMatchData(int $matchId): void
+    {
+        $tables = [
+            't_match_ability_usage',
+            't_match_ability_target_units',
+            't_match_unit_status',
+            't_match_unit_phase_flags',
+            't_match_battle_tactic_progress',
+        ];
+
+        foreach ($tables as $table) {
+            $this->db->executesql(
+                "DELETE FROM {$table} WHERE match_id = :match_id;",
+                ['match_id' => $matchId]
+            );
+        }
+    }
+
+    /**
+     * 完了済み試合の BT 進捗をスナップショットへ書き込み、ライブデータを削除する。
+     * 既存データの一括掃除用。
+     */
+    public function finalizeCompletedMatchLiveData(int $matchId): void
+    {
+        $match = $this->getMatchById($matchId);
+        if (!$match || ($match['status'] ?? '') !== 'completed') {
+            return;
+        }
+
+        $this->persistBattleTacticProgressIntoSnapshots($matchId, $match);
+        $this->pruneLiveMatchData($matchId);
     }
 }
